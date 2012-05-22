@@ -6,12 +6,13 @@ class lionbat;
 class loadApplication;
 
 #include <fstream>
+#include <string>
 
 class ChargeProcess {
 public:
 	ChargeProcess();
-	void ChargeProcessOurPolicy(double power_input, supcapacitor *sp, lionbat *lb, loadApplication *load);
-	void ChargeProcessOptimalVcti(double power_input, supcapacitor *sp, lionbat *lb, loadApplication *load); 
+	int ChargeProcessOurPolicy(double power_input, supcapacitor *sp, lionbat *lb, loadApplication *load);
+	int ChargeProcessOptimalVcti(double power_input, supcapacitor *sp, lionbat *lb, loadApplication *load); 
 	void print_super_cap_info(std::ofstream &output_file, supcapacitor *sp);
 private:
 	// CTI
@@ -25,6 +26,9 @@ private:
 
 	// DC-DC converter for the load
 	double &dc_load_vin, &dc_load_iin, dc_load_vout, dc_load_iout;
+
+	// Output file
+	std::string output_file;
 
 };
 

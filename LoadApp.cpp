@@ -14,6 +14,31 @@ loadApplication::loadApplication() :
 	m_Pc(-164.05){
 }
 
+void loadApplication::SetTaskParameters(double vdd, double idd, double deadline, double exec_time) {
+	this->vdd = vdd;
+	this->idd = idd;
+	this->deadline = deadline;
+	this->exec_time = exec_time;
+
+	return;
+}
+
+double loadApplication::get_vdd() {
+	return vdd;
+}
+
+double loadApplication::get_idd() {
+	return idd;
+}
+
+double loadApplication::get_deadline() {
+	return deadline;
+}
+
+double loadApplication::get_exec_time() {
+	return exec_time;
+}
+
 double loadApplication::LoadModel(double Vdd, double &Iload, double &Tur){
 	double m_Iload = 0.0;
 	double m_Tdur = 0.0;

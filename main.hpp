@@ -1,7 +1,7 @@
 #ifndef _MAIN_HPP_
 #define _MAIN_HPP_
 
-#define MAX_TIME_INDEX 6000
+#define MAX_TIME_INDEX 1
 
 const double min_time_interval = 0.1;
 

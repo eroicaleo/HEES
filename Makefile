@@ -2,7 +2,8 @@
 
 bin = energysys
 
-OBJ = DCCon_out.o SuperCap.o main.o DischargeProcess.o ChargeProcess.o DCCon_in.o DCCon_dis.o LionBat.o LoadApp.o selVCTI.o
+OBJ = DCCon_out.o SuperCap.o main.o DischargeProcess.o ChargeProcess.o DCCon_in.o DCCon_dis.o LionBat.o LoadApp.o selVCTI.o \
+			powersource.o
 
 CC = g++
 # CFLAGS = -c -Wall -I/home/yzhang/usr/sundials/include

@@ -1,5 +1,7 @@
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <math.h>
+
 #include "SuperCap.hpp"
 #include "DCCon_out.hpp"
 #include "LoadApp.hpp"
@@ -7,7 +9,8 @@
 #include "DischargeProcess.hpp"
 #include "ChargeProcess.hpp"
 #include "main.hpp"
-#include <math.h>
+#include "powersource.hpp"
+
 using namespace std;
 
 int main(){
@@ -19,6 +22,49 @@ int main(){
 	DischargeProcess dp;
 	ChargeProcess cp;
 
+	sp.SupCapReset();
+	// sp.SupCapSetQacc(22.91672);
+	sp.SupCapReconfig(4, 1);
+	sp.SupCapSetQacc(0.0);
+
+	// Set current task info
+	double vdd = 1.0, idd = 1.0;
+	double deadline = 1.0, exec_time = 1.0;
+	load.SetTaskParameters(vdd, idd, deadline, exec_time);
+
+	// timer staff
+	double time_elapsed = 0.0;
+	int time_index = 0;
+	int hh = 11, mm = 0, ss = 0;
+	int start_time_sec = 3600*hh + 60*mm + ss;
+	int curr_time_sec = start_time_sec;
+	
+	// powersource
+	double power_input = 0.0;
+
+	// The main loop
+	while (time_index < MAX_TIME_INDEX) {
+
+		power_input = powersource_sec(curr_time_sec);
+
+		// ChargeProcess
+		time_index = cp.ChargeProcessOurPolicy(power_input, &sp, &lb, &load);
+		// time_index = cp.ChargeProcessOptimalVcti(power_input, &sp, &lb, &load);
+
+		// DischargeProcess
+		if (time_index < 0) {
+			// time_index = dp.DischargeProcessOurPolicy(&sp, &lb, &load);
+			// time_index = dp.DischargeProcessOptimalVcti(&sp, &lb, &load);
+		}
+
+		if (time_index < 0) {
+			break;
+		}
+
+		// Advance the timer
+		curr_time_sec += (int)(time_index * min_time_interval);
+	}
+
 	//powersource
 	double VCTI = 1.0, powerInput = 1.25, delVCTI = 0;
 	//DCDC converter
@@ -28,11 +74,12 @@ int main(){
 
 	double dccon1_energy = 0.0;
 
+	bool supcap_reconfig_return = true;
+	// int charging_phase = 1;
+	double Prbank = 0.0;
+
 	int task = 1;
 	double task_duration = 2000.0;
-	double min_time_interval = 0.1;
-	double time_elapsed = 0.0;
-	int time_index = 0;
 
 	string filename1("Result.txt");
 	string filename2("Process.txt");
@@ -41,23 +88,7 @@ int main(){
 	
 	fprintf(fp1,"Isup\t Vsup\t Psup\n");
 	fprintf(fp2,"VCTI\t Vs_sup\t Vs_dc\t del_VCTI\t Qacc\n");
-	sp.SupCapReset();
-	// sp.SupCapSetQacc(22.91672);
-	sp.SupCapReconfig(4, 1);
-	sp.SupCapSetQacc(0.0);
-
-	// DischargeProcess
-	// dp.DischargeProcessOurPolicy(&sp, &lb, &load);
-	// dp.DischargeProcessOptimalVcti(&sp, &lb, &load);
-
-	// ChargeProcess
-	cp.ChargeProcessOurPolicy(powerInput, &sp, &lb, &load);
-	// cp.ChargeProcessOptimalVcti(powerInput, &sp, &lb, &load);
-
-	bool supcap_reconfig_return = true;
-	// int charging_phase = 1;
-	double Prbank = 0.0;
-
+	
 	while(task < 0){
 		dccon1_Iin = powerInput/VCTI - 1.153;
 		dccon1_Vin = VCTI;
