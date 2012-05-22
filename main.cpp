@@ -14,7 +14,6 @@
 using namespace std;
 
 int main(){
-	dcconvertOUT dcout;
 	supcapacitor sp;
 	lionbat lb; 
 	loadApplication load;
@@ -29,7 +28,7 @@ int main(){
 
 	// Set current task info
 	double vdd = 1.0, idd = 1.0;
-	double deadline = 1.0, exec_time = 1.0;
+	double deadline = 10.0, exec_time = 10.0;
 	load.SetTaskParameters(vdd, idd, deadline, exec_time);
 
 	// timer staff
@@ -58,12 +57,17 @@ int main(){
 		}
 
 		if (time_index < 0) {
+			cerr << "time_index can not be less than 0" << endl;
 			break;
 		}
 
 		// Advance the timer
+		time_elapsed += (time_index * min_time_interval);
 		curr_time_sec += (int)(time_index * min_time_interval);
 	}
+
+#ifdef _COMPLEX_MAIN_
+	dcconvertOUT dcout;
 
 	//powersource
 	double VCTI = 1.0, powerInput = 1.25, delVCTI = 0;
@@ -148,6 +152,7 @@ int main(){
 	fclose(fp2);
 
 	printf("energy consumed is %f, time elapsed is %f\n", dccon1_energy, time_elapsed);
+#endif
 
 	return 0;
 }

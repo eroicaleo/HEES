@@ -13,7 +13,7 @@ public:
 	ChargeProcess();
 	int ChargeProcessOurPolicy(double power_input, supcapacitor *sp, lionbat *lb, loadApplication *load);
 	int ChargeProcessOptimalVcti(double power_input, supcapacitor *sp, lionbat *lb, loadApplication *load); 
-	void print_super_cap_info(std::ofstream &output_file, supcapacitor *sp);
+	void print_super_cap_info(std::ofstream &output_file, supcapacitor *sp, double power_input);
 private:
 	// CTI
 	double vcti, icti;

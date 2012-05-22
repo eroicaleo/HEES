@@ -20,7 +20,7 @@ ChargeProcess::ChargeProcess() :
 	output_file("OverallProcess.txt") {
 	
 	ofstream output(output_file.c_str());
-	output << "VCTI\tVcap_oc\tVcap_cc\tQacc\tIsup\tPdcsup\tPdcload\tPrbank\tEsup" << endl;
+	output << "power_intput\tVCTI\tVcap_oc\tVcap_cc\tQacc\tIsup\tPdcsup\tPdcload\tPrbank\tEsup" << endl;
 	output.close();
 }
 
@@ -58,7 +58,7 @@ int ChargeProcess::ChargeProcessOurPolicy(double power_input, supcapacitor *sp, 
 		return -1;
 	}
 
-	while (current_task_remaining_time > 0) {
+	while (current_task_remaining_time > min_time_interval) {
 		
 		dc_super_cap.ConverterModel_SupCap(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, sp);
 		// Reconfig if necessary
@@ -68,7 +68,7 @@ int ChargeProcess::ChargeProcessOurPolicy(double power_input, supcapacitor *sp, 
 		}
 
 		// Recorde the curren status of the super capacitor
-		print_super_cap_info(output, sp);
+		print_super_cap_info(output, sp, power_input);
 
 		sp->SupCapCharge(super_cap_iin, min_time_interval, super_cap_vcc, super_cap_qacc);
 
@@ -106,11 +106,10 @@ int ChargeProcess::ChargeProcessOptimalVcti(double power_input, supcapacitor *sp
 
 	selVcti sel_vcti;
 
-	while (current_task_remaining_time > 0) {
+	while (current_task_remaining_time > min_time_interval) {
 
 		if (time_index % recompute_vcti_time_index == 0) {
-			vcti = 0.969247; 
-			// vcti = sel_vcti.bestVCTI(power_input, dc_load_iout, dc_load_vout, "out_SupCap", lb, sp);
+			vcti = sel_vcti.bestVCTI(power_input, dc_load_iout, dc_load_vout, "out_SupCap", lb, sp);
 		}
 
 		// Compute the current Icti on CTI from bank to load
@@ -126,7 +125,7 @@ int ChargeProcess::ChargeProcessOptimalVcti(double power_input, supcapacitor *sp
 		dc_super_cap.ConverterModel_SupCap(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, sp);
 
 		// Recorde the curren status of the super capacitor
-		print_super_cap_info(output, sp);
+		print_super_cap_info(output, sp, power_input);
 
 		sp->SupCapCharge(super_cap_iin, min_time_interval, super_cap_vcc, super_cap_qacc);
 
@@ -142,11 +141,12 @@ int ChargeProcess::ChargeProcessOptimalVcti(double power_input, supcapacitor *sp
 	return time_index;
 }
 
-void ChargeProcess::print_super_cap_info(ofstream &output, supcapacitor *sp) {
+void ChargeProcess::print_super_cap_info(ofstream &output, supcapacitor *sp, double power_input) {
 	// Output the status to a file
 	super_cap_voc = sp->SupCapGetVoc();
 	super_cap_qacc = sp->SupCapGetQacc();
-	output << vcti << "\t"
+	output << power_input << "\t"
+			<< vcti << "\t"
 			<< super_cap_voc << "\t"
 			<< super_cap_vcc << "\t"
 			<< super_cap_qacc << "\t"
