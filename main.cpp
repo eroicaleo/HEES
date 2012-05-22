@@ -33,7 +33,7 @@ int main(){
 
 	// timer staff
 	double time_elapsed = 0.0;
-	int time_index = 0;
+	int total_time_index = 0, time_index = 0;
 	int hh = 11, mm = 0, ss = 0;
 	int start_time_sec = 3600*hh + 60*mm + ss;
 	int curr_time_sec = start_time_sec;
@@ -42,7 +42,7 @@ int main(){
 	double power_input = 0.0;
 
 	// The main loop
-	while (time_index < MAX_TIME_INDEX) {
+	while (total_time_index < MAX_TIME_INDEX) {
 
 		power_input = powersource_sec(curr_time_sec);
 
@@ -62,6 +62,7 @@ int main(){
 		}
 
 		// Advance the timer
+		total_time_index += time_index;
 		time_elapsed += (time_index * min_time_interval);
 		curr_time_sec += (int)(time_index * min_time_interval);
 	}
