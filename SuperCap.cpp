@@ -9,8 +9,8 @@
  using namespace std;
 
 supcapacitor::supcapacitor() :
-	m_p(4),
-	m_s(1),
+	m_p(1),
+	m_s(4),
 	m_Totl(4),
 	m_Racc(0.0), m_Racc1(34e-3),
 	m_Rs(10e-3), m_Rp(10e-3),
@@ -32,22 +32,28 @@ void supcapacitor::SupCapCharge(double Iin, double Tdur, double &Vs, double &Qac
 
 	Vs = m_Vs;
 	Qacc = m_Qacc;
+
+	m_Energy = (0.5)*(m_Qacc*m_Qacc)/m_Cacc;
 }
 
-void supcapacitor::SupCapOperating(double Iin, double VCTI, double delVCTI){
+bool supcapacitor::SupCapOperating(double Iin, double VCTI, double delVCTI){
 	double m_Vs = 0.0;
 	double m_R = 0.0;
 	double m_C = 0.0;
 	double m_del = 0;
 	double m_Combp = m_p;
 	double m_Combs = m_s;
-	double m_vsdel = delVCTI;
+	double m_vsdel = -100.0;
+
+	double voc_orig = m_Qacc / this->m_Cacc;
+
+	bool flag = false;
     
 	vector<double>m_comb;
 	for(int i = 1; i <= m_Totl; i++){
 		if((int)m_Totl % i == 0){
 			m_comb.push_back((double)i);
-			}
+		}
 	}
 
 	while(m_comb.size() > 0){
@@ -56,21 +62,56 @@ void supcapacitor::SupCapOperating(double Iin, double VCTI, double delVCTI){
 		s = m_Totl / p;
 		m_R = (2.0/3.0 * p - 1.0 + 1.0/(3.0 * p)) * s * m_Rp + s / p  * m_Racc1 + (s - 1.0) * m_Rs;// m_Racc
         m_C = p / s * m_Cacc1;//m_Cacc
-        m_Vs = m_Qacc / m_C + Iin * m_R;
+        m_Vs = m_Qacc * sqrt(m_C/m_Cacc) / m_C;
         m_del = m_Vs - VCTI;
-        // m_del = fabs(m_del);
-        if(m_del < m_vsdel){
+		// Choose the V_cap such that it is smaller and close to V_cti
+		// but less than the current V_oc
+        if((m_del > m_vsdel) && (m_del < 0) && (m_Vs < voc_orig)){
         	m_Combp = p;
             m_Combs = s;
             m_vsdel = m_del;
+			flag = true;
         }
 		m_comb.pop_back();
 	}
 
-	cout<<"------p------"<<m_Combp<<"----s----"<<m_Combs<<endl;
-	m_p = m_Combp;
-	m_s = m_Combs;
+	if (flag) {
+		cout<<"------p------"<<m_Combp<<"----s----"<<m_Combs<<endl;
+		// Make the reconfiguration here!
+		SupCapReconfig(m_Combs, m_Combp);
+	}
+
+	return flag;
 }
+
+bool supcapacitor::SupCapMoreSeriesReconfig() {
+	int new_s = (int)m_s + 1;
+	do {
+		if ((int)m_Totl % new_s == 0) {
+			SupCapReconfig(new_s, m_Totl/new_s);
+			return true;
+		}
+	} while (new_s++ < m_Totl);
+	return false;
+}
+
+double supcapacitor::SupCapReconfig(double new_s, double new_p) {
+	double new_C = new_p / new_s * m_Cacc1;
+
+	// E_sup = (1/2)*Q^2/C
+	// After reconfiguration, the energy is same
+	double new_Q = m_Qacc * sqrt(new_C / m_Cacc);
+
+	m_Qacc = new_Q;
+	m_Cacc = new_C;
+	m_p = new_p;
+	m_s = new_s;
+	m_Rbank = (2.0/3.0 * m_p - 1.0 + 1.0/(3.0 * m_p)) * m_s * m_Rp + m_s / m_p  * m_Racc1 + (m_s - 1.0) * m_Rs;
+	m_Racc = m_s / m_p * m_Racc1;
+
+	return new_Q;
+}
+
 double supcapacitor::SupCapGetRacc(){
 	return m_Rbank;
 }
@@ -90,4 +131,14 @@ void supcapacitor::SupCapReset(){
 
 void supcapacitor::SupCapSetQacc(double Qacc){
 	m_Qacc = Qacc;
+}
+
+double supcapacitor::SupCapGetEnergy(void) {
+	if (m_Qacc < 0)
+		return -1.0;
+	return m_Energy = (0.5)*(m_Qacc*m_Qacc)/m_Cacc;
+}
+
+double supcapacitor::SupCapGetVoc(void) {
+	return (m_Qacc/m_Cacc);
 }
