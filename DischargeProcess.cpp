@@ -5,41 +5,45 @@
 #include "DischargeProcess.hpp"
 #include "DCCon_dis.hpp"
 #include "DCCon_in.hpp"
+#include "LoadApp.hpp"
 #include "SuperCap.hpp"
 #include "selVCTI.hpp"
 #include "main.hpp"
 
 using namespace std;
 
-DischargeProcess::DischargeProcess() {}
+DischargeProcess::DischargeProcess() :
+	vcti(0.0), icti(0.0),
+	super_cap_iout(0.0), super_cap_qacc(0.0), super_cap_voc(0.0), super_cap_vcc(0.0), dc_load_power(0.0),
+	dc_super_cap_vin(super_cap_vcc), dc_super_cap_iin(super_cap_iout), dc_super_cap_vout(vcti), dc_super_cap_iout(0.0), dc_super_cap_power(0.0),
+	dc_load_vin(vcti), dc_load_iin(icti), dc_load_vout(1.0), dc_load_iout(1.0),
+	output_file("OverallProcess.txt") {
 
-void DischargeProcess::DischargeProcessOurPolicy(supcapacitor *sp, lionbat *lb, loadApplication *load) {
+	ofstream output(output_file.c_str());
+	output << "power_intput\tVCTI\tVcap_oc\tVcap_cc\tQacc\tIsup\tPdcsup\tPdcload\tPrbank\tEsup\tCacc" << endl;
+	output.close();
+}
+
+int DischargeProcess::DischargeProcessOurPolicy(double power_input, supcapacitor *sp, lionbat *lb, loadApplication *load) {
 
 	dcconvertDIS dc_super_cap;
 	dcconvertIN dc_load;
 
-	// CTI
-	double vcti(0.0), icti(0.0);
-
-	// Super capacitor discharging paramenters
-	double super_cap_iout(0.0), super_cap_qacc(0.0), super_cap_voc(0.0), super_cap_vcc(0.0), dc_load_power(0.0);
-
-	// DC-DC converter for the super capacitor bank discharge
-	double &dc_super_cap_vin(super_cap_vcc), &dc_super_cap_iin(super_cap_iout), &dc_super_cap_vout(vcti), &dc_super_cap_iout(icti), dc_super_cap_power(0.0);
-
 	// DC-DC converter for the load
 	// FIXME: should initilized from load
-	double &dc_load_vin(vcti), &dc_load_iin(icti), dc_load_vout(1.0), dc_load_iout(1.0);
+	dc_load_vout = load->get_vdd();
+	dc_load_iout = load->get_idd();
+	double current_task_remaining_time = load->get_exec_time();
 
 	// Task info and timer stuff
-	double task_duration = 2000000.0; // FIXME: should be replaced with load->TimeDuration(Vdd)
 	double time_elapsed = 0.0;
 	int time_index = 0;
-	double current_task_remaining_time = task_duration;
 
 	// Output file
-	ofstream output("Discharge.txt");
-	output << "VCTI\tVcap_oc\tVcap_cc\tQacc\tIsup\tPdcsup\tPdcload\tPrbank\tEsup" << endl;
+	ofstream output(output_file.c_str(), ios_base::app);
+	if (!output.good()) {
+		cerr << "Can not open files!" << endl;
+	}
 
 	// Compute the initial Vcti first
 	vcti = ComputeBestVCTI(dc_load_vout, dc_load_iout);
@@ -51,8 +55,15 @@ void DischargeProcess::DischargeProcessOurPolicy(supcapacitor *sp, lionbat *lb, 
 	// Compute the current Icti on CTI from bank to load
 	dc_load.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
 
+	dc_super_cap_iout = dc_load_iin - power_input/vcti;
+
+	// Test if the supply power is small enough
+	if (dc_super_cap_iout < 0) {
+		return -1;
+	}
+
 	bool could_reconfig_flag = true;
-	while (current_task_remaining_time > 0) {
+	while (current_task_remaining_time > min_time_interval) {
 
 		// Compute the current status of the Supercapacitor bank
 		dc_super_cap.ConverterModel_supcap(dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_power, sp);
@@ -63,110 +74,92 @@ void DischargeProcess::DischargeProcessOurPolicy(supcapacitor *sp, lionbat *lb, 
 			could_reconfig_flag = sp->SupCapMoreSeriesReconfig();
 			dc_super_cap.ConverterModel_supcap(dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_power, sp);
 		}
-		// if (!could_reconfig_flag)
-		//	break;
 
-		// Output the status to a file
-		super_cap_voc = sp->SupCapGetVoc();
-		super_cap_qacc = sp->SupCapGetQacc();
-		output << vcti << "\t"
-				<< super_cap_voc << "\t"
-				<< super_cap_vcc << "\t"
-				<< super_cap_qacc << "\t"
-				<< super_cap_iout << "\t"
-				<< dc_super_cap_power << "\t"
-				<< dc_load_power << "\t"
-				<< super_cap_iout*(sp->SupCapGetRacc()*sp->SupCapGetRacc()) << "\t"
-				<< sp->SupCapGetEnergy() << "\t"
-				<< sp->SupCapGetCacc() << endl;
+		// Recorde the curren status of the super capacitor
+		print_super_cap_info(output, sp, power_input);
 
 		// compute the energy consumption
 		sp->SupCapCharge(-super_cap_iout, min_time_interval, super_cap_vcc, super_cap_qacc);
-
-		// stop if there is no energy in the supercapacitor
-		if (sp->SupCapGetEnergy() < 0)
-			break;
 
 		// time elapse
 		current_task_remaining_time -= min_time_interval;
 		time_elapsed += min_time_interval;
 		++time_index;
+
+		// stop if there is no energy in the supercapacitor
+		if (sp->SupCapGetEnergy() < 0)
+			break;
 	}
 
 	output.close();
+
+	return time_index;
 }
 
-void DischargeProcess::DischargeProcessOptimalVcti(supcapacitor *sp, lionbat *lb, loadApplication *load) {
+int DischargeProcess::DischargeProcessOptimalVcti(double power_input, supcapacitor *sp, lionbat *lb, loadApplication *load) {
 
 	dcconvertDIS dc_super_cap;
 	dcconvertIN dc_load;
 	selVcti sel_vcti;
 
-	// CTI
-	double vcti(1.0), icti(0.0);
-
-	// Super capacitor discharging paramenters
-	double super_cap_iout(0.0), super_cap_qacc(0.0), super_cap_voc(0.0), super_cap_vcc(0.0), dc_load_power(0.0);
-
-	// DC-DC converter for the super capacitor bank discharge
-	double &dc_super_cap_vin(super_cap_vcc), &dc_super_cap_iin(super_cap_iout), &dc_super_cap_vout(vcti), &dc_super_cap_iout(icti), dc_super_cap_power(0.0);
-
 	// DC-DC converter for the load
 	// FIXME: should initilized from load
-	double &dc_load_vin(vcti), &dc_load_iin(icti), dc_load_vout(1.0), dc_load_iout(1.0);
+	dc_load_vout = load->get_vdd();
+	dc_load_iout = load->get_idd();
+	double current_task_remaining_time = load->get_exec_time();
 
 	// Task info and timer stuff
-	double task_duration = 2000.0; // FIXME: should be replaced with load->TimeDuration(Vdd)
 	double time_elapsed = 0.0;
 	int time_index = 0;
-	double current_task_remaining_time = task_duration;
 
 	// Output file
-	ofstream output("Discharge.txt");
-	output << "VCTI\tVcap_oc\tVcap_cc\tQacc\tIsup\tPdcsup\tPdcload\tPrbank\tEsup" << endl;
+	ofstream output(output_file.c_str(), ios_base::app);
+	if (!output.good()) {
+		cerr << "Can not open files!" << endl;
+	}
 
-	// Compute the current Icti on CTI from bank to load
-	dc_load.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
+	vcti = dc_load_vout;
 
-	while (current_task_remaining_time > 0) {
+	while (current_task_remaining_time > min_time_interval) {
 
 		if (time_index % 10 == 0) {
-			vcti = sel_vcti.bestVCTI(0.0, dc_load_iout, dc_load_vout, "dis_SupCap", lb, sp);
+			// vcti = sel_vcti.bestVCTI(0.0, dc_load_iout, dc_load_vout, "dis_SupCap", lb, sp);
+			vcti = 1.58251;
 			// Compute the current Icti on CTI from bank to load
 			dc_load.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
 		}
 
+		// Compute the current Icti on CTI from bank to load
+		dc_load.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
+
+		dc_super_cap_iout = dc_load_iin - power_input/vcti;
+
+		// Test if the supply power is small enough
+		if (dc_super_cap_iout < 0) {
+			return -1;
+		}
+
 		// Compute the current status of the Supercapacitor bank
 		dc_super_cap.ConverterModel_supcap(dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_power, sp);
-				super_cap_voc = sp->SupCapGetVoc();
 
-		// Output the status to a file
-		super_cap_voc = sp->SupCapGetVoc();
-		super_cap_qacc = sp->SupCapGetQacc();
-		output << vcti << "\t"
-				<< super_cap_voc << "\t"
-				<< super_cap_vcc << "\t"
-				<< super_cap_qacc << "\t"
-				<< super_cap_iout << "\t"
-				<< dc_super_cap_power << "\t"
-				<< dc_load_power << "\t"
-				<< super_cap_iout*(sp->SupCapGetRacc()*sp->SupCapGetRacc()) << "\t"
-				<< sp->SupCapGetEnergy() << endl;
-
+		print_super_cap_info(output, sp, power_input);
+		
 		// compute the energy consumption
 		sp->SupCapCharge(-super_cap_iout, min_time_interval, super_cap_vcc, super_cap_qacc);
-
-		// stop if there is no energy in the supercapacitor
-		if (sp->SupCapGetEnergy() < 0)
-			break;
 
 		// time elapse
 		current_task_remaining_time -= min_time_interval;
 		time_elapsed += min_time_interval;
 		++time_index;
+
+		// stop if there is no energy in the supercapacitor
+		if (sp->SupCapGetEnergy() < 0)
+			break;
 	}
 
 	output.close();
+
+	return time_index;
 }
 
 double DischargeProcess::ComputeBestVCTI(double load_vdd, double load_i) {
@@ -191,6 +184,25 @@ double DischargeProcess::ComputeBestVCTI(double load_vdd, double load_i) {
 		cerr << "The solution is wrong!" << endl;
 
 	return v;
+}
+
+void DischargeProcess::print_super_cap_info(ofstream &output, supcapacitor *sp, double power_input) {
+	// Output the status to a file
+	super_cap_voc = sp->SupCapGetVoc();
+	super_cap_qacc = sp->SupCapGetQacc();
+	output << power_input << "\t"
+			<< vcti << "\t"
+			<< super_cap_voc << "\t"
+			<< super_cap_vcc << "\t"
+			<< super_cap_qacc << "\t"
+			<< super_cap_iout << "\t"
+			<< dc_super_cap_power << "\t"
+			<< dc_load_power << "\t"
+			<< super_cap_iout*(sp->SupCapGetRacc()*sp->SupCapGetRacc()) << "\t"
+			<< sp->SupCapGetEnergy() << "\t"
+			<< sp->SupCapGetCacc() << endl;
+
+	return;
 }
 
 /*

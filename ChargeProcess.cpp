@@ -20,7 +20,7 @@ ChargeProcess::ChargeProcess() :
 	output_file("OverallProcess.txt") {
 	
 	ofstream output(output_file.c_str());
-	output << "power_intput\tVCTI\tVcap_oc\tVcap_cc\tQacc\tIsup\tPdcsup\tPdcload\tPrbank\tEsup" << endl;
+	output << "power_intput\tVCTI\tVcap_oc\tVcap_cc\tQacc\tIsup\tPdcsup\tPdcload\tPrbank\tEsup\tCacc" << endl;
 	output.close();
 }
 

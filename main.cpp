@@ -23,8 +23,8 @@ int main(){
 
 	sp.SupCapReset();
 	// sp.SupCapSetQacc(22.91672);
-	sp.SupCapReconfig(4, 1);
-	sp.SupCapSetQacc(0.0);
+	sp.SupCapReconfig(1, 4);
+	sp.SupCapSetQacc(1000.0);
 
 	// Set current task info
 	double vdd = 1.0, idd = 1.0;
@@ -33,27 +33,27 @@ int main(){
 
 	// timer staff
 	double time_elapsed = 0.0;
-	int total_time_index = 0, time_index = 0;
+	int total_time_index = 0, time_index = -1;
 	int hh = 11, mm = 0, ss = 0;
 	int start_time_sec = 3600*hh + 60*mm + ss;
 	int curr_time_sec = start_time_sec;
 	
 	// powersource
-	double power_input = 0.0;
+	double power_input = 1.25;
 
 	// The main loop
 	while (total_time_index < MAX_TIME_INDEX) {
 
-		power_input = powersource_sec(curr_time_sec);
+		// power_input = powersource_sec(curr_time_sec);
 
 		// ChargeProcess
-		time_index = cp.ChargeProcessOurPolicy(power_input, &sp, &lb, &load);
+		// time_index = cp.ChargeProcessOurPolicy(power_input, &sp, &lb, &load);
 		// time_index = cp.ChargeProcessOptimalVcti(power_input, &sp, &lb, &load);
 
 		// DischargeProcess
 		if (time_index < 0) {
-			// time_index = dp.DischargeProcessOurPolicy(&sp, &lb, &load);
-			// time_index = dp.DischargeProcessOptimalVcti(&sp, &lb, &load);
+			time_index = dp.DischargeProcessOurPolicy(power_input, &sp, &lb, &load);
+			// time_index = dp.DischargeProcessOptimalVcti(power_input, &sp, &lb, &load);
 		}
 
 		if (time_index < 0) {
