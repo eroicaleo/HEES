@@ -14,6 +14,7 @@ static int func_given_input(N_Vector u, N_Vector f, void *user_data);
 
 /* Private Helper Functions */
 static void SetInitialGuess1(N_Vector u, UserData data);
+static void SetInitialGuess2(N_Vector u, UserData data);
 static void PrintOutput(N_Vector u);
 static void PrintFinalStats(void *kmem);
 static int check_flag(void *flagvalue, char *funcname, int opt);
@@ -178,15 +179,25 @@ int DCSolver::KINSolverWapper()
   buck_failed = KINSol(kmem, u, glstr, s, s);
   if (buck_failed != KIN_SUCCESS) {
     check_flag(&buck_failed, "KINSol", 1);
+
+	// Start from another bound
+	SetInitialGuess2(u1,data);
+    N_VScale_Serial(ONE,u1,u);
+	buck_failed = KINSol(kmem, u, glstr, s, s);
   }
 
   // If it is in boost mode
   if ((buck_failed != KIN_SUCCESS) || (g_dc_vin < g_dc_vout)) {
-	  power_calculator = bind(&DCSolver::ComputeDCPowerBoost, this, placeholders::_1, placeholders::_2, placeholders::_3);
+	power_calculator = bind(&DCSolver::ComputeDCPowerBoost, this, placeholders::_1, placeholders::_2, placeholders::_3);
+	boost_failed = KINSol(kmem, u, glstr, s, s);
+	if ((boost_failed != KIN_SUCCESS) || (g_dc_vin > g_dc_vout)){
+	  check_flag(&boost_failed, "KINSol", 1);
+
+	  // Start from another bound
+	  SetInitialGuess2(u1,data);
+      N_VScale_Serial(ONE,u1,u);
 	  boost_failed = KINSol(kmem, u, glstr, s, s);
-	  if (boost_failed != KIN_SUCCESS) {
-	    check_flag(&boost_failed, "KINSol", 1);
-	  }
+	}
   }
 
   printf("Solution:\n  [x1,x2] = ");
@@ -268,6 +279,25 @@ static void SetInitialGuess1(N_Vector u, UserData data)
 
   /* this init. guess should take us to (0.29945; 2.83693) */
   x1 = lb[0];
+
+  udata[0] = x1;
+  udata[1] = x1 - lb[0];
+  udata[2] = x1 - ub[0];
+}
+
+static void SetInitialGuess2(N_Vector u, UserData data)
+{
+  realtype x1;
+  realtype *udata;
+  realtype *lb, *ub;
+
+  udata = NV_DATA_S(u);
+
+  lb = data->lb;
+  ub = data->ub;
+
+  /* this init. guess should take us to (0.29945; 2.83693) */
+  x1 = ub[0];
 
   udata[0] = x1;
   udata[1] = x1 - lb[0];
