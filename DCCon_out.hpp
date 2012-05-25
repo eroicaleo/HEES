@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include "DCSolver.hpp"
+
 using std::vector;
 
 class lionbat;
@@ -22,6 +24,8 @@ class dcconvertOUT {
 		double m_Ictrl;
 		double m_fs;
 		double m_Lf;
+
+		DCSolver dc_solver;
 
 };
 #endif

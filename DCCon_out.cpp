@@ -50,26 +50,29 @@ dcconvertOUT::dcconvertOUT() :
 void dcconvertOUT::ConverterModel_SupCap(double Vin, double Iin, double &Vout, double &Iout, double &Pdcdc, supcapacitor *sp){
 
     // Write the Vin, Iin, SoC of the battery to the dcdc_input.txt for Matlab
-    ofstream dcdc_input_file("./matlab/dcdc_supcap_input.txt");
-    dcdc_input_file << Vin << endl
-                    << Iin << endl
-                    << sp->SupCapGetRacc()<< endl 
-					<< sp->SupCapGetCacc()<< endl
-					<< sp->SupCapGetQacc()<< endl;
-    dcdc_input_file.close();
+//   ofstream dcdc_input_file("./matlab/dcdc_supcap_input.txt");
+//   dcdc_input_file << Vin << endl
+//                   << Iin << endl
+//                   << sp->SupCapGetRacc()<< endl 
+//   				<< sp->SupCapGetCacc()<< endl
+//   				<< sp->SupCapGetQacc()<< endl;
+//   dcdc_input_file.close();
 
-    // Call the matlab to solve the Vout and Iout
-    system("matlab -nojvm -nodisplay -nosplash < ./matlab/dcdc_supcap_test.m");
-    // Call the sundials to solve the Vout and Iout
-    // bsolver->SolveItGivenDCInput(Vin, Iin, Vout, Iout, Pdcdc, lion_battery);
+//   // Call the matlab to solve the Vout and Iout
+//   system("matlab -nojvm -nodisplay -nosplash < ./matlab/dcdc_supcap_test.m");
+//   // Call the sundials to solve the Vout and Iout
+//   // bsolver->SolveItGivenDCInput(Vin, Iin, Vout, Iout, Pdcdc, lion_battery);
 
-    // Retrieve the Vout, Iout and Pdcdc infomation
-    ifstream dcdc_output_file("dcdc_supcap_output.txt");
-    dcdc_output_file >> Vout >> Iout >> Pdcdc;
-    dcdc_output_file.close();
+//   // Retrieve the Vout, Iout and Pdcdc infomation
+//   ifstream dcdc_output_file("dcdc_supcap_output.txt");
+//   dcdc_output_file >> Vout >> Iout >> Pdcdc;
+//   dcdc_output_file.close();
+
+	// Using the sundial solver
+	dc_solver.SolveItGivenDCInput(Vin, Iin, Vout, Iout, Pdcdc, sp);
 
     // Error check
-    if ((Vout < 0) && (Iout < 0) && (Pdcdc < 0)) {
+    if ((Vout < 0) || (Iout < 0) || (Pdcdc < 0)) {
         cerr << "ERROR: matlab results are wrong!" << endl;
     }
 

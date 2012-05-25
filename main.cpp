@@ -23,8 +23,8 @@ int main(){
 
 	sp.SupCapReset();
 	// sp.SupCapSetQacc(22.91672);
-	sp.SupCapReconfig(1, 4);
-	sp.SupCapSetQacc(1000.0);
+	sp.SupCapReconfig(4, 1);
+	sp.SupCapSetQacc(0.0);
 
 	// Set current task info
 	double vdd = 1.0, idd = 1.0;
@@ -39,15 +39,15 @@ int main(){
 	int curr_time_sec = start_time_sec;
 	
 	// powersource
-	double power_input = 1.25;
+	double power_input = 0.0;
 
 	// The main loop
 	while (total_time_index < MAX_TIME_INDEX) {
 
-		// power_input = powersource_sec(curr_time_sec);
+		power_input = powersource_sec(curr_time_sec);
 
 		// ChargeProcess
-		// time_index = cp.ChargeProcessOurPolicy(power_input, &sp, &lb, &load);
+		time_index = cp.ChargeProcessOurPolicy(power_input, &sp, &lb, &load);
 		// time_index = cp.ChargeProcessOptimalVcti(power_input, &sp, &lb, &load);
 
 		// DischargeProcess
