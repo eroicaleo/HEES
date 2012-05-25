@@ -86,7 +86,7 @@ extern "C" {
 #define PI     RCONST(3.1415926)
 #define E      RCONST(2.7182818)
 
-#define TOL	   RCONST(1.e-1)
+#define TOL	   RCONST(1.e-3)
 #define ABSTOL RCONST(1.e-3)
 
 class DCSolver;

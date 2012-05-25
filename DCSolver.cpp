@@ -144,6 +144,17 @@ int DCSolver::SolveItGivenDCInput(double dc_vin, double dc_iin, double &dc_vout,
 
 	KINSolverWapper();
 
+	if (buck_failed && boost_failed) {
+		// In case we can not solve the problem, 
+		// assume there is no current between bank and DC-DC
+		g_dc_vout = g_bank_vocc;
+		g_dc_iout = 0.0;
+		if (g_dc_vin >= g_dc_vout) {
+			g_dc_power = ComputeDCPowerBuck(g_dc_vin, g_dc_vout, g_dc_iout);
+		} else {
+			g_dc_power = ComputeDCPowerBoost(g_dc_vin, g_dc_vout, g_dc_iout);
+		}
+	}
 	// Assign the computed value back
 	dc_vout = g_dc_vout;
 	dc_iout = g_dc_iout;
@@ -197,6 +208,9 @@ int DCSolver::KINSolverWapper()
 	  SetInitialGuess2(u1,data);
       N_VScale_Serial(ONE,u1,u);
 	  boost_failed = KINSol(kmem, u, glstr, s, s);
+	  if (g_dc_vin > g_dc_vout) {
+	    boost_failed = -1;
+	  }
 	}
   }
 
@@ -204,13 +218,6 @@ int DCSolver::KINSolverWapper()
   PrintOutput(u);
 
   PrintFinalStats(kmem);
-
-  if (buck_failed && boost_failed) {
-	// Assign the wrong value to let them know
-	g_dc_vout = -100.0;
-	g_dc_iout = -100.0;
-  	return (-1);
-  }
 
   return(0);
 }
@@ -313,7 +320,7 @@ double DCSolver::ComputeDCPowerBuck(const double &Vin, const double &Vout, const
 
 double DCSolver::ComputeDCPowerBoost(const double &Vin, const double &Vout, const double &Iout) {
     double m_D = 1 - (Vin / Vout); 
-    double m_delI = (Vout * m_D) / (m_Lf * m_fs);
+    double m_delI = (Vin * m_D) / (m_Lf * m_fs);
     double power = ((Iout * Iout) / ((1 - m_D) * (1 - m_D))) * (m_RL + m_D * m_Rsw[2] + (1 - m_D) * m_Rsw[3] + m_Rsw[0] + m_D * (1 - m_D) * m_RC) + ((m_delI * m_delI) / 12) * (m_RL + m_D * m_Rsw[2] + (1 - m_D) * m_Rsw[3] + m_Rsw[0] + (1 - m_D) * m_RC) + Vout * m_fs * (m_Qsw[2] + m_Qsw[3]) + Vin * m_Ictrl;
     
     return power;
