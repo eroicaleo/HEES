@@ -47,8 +47,8 @@ int main(){
 		power_input = powersource_sec(curr_time_sec);
 
 		// ChargeProcess
-		time_index = cp.ChargeProcessOurPolicy(power_input, &sp, &lb, &load);
-		// time_index = cp.ChargeProcessOptimalVcti(power_input, &sp, &lb, &load);
+		// time_index = cp.ChargeProcessOurPolicy(power_input, &sp, &lb, &load);
+		time_index = cp.ChargeProcessOptimalVcti(power_input, &sp, &lb, &load);
 
 		// DischargeProcess
 		if (time_index < 0) {
