@@ -4,6 +4,8 @@
 #include <vector>
 using std::vector;
 
+class ees_bank;
+
 class lionbat {
 	public:
 		//Default Constructor

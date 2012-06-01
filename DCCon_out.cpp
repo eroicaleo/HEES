@@ -78,3 +78,16 @@ void dcconvertOUT::ConverterModel_SupCap(double Vin, double Iin, double &Vout, d
 
     return;
 }
+
+void dcconvertOUT::ConverterModel_EESBank(double Vin, double Iin, double &Vout, double &Iout, double &Pdcdc, ees_bank *bank){
+
+	// Using the sundial solver
+	dc_solver.SolveItGivenDCInput(Vin, Iin, Vout, Iout, Pdcdc, bank);
+
+    // Error check
+    if ((Vout < 0) || (Iout < 0) || (Pdcdc < 0)) {
+        cerr << "ERROR: matlab results are wrong!" << endl;
+    }
+
+    return;
+}

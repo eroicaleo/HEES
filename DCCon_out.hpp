@@ -9,6 +9,7 @@ using std::vector;
 
 class lionbat;
 class supcapacitor;
+class ees_bank;
 
 class dcconvertOUT {
 	public:
@@ -17,6 +18,7 @@ class dcconvertOUT {
 		//Converter model
 //		void ConverterModel_LionBat(double Vin, double Iin, double &Vout, double &Iout, double &Pdcdc, lionbat *lion_battery);
 		void ConverterModel_SupCap(double Vin, double Iin, double &Vout, double &Iout, double &Pdcdc, supcapacitor *sp);
+		void ConverterModel_EESBank(double Vin, double Iin, double &Vout, double &Iout, double &Pdcdc, ees_bank *bank);
 	private:
 		vector<double> m_Rsw;
 		vector<double> m_Qsw;

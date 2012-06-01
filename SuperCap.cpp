@@ -112,13 +112,13 @@ double supcapacitor::SupCapReconfig(double new_s, double new_p) {
 	return new_Q;
 }
 
-double supcapacitor::SupCapGetRacc(){
+double supcapacitor::SupCapGetRacc() const {
 	return m_Rbank;
 }
-double supcapacitor::SupCapGetCacc(){
+double supcapacitor::SupCapGetCacc() const {
 	return m_Cacc;
 }
-double supcapacitor::SupCapGetQacc(){
+double supcapacitor::SupCapGetQacc() const {
     return m_Qacc;
 }
 void supcapacitor::SupCapReset(){
@@ -127,18 +127,49 @@ void supcapacitor::SupCapReset(){
 	m_Racc = m_s / m_p * m_Racc1;
 	m_Rbank = (2.0 / 3.0 * m_p - 1.0 + 1.0/(3.0 * m_p)) * m_s * m_Rp + m_Racc + (m_s - 1.0) * m_Rs;
 
+	m_Energy = (0.5)*(m_Qacc*m_Qacc)/m_Cacc;
 }
 
 void supcapacitor::SupCapSetQacc(double Qacc){
 	m_Qacc = Qacc;
+	m_Energy = (0.5)*(m_Qacc*m_Qacc)/m_Cacc;
 }
 
-double supcapacitor::SupCapGetEnergy(void) {
+double supcapacitor::SupCapGetEnergy(void) const {
 	if (m_Qacc < 0)
 		return -1.0;
-	return m_Energy = (0.5)*(m_Qacc*m_Qacc)/m_Cacc;
+	return m_Energy;
 }
 
-double supcapacitor::SupCapGetVoc(void) {
+double supcapacitor::SupCapGetVoc(void) const {
 	return (m_Qacc/m_Cacc);
+}
+
+/* Implement the interface inherited from base class ees_bank */
+double supcapacitor::EESBankGetCacc() const {
+	return SupCapGetCacc();
+}
+
+double supcapacitor::EESBankGetVoc() const {
+	return SupCapGetVoc();
+}
+
+double supcapacitor::EESBankGetQacc() const {
+	return SupCapGetQacc();
+}
+
+double supcapacitor::EESBankGetRacc() const {
+	return SupCapGetRacc();
+}
+
+double supcapacitor::EESBankGetEnergy() const {
+	return SupCapGetEnergy();
+}
+
+bool supcapacitor::EESBankOperating(double Iin, double VCTI, double delVCTI) {
+	return SupCapOperating(Iin, VCTI, delVCTI);
+}
+
+void supcapacitor::EESBankCharge(double Iin, double Tdur, double &Vs, double &Qacc) {
+	return SupCapCharge(Iin, Tdur, Vs, Qacc);
 }

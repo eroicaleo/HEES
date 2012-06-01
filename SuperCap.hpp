@@ -1,7 +1,9 @@
 #ifndef _SUPER_CAP_H_
 #define _SUPER_CAP_H_
 
-class supcapacitor {
+#include "ees_bank.hpp"
+
+class supcapacitor : public ees_bank {
 	public:
 		//Default Constructor
 		supcapacitor();
@@ -10,13 +12,23 @@ class supcapacitor {
 		bool SupCapOperating(double Iin, double VCTI, double delVCTI);
 		bool SupCapMoreSeriesReconfig(); 
 		double SupCapReconfig(double new_s, double new_p); 
-		double SupCapGetRacc(void);
-		double SupCapGetCacc(void);
-		double SupCapGetQacc(void);
-		double SupCapGetEnergy(void);
-		double SupCapGetVoc(void);
+		double SupCapGetRacc(void) const;
+		double SupCapGetCacc(void) const;
+		double SupCapGetQacc(void) const;
+		double SupCapGetEnergy(void) const;
+		double SupCapGetVoc(void) const;
 		void SupCapReset();
 		void SupCapSetQacc(double Qacc);
+	/* Inherited public interface from base class ees_bank */
+	public:
+		virtual double EESBankGetCacc() const;
+		virtual double EESBankGetVoc() const;
+		virtual double EESBankGetQacc() const;
+		virtual double EESBankGetRacc() const;
+		virtual double EESBankGetEnergy() const;
+		virtual bool EESBankOperating(double, double, double);
+		virtual	void EESBankCharge(double Iin, double Tdur, double &Vs, double &Qacc);
+		
 	private:
 		double m_p;
 		double m_s;

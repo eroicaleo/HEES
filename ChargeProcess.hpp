@@ -4,16 +4,24 @@
 class supcapacitor;
 class lionbat;
 class loadApplication;
+class ees_bank;
 
+#include <algorithm>
 #include <fstream>
+#include <iostream>
 #include <string>
+#include <tr1/functional>
 
 class ChargeProcess {
 public:
 	ChargeProcess();
-	int ChargeProcessOurPolicy(double power_input, supcapacitor *sp, lionbat *lb, loadApplication *load);
-	int ChargeProcessOptimalVcti(double power_input, supcapacitor *sp, lionbat *lb, loadApplication *load); 
-	void print_super_cap_info(std::ofstream &output_file, supcapacitor *sp, double power_input);
+	int ChargeProcessOurPolicy(double power_input, ees_bank *bank, lionbat *lb, loadApplication *load);
+	int ChargeProcessOptimalVcti(double power_input, ees_bank *bank, lionbat *lb, loadApplication *load); 
+	void print_super_cap_info(std::ofstream &output_file, ees_bank *bank, double power_input);
+// Private member function
+private:
+	std::tr1::function<void(ees_bank *)> charge_policy;
+// Private data member
 private:
 	// CTI
 	double vcti, icti;

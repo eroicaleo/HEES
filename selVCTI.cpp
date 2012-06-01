@@ -4,12 +4,13 @@
 #include <sstream>
 #include <stdio.h>
 #include <math.h>
-#include "selVCTI.hpp"
 #include "DCCon_in.hpp"
 #include "DCCon_out.hpp"
 #include "DCCon_dis.hpp"
 #include "SuperCap.hpp"
 #include "LionBat.hpp"
+#include "ees_bank.hpp"
+#include "selVCTI.hpp"
 #include <vector>
  using namespace std;
 
@@ -19,7 +20,7 @@ selVcti::selVcti() :
 	alpha(0.23),
 	epsilon(0.1){}
 
-double selVcti :: bestVCTI(double input_Power, double dccon1_Iout, double dccon1_Vout, string selMode, lionbat *lb, supcapacitor *sp){
+double selVcti :: bestVCTI(double input_Power, double dccon1_Iout, double dccon1_Vout, string selMode, lionbat *lb, ees_bank *sp){
 	dcconvertIN m_dcin;
 	dcconvertOUT m_dcout;
 	dcconvertDIS m_dcdis;
@@ -49,7 +50,7 @@ double selVcti :: bestVCTI(double input_Power, double dccon1_Iout, double dccon1
 		//VCTImax
     	m_VCTI = (1 - alpha) * m_Vmin + alpha * m_Vmax;
 		m_Vsoc = lb -> BatteryGetVsoc();
-		m_Qacc = sp -> SupCapGetQacc();
+		m_Qacc = sp -> EESBankGetQacc();
 		
 		m_dccon1_Iout = dccon1_Iout;
         m_dccon1_Vout = dccon1_Vout;
@@ -71,7 +72,7 @@ double selVcti :: bestVCTI(double input_Power, double dccon1_Iout, double dccon1
 				if (m_dccon2_Iin <= 0) {
 					m_dccon2_Pdcdc = 100;
 				} else {
-                	m_dcout.ConverterModel_SupCap(m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Pdcdc, sp);
+                	m_dcout.ConverterModel_EESBank(m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Pdcdc, sp);
 				}
             break;   
     		case 2:
@@ -82,13 +83,13 @@ double selVcti :: bestVCTI(double input_Power, double dccon1_Iout, double dccon1
 			case 3:
 				m_dccon2_Vout = m_VCTI;
                 m_dccon2_Iout = m_dccon1_Iin;
-                m_dcdis.ConverterModel_supcap(m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Pdcdc, sp);
+                // m_dcdis.ConverterModel_supcap(m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Pdcdc, sp);
  			break; 
 		}
 		m_Pup= m_dccon1_Pdcdc + m_dccon2_Pdcdc;
 	    //VCTImin
 		lb->BatterySetVsoc(m_Vsoc);
-		sp->SupCapSetQacc(m_Qacc);
+
 		m_VCTI = (1 - alpha) * m_Vmax + alpha * m_Vmin;
 		m_dccon1_Iout = dccon1_Iout;
         m_dccon1_Vout = dccon1_Vout;
@@ -110,7 +111,7 @@ double selVcti :: bestVCTI(double input_Power, double dccon1_Iout, double dccon1
 				if (m_dccon2_Iin <= 0) {
 					m_dccon2_Pdcdc = 100;
 				} else {
-                	m_dcout.ConverterModel_SupCap(m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Pdcdc, sp);
+                	m_dcout.ConverterModel_EESBank(m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Pdcdc, sp);
 				}
             break;
             case 2:
@@ -121,7 +122,7 @@ double selVcti :: bestVCTI(double input_Power, double dccon1_Iout, double dccon1
             case 3:
                 m_dccon2_Vout = m_VCTI;
                 m_dccon2_Iout = m_dccon1_Iin;
-                m_dcdis.ConverterModel_supcap(m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Pdcdc, sp);
+                // m_dcdis.ConverterModel_supcap(m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Pdcdc, sp);
             break;
         }
         m_Pdn= m_dccon1_Pdcdc + m_dccon2_Pdcdc;		

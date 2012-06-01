@@ -41,8 +41,8 @@ int main() {
 	double dc_vin(1.0), dc_iin(0.113714);
 	double dc_power;
 
-	dc_solver.SolveItGivenDCInput(dc_vin, dc_iin, dc_vout, dc_iout, dc_power, (supcapacitor *)NULL);
-	dc_solver.SolveItGivenDCInput(dc_vin, dc_iin, dc_vout, dc_iout, dc_power, (supcapacitor *)NULL);
+	dc_solver.SolveItGivenDCInput(dc_vin, dc_iin, dc_vout, dc_iout, dc_power, (ees_bank *)NULL);
+	dc_solver.SolveItGivenDCInput(dc_vin, dc_iin, dc_vout, dc_iout, dc_power, (ees_bank *)NULL);
 
 	cout << dc_vout << "\t" << dc_iout << endl;
 
@@ -126,13 +126,13 @@ DCSolver::~DCSolver() {
   free(data);
 }
 
-int DCSolver::SolveItGivenDCInput(double dc_vin, double dc_iin, double &dc_vout, double &dc_iout, double &dc_power, supcapacitor *sp) {
+int DCSolver::SolveItGivenDCInput(double dc_vin, double dc_iin, double &dc_vout, double &dc_iout, double &dc_power, ees_bank *bank) {
 
 	// Initialize the static global variables here
 	g_dc_vin = dc_vin;
 	g_dc_iin = dc_iin;
-	g_bank_racc = sp->SupCapGetRacc();
-	g_bank_vocc = sp->SupCapGetVoc();
+	g_bank_racc = bank->EESBankGetRacc();
+	g_bank_vocc = bank->EESBankGetVoc();
 
 	// Bind the function here
 	flag = KINSetSysFunc(kmem, func_given_input);

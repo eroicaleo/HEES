@@ -24,7 +24,7 @@ ChargeProcess::ChargeProcess() :
 	output.close();
 }
 
-int ChargeProcess::ChargeProcessOurPolicy(double power_input, supcapacitor *sp, lionbat *lb, loadApplication *load) {
+int ChargeProcess::ChargeProcessOurPolicy(double power_input, ees_bank *bank, lionbat *lb, loadApplication *load) {
 	
 	dcconvertIN dc_load;
 	dcconvertOUT dc_super_cap;
@@ -60,17 +60,17 @@ int ChargeProcess::ChargeProcessOurPolicy(double power_input, supcapacitor *sp, 
 
 	while (current_task_remaining_time > min_time_interval) {
 		
-		dc_super_cap.ConverterModel_SupCap(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, sp);
+		dc_super_cap.ConverterModel_EESBank(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, bank);
 		// Reconfig if necessary
 		while ((dc_super_cap_vout > dc_super_cap_vin) && supcap_reconfig_return) {
-			supcap_reconfig_return = sp->SupCapOperating(dc_super_cap_iin, dc_super_cap_vout, -100.0);
-			dc_super_cap.ConverterModel_SupCap(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, sp);
+			supcap_reconfig_return = bank->EESBankOperating(dc_super_cap_iin, dc_super_cap_vout, -100.0);
+			dc_super_cap.ConverterModel_EESBank(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, bank);
 		}
 
 		// Recorde the curren status of the super capacitor
-		print_super_cap_info(output, sp, power_input);
+		print_super_cap_info(output, bank, power_input);
 
-		sp->SupCapCharge(super_cap_iin, min_time_interval, super_cap_vcc, super_cap_qacc);
+		bank->EESBankCharge(super_cap_iin, min_time_interval, super_cap_vcc, super_cap_qacc);
 
 		current_task_remaining_time -= min_time_interval;
 		time_elapsed += min_time_interval;
@@ -84,7 +84,7 @@ int ChargeProcess::ChargeProcessOurPolicy(double power_input, supcapacitor *sp, 
 	return time_index;
 }
 
-int ChargeProcess::ChargeProcessOptimalVcti(double power_input, supcapacitor *sp, lionbat *lb, loadApplication *load) {
+int ChargeProcess::ChargeProcessOptimalVcti(double power_input, ees_bank *bank, lionbat *lb, loadApplication *load) {
 	
 	dcconvertIN dc_load;
 	dcconvertOUT dc_super_cap;
@@ -109,7 +109,7 @@ int ChargeProcess::ChargeProcessOptimalVcti(double power_input, supcapacitor *sp
 	while (current_task_remaining_time > min_time_interval) {
 
 		if (time_index % recompute_vcti_time_index == 0) {
-			vcti = sel_vcti.bestVCTI(power_input, dc_load_iout, dc_load_vout, "out_SupCap", lb, sp);
+			vcti = sel_vcti.bestVCTI(power_input, dc_load_iout, dc_load_vout, "out_SupCap", lb, bank);
 		}
 
 		// Compute the current Icti on CTI from bank to load
@@ -122,12 +122,12 @@ int ChargeProcess::ChargeProcessOptimalVcti(double power_input, supcapacitor *sp
 			return -1;
 		}
 		
-		dc_super_cap.ConverterModel_SupCap(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, sp);
+		dc_super_cap.ConverterModel_EESBank(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, bank);
 
 		// Recorde the curren status of the super capacitor
-		print_super_cap_info(output, sp, power_input);
+		print_super_cap_info(output, bank, power_input);
 
-		sp->SupCapCharge(super_cap_iin, min_time_interval, super_cap_vcc, super_cap_qacc);
+		bank->EESBankCharge(super_cap_iin, min_time_interval, super_cap_vcc, super_cap_qacc);
 
 		current_task_remaining_time -= min_time_interval;
 		time_elapsed += min_time_interval;
@@ -141,10 +141,10 @@ int ChargeProcess::ChargeProcessOptimalVcti(double power_input, supcapacitor *sp
 	return time_index;
 }
 
-void ChargeProcess::print_super_cap_info(ofstream &output, supcapacitor *sp, double power_input) {
+void ChargeProcess::print_super_cap_info(ofstream &output, ees_bank *bank, double power_input) {
 	// Output the status to a file
-	super_cap_voc = sp->SupCapGetVoc();
-	super_cap_qacc = sp->SupCapGetQacc();
+	super_cap_voc = bank->EESBankGetVoc();
+	super_cap_qacc = bank->EESBankGetQacc();
 	output << power_input << "\t"
 			<< vcti << "\t"
 			<< super_cap_voc << "\t"
@@ -153,9 +153,9 @@ void ChargeProcess::print_super_cap_info(ofstream &output, supcapacitor *sp, dou
 			<< super_cap_iin << "\t"
 			<< dc_super_cap_power << "\t"
 			<< dc_load_power << "\t"
-			<< super_cap_iin*(sp->SupCapGetRacc()*sp->SupCapGetRacc()) << "\t"
-			<< sp->SupCapGetEnergy() << "\t"
-			<< sp->SupCapGetCacc() << endl;
+			<< super_cap_iin*(bank->EESBankGetRacc()*bank->EESBankGetRacc()) << "\t"
+			<< bank->EESBankGetEnergy() << "\t"
+			<< bank->EESBankGetCacc() << endl;
 
 	return;
 }
