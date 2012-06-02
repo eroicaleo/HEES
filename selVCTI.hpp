@@ -13,7 +13,7 @@ class ees_bank;
 class selVcti{
 		public:
 			selVcti();
-			double bestVCTI(double I, double dccon1_Iout, double dccon1_Vout, string selMode, lionbat *lb, ees_bank *sp);
+			double bestVCTI(double I, double dccon1_Iout, double dccon1_Vout, string selMode, ees_bank *sp);
 		private:
 			double Vmax, Vmin;
 			double alpha, epsilon;
