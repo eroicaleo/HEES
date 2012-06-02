@@ -16,7 +16,7 @@ class ees_bank;
 #include "DCCon_out.hpp"
 #include "selVCTI.hpp"
 
-enum POWER_STATUS {POWER_NORMAL, POWER_NOT_ENOUGH_FOR_LOAD};
+enum POWER_STATUS {POWER_INIT, POWER_NORMAL, POWER_NOT_ENOUGH_FOR_LOAD};
 
 class ChargeProcess {
 public:
@@ -30,7 +30,7 @@ private:
 	void compute_dc_bank_iin();
 	void charge_policy_our_policy(ees_bank *bank);
 	void charge_policy_optimal_vcti(ees_bank *bank); 
-	int ChargeProcessApplyPolicy(double power_input, ees_bank *bank, lionbat *lb, loadApplication *load); 
+	int ChargeProcessApplyPolicy(ees_bank *bank, lionbat *lb, loadApplication *load); 
 // Private data member
 private:
 	// CTI

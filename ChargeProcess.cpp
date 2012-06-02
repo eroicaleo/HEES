@@ -42,6 +42,12 @@ void ChargeProcess::compute_dc_bank_iin() {
 
 void ChargeProcess::charge_policy_our_policy(ees_bank *bank) {
 
+	// Set the VCTI to the load vdd;
+	if (power_status == POWER_INIT) {
+		vcti = dc_load_vout;
+		compute_dc_bank_iin();
+	}
+
 	if (power_status == POWER_NORMAL) {
 		dc_super_cap.ConverterModel_EESBank(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, bank);
 		// Reconfig if necessary
@@ -71,37 +77,29 @@ void ChargeProcess::charge_policy_optimal_vcti(ees_bank *bank) {
 int ChargeProcess::ChargeProcessOptimalVcti(double power_input, ees_bank *bank, lionbat *lb, loadApplication *load) {
 
 	this->power_input = power_input;
+	power_status = POWER_INIT;
 
 	// Bind to optimal vcti policy
 	charge_policy = bind(&ChargeProcess::charge_policy_optimal_vcti, this, placeholders::_1);
 
-	return ChargeProcessApplyPolicy(power_input, bank, lb, load);
+	return ChargeProcessApplyPolicy(bank, lb, load);
 }
 
 int ChargeProcess::ChargeProcessOurPolicy(double power_input, ees_bank *bank, lionbat *lb, loadApplication *load) {
 
 	this->power_input = power_input;
-
-	// Set the VCTI to the load vdd;
-	vcti = dc_load_vout;
-	compute_dc_bank_iin();
-
-	if (power_status == POWER_NOT_ENOUGH_FOR_LOAD) {
-		return -1;
-	}
+	power_status = POWER_INIT;
 
 	supcap_reconfig_return = true;
 
 	// Bind to our policy
 	charge_policy = bind(&ChargeProcess::charge_policy_our_policy, this, placeholders::_1);
 
-	return ChargeProcessApplyPolicy(power_input, bank, lb, load);
+	return ChargeProcessApplyPolicy(bank, lb, load);
 }
 
-int ChargeProcess::ChargeProcessApplyPolicy(double power_input, ees_bank *bank, lionbat *lb, loadApplication *load) {
+int ChargeProcess::ChargeProcessApplyPolicy(ees_bank *bank, lionbat *lb, loadApplication *load) {
 	
-	power_status = POWER_NORMAL;
-
 	// DC-DC converter for the load
 	dc_load_vout = load->get_vdd();
 	dc_load_iout = load->get_idd();
@@ -120,6 +118,12 @@ int ChargeProcess::ChargeProcessApplyPolicy(double power_input, ees_bank *bank, 
 	while (current_task_remaining_time > min_time_interval) {
 
 		charge_policy(bank);
+
+		// Check if we need to break because the power_input is not enough
+		if (power_status == POWER_NOT_ENOUGH_FOR_LOAD) {
+			time_index = -1;
+			break;
+		}
 		
 		// Recorde the curren status of the super capacitor
 		print_super_cap_info(output, bank, power_input);
