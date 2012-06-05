@@ -11,6 +11,7 @@ using namespace std::tr1;
 
 /* Functions Called by the KINSOL Solver */
 static int func_given_input(N_Vector u, N_Vector f, void *user_data);
+static int func_given_output(N_Vector u, N_Vector f, void *user_data);
 
 /* Private Helper Functions */
 static void SetInitialGuess1(N_Vector u, UserData data);
@@ -26,6 +27,11 @@ static double g_dc_power;
 static double g_bank_vocc(0.0), g_bank_racc(0.166);
 
 static function<double(const double, const double, const double)> power_calculator;
+
+typedef void (*GuessFunction)(N_Vector, UserData); 
+
+static GuessFunction PrimaryGuess;
+static GuessFunction SecondaryGuess;
 
 /*
  *--------------------------------------------------------------------
@@ -62,7 +68,7 @@ DCSolver::DCSolver() :
   /* User data */
 
   data = (UserData)malloc(sizeof *data);
-  data->lb[0] = RCONST(0.01);       
+  data->lb[0] = RCONST(ABSTOL);       
   data->ub[0] = RCONST(10.0);
 
   /* Create serial vectors of length NEQ */
@@ -128,19 +134,23 @@ DCSolver::~DCSolver() {
 
 int DCSolver::SolveItGivenDCInput(double dc_vin, double dc_iin, double &dc_vout, double &dc_iout, double &dc_power, ees_bank *bank) {
 
+	int ret = 0;
 	// Initialize the static global variables here
 	g_dc_vin = dc_vin;
 	g_dc_iin = dc_iin;
 	g_bank_racc = bank->EESBankGetRacc();
 	g_bank_vocc = bank->EESBankGetVoc();
 
+	PrimaryGuess = SetInitialGuess1;
+	SecondaryGuess = SetInitialGuess2;
+
 	// Bind the function here
 	flag = KINSetSysFunc(kmem, func_given_input);
     if (check_flag(&flag, "KINSetSysFunc", 1)) return(1);
 
 	// Set the lower bound and initial guess
-	data->lb[0] = max(RCONST(g_bank_vocc)- TOL, ABSTOL);
-	SetInitialGuess1(u1,data);
+	data->lb[0] = max(RCONST(g_bank_vocc - TOL), ABSTOL);
+	PrimaryGuess(u1,data);
 
 	KINSolverWapper();
 
@@ -154,13 +164,56 @@ int DCSolver::SolveItGivenDCInput(double dc_vin, double dc_iin, double &dc_vout,
 		} else {
 			g_dc_power = ComputeDCPowerBoost(g_dc_vin, g_dc_vout, g_dc_iout);
 		}
+		ret = -2;
 	}
 	// Assign the computed value back
 	dc_vout = g_dc_vout;
 	dc_iout = g_dc_iout;
 	dc_power = g_dc_power;
 
-	return (0);
+	return (ret);
+}
+
+int DCSolver::SolveItGivenDCOutput(double dc_vout, double dc_iout, double &dc_vin, double &dc_iin, double &dc_power, ees_bank *bank) {
+
+	int ret = 0;
+	// Initialize the static global variables here
+	g_dc_vout = dc_vout;
+	g_dc_iout = dc_iout;
+	g_bank_racc = bank->EESBankGetRacc();
+	g_bank_vocc = bank->EESBankGetVoc();
+
+	PrimaryGuess = SetInitialGuess2;
+	SecondaryGuess = SetInitialGuess1;
+
+	// Bind the function here
+	flag = KINSetSysFunc(kmem, func_given_output);
+    if (check_flag(&flag, "KINSetSysFunc", 1)) return(1);
+
+	// Set the upper bound and initial guess
+	data->ub[0] = RCONST(g_bank_vocc + TOL);
+	PrimaryGuess(u1,data);
+
+	KINSolverWapper();
+
+	if (buck_failed && boost_failed) {
+		// In case we can not solve the problem, 
+		// assume there is no current between bank and DC-DC
+		g_dc_vin = g_bank_vocc;
+		g_dc_iin = 0.0;
+		if (g_dc_vin >= g_dc_vout) {
+			g_dc_power = ComputeDCPowerBuck(g_dc_vin, g_dc_vout, g_dc_iout);
+		} else {
+			g_dc_power = ComputeDCPowerBoost(g_dc_vin, g_dc_vout, g_dc_iout);
+		}
+		ret = -2;
+	}
+	// Assign the computed value back
+	dc_vin = g_dc_vin;
+	dc_iin = g_dc_iin;
+	dc_power = g_dc_power;
+
+	return (ret);
 }
 
 int DCSolver::KINSolverWapper()
@@ -192,7 +245,7 @@ int DCSolver::KINSolverWapper()
     check_flag(&buck_failed, "KINSol", 1);
 
 	// Start from another bound
-	SetInitialGuess2(u1,data);
+	SecondaryGuess(u1,data);
     N_VScale_Serial(ONE,u1,u);
 	buck_failed = KINSol(kmem, u, glstr, s, s);
   }
@@ -205,7 +258,7 @@ int DCSolver::KINSolverWapper()
 	  check_flag(&boost_failed, "KINSol", 1);
 
 	  // Start from another bound
-	  SetInitialGuess2(u1,data);
+	  SecondaryGuess(u1,data);
       N_VScale_Serial(ONE,u1,u);
 	  boost_failed = KINSol(kmem, u, glstr, s, s);
 	  if (g_dc_vin > g_dc_vout) {
@@ -253,6 +306,37 @@ static int func_given_input(N_Vector u, N_Vector f, void *user_data)
   // x1 is the dc_vout, y1 is the dc_iout
   g_dc_vout = x1;
   g_dc_iout = (g_dc_vout - g_bank_vocc)/g_bank_racc;
+  g_dc_power = power_calculator(g_dc_vin, g_dc_vout, g_dc_iout);
+
+  // fdata[0] = x1*x1 - 1; 
+  fdata[0] = g_dc_vout*g_dc_iout + g_dc_power - g_dc_vin*g_dc_iin; 
+  fdata[1] = l1 - x1 + lb[0];
+  fdata[2] = L1 - x1 + ub[0];
+
+  return(0);
+}
+
+static int func_given_output(N_Vector u, N_Vector f, void *user_data)
+{
+  realtype *udata, *fdata;
+  realtype x1, l1, L1;
+  realtype *lb, *ub;
+  UserData data;
+  
+  data = (UserData)user_data;
+  lb = data->lb;
+  ub = data->ub;
+
+  udata = NV_DATA_S(u);
+  fdata = NV_DATA_S(f);
+
+  x1 = udata[0];
+  l1 = udata[1];
+  L1 = udata[2];
+
+  // x1 is the dc_vout, y1 is the dc_iout
+  g_dc_vin = x1;
+  g_dc_iin = (g_bank_vocc - g_dc_vin)/g_bank_racc;
   g_dc_power = power_calculator(g_dc_vin, g_dc_vout, g_dc_iout);
 
   // fdata[0] = x1*x1 - 1; 

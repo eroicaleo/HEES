@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-#include "DCCon_dis.hpp"
 #include <vector>
+#include "DCCon_dis.hpp"
 #include "LionBat.hpp"
 #include "SuperCap.hpp"
 using namespace std;
@@ -49,6 +49,27 @@ void dcconvertDIS::ConverterModel_battery(double Vout, double Iout, double &Vin,
 
 void dcconvertDIS::ConverterModel_supcap(double Vout, double Iout, double &Vin, double &Iin, double &Pdcdc, supcapacitor *sp) {
 
+	// Using the sundial solver
+	int ret = dc_solver.SolveItGivenDCOutput(Vout, Iout, Vin, Iin, Pdcdc, sp);
+
+	if (ret == -2) {
+		MatlabSolverGivenDCOutput(Vout, Iout, Vin, Iin, Pdcdc, sp);
+	}
+
+    // Error check
+    if ((Vin < 0) && (Iin < 0) && (Pdcdc < 0)) {
+        cerr << "ERROR: matlab results are wrong! Negative!" << endl;
+    }
+
+    if ((Iin > 5) || (Pdcdc > 10)) {
+        cerr << "ERROR: matlab results are wrong! Too big!" << endl;
+    }
+
+    return;
+}
+
+void dcconvertDIS::MatlabSolverGivenDCOutput(double Vout, double Iout, double &Vin, double &Iin, double &Pdcdc, supcapacitor *sp) {
+
     // Write the Vin, Iin, SoC of the battery to the dcdc_input.txt for Matlab
     ofstream dcdc_input_file("./matlab/dcdc_supcap_input.txt");
     dcdc_input_file << Vout << endl
@@ -67,11 +88,4 @@ void dcconvertDIS::ConverterModel_supcap(double Vout, double Iout, double &Vin, 
     ifstream dcdc_output_file("dcdc_supcap_output.txt");
     dcdc_output_file >> Vin >> Iin >> Pdcdc;
     dcdc_output_file.close();
-
-    // Error check
-    if ((Vin < 0) && (Iin < 0) && (Pdcdc < 0)) {
-        cerr << "ERROR: matlab results are wrong!" << endl;
-    }
-
-    return;
 }
