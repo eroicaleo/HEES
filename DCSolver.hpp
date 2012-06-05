@@ -86,7 +86,7 @@ extern "C" {
 #define PI     RCONST(3.1415926)
 #define E      RCONST(2.7182818)
 
-#define TOL	   RCONST(1.e-3)
+#define TOL	   1.e-3
 #define ABSTOL RCONST(1.e-3)
 
 class DCSolver;
@@ -100,12 +100,14 @@ typedef struct {
 #define Ith(v,i)    NV_Ith_S(v,i-1)   
 
 class supcapacitor;
+class ees_bank;
 
 class DCSolver {
 public:
 	DCSolver();
 	~DCSolver();
-    int SolveItGivenDCInput(double dc_vin, double dc_iin, double &dc_vout, double &dc_iout, double &dc_power, supcapacitor *sp);
+    int SolveItGivenDCInput(double dc_vin, double dc_iin, double &dc_vout, double &dc_iout, double &dc_power, ees_bank *bank);
+	int SolveItGivenDCOutput(double dc_vout, double dc_iout, double &dc_vin, double &dc_iin, double &dc_power, ees_bank *bank); 
     double ComputeDCPowerBuck(const double &Vin, const double &Vout, const double &Iout);
     double ComputeDCPowerBoost(const double &Vin, const double &Vout, const double &Iout);
 private:

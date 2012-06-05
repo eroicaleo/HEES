@@ -25,6 +25,7 @@ int main(){
 	// sp.SupCapSetQacc(22.91672);
 	sp.SupCapReconfig(4, 1);
 	sp.SupCapSetQacc(0.0);
+	// sp.SupCapSetQacc(1000);
 
 	// Set current task info
 	double vdd = 1.0, idd = 1.0;
@@ -61,10 +62,14 @@ int main(){
 			break;
 		}
 
+		if (sp.SupCapGetEnergy() < 0)
+			break;
+
 		// Advance the timer
 		total_time_index += time_index;
 		time_elapsed += (time_index * min_time_interval);
 		curr_time_sec += (int)(time_index * min_time_interval);
+		time_index = -1; 
 	}
 
 #ifdef _COMPLEX_MAIN_

@@ -7,47 +7,26 @@
 #include "DCCon_out.hpp"
 #include "LoadApp.hpp"
 #include "SuperCap.hpp"
-#include "selVCTI.hpp"
 #include "main.hpp"
 
 using namespace std;
+using namespace std::tr1;
 
 ChargeProcess::ChargeProcess() :
 	vcti(0.0), icti(0.0),
 	super_cap_iin(0.0), super_cap_qacc(0.0), super_cap_voc(0.0), super_cap_vcc(0.0), dc_load_power(0.0),
 	dc_super_cap_vout(super_cap_vcc), dc_super_cap_iout(super_cap_iin), dc_super_cap_vin(vcti), dc_super_cap_iin(0.0), dc_super_cap_power(0.0),
 	dc_load_vin(vcti), dc_load_iin(icti), dc_load_vout(1.0), dc_load_iout(1.0), 
-	output_file("OverallProcess.txt") {
+	power_input(0.0),
+	time_elapsed(0.0), time_index(0), current_task_remaining_time(0.0), 
+	output_file("OverallProcess.txt") { 
 	
 	ofstream output(output_file.c_str());
 	output << "power_intput\tVCTI\tVcap_oc\tVcap_cc\tQacc\tIsup\tPdcsup\tPdcload\tPrbank\tEsup\tCacc" << endl;
 	output.close();
 }
 
-int ChargeProcess::ChargeProcessOurPolicy(double power_input, supcapacitor *sp, lionbat *lb, loadApplication *load) {
-	
-	dcconvertIN dc_load;
-	dcconvertOUT dc_super_cap;
-
-	// DC-DC converter for the load
-	dc_load_vout = load->get_vdd();
-	dc_load_iout = load->get_idd();
-	double current_task_remaining_time = load->get_exec_time();
-
-	// Task info and timer stuff
-	double time_elapsed = 0.0;
-	int time_index = 0;
-
-	// Output file
-	ofstream output(output_file.c_str(), ios_base::app);
-	if (!output.good()) {
-		cerr << "Can not open files!" << endl;
-	}
-
-	bool supcap_reconfig_return = true;
-
-	// Set the VCTI to the load vdd;
-	vcti = dc_load_vout;
+void ChargeProcess::compute_dc_bank_iin() {
 	// Compute the current Icti on CTI from bank to load
 	dc_load.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
 
@@ -55,79 +34,101 @@ int ChargeProcess::ChargeProcessOurPolicy(double power_input, supcapacitor *sp, 
 
 	// Test if the supply power is large enough
 	if (dc_super_cap_iin < 0) {
-		return -1;
+		power_status = POWER_NOT_ENOUGH_FOR_LOAD;
+	} else {
+		power_status = POWER_NORMAL;
 	}
-
-	while (current_task_remaining_time > min_time_interval) {
-		
-		dc_super_cap.ConverterModel_SupCap(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, sp);
-		// Reconfig if necessary
-		while ((dc_super_cap_vout > dc_super_cap_vin) && supcap_reconfig_return) {
-			supcap_reconfig_return = sp->SupCapOperating(dc_super_cap_iin, dc_super_cap_vout, -100.0);
-			dc_super_cap.ConverterModel_SupCap(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, sp);
-		}
-
-		// Recorde the curren status of the super capacitor
-		print_super_cap_info(output, sp, power_input);
-
-		sp->SupCapCharge(super_cap_iin, min_time_interval, super_cap_vcc, super_cap_qacc);
-
-		current_task_remaining_time -= min_time_interval;
-		time_elapsed += min_time_interval;
-		++time_index;
-
-		if (time_index > MAX_TIME_INDEX)
-			break;
-	}
-
-	output.close();
-	return time_index;
 }
 
-int ChargeProcess::ChargeProcessOptimalVcti(double power_input, supcapacitor *sp, lionbat *lb, loadApplication *load) {
-	
-	dcconvertIN dc_load;
-	dcconvertOUT dc_super_cap;
+void ChargeProcess::charge_policy_our_policy(ees_bank *bank) {
 
+	// Set the VCTI to the load vdd;
+	if (power_status == POWER_INIT) {
+		vcti = dc_load_vout;
+		compute_dc_bank_iin();
+	}
+
+	if (power_status == POWER_NORMAL) {
+		dc_super_cap.ConverterModel_EESBank(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, bank);
+		// Reconfig if necessary
+		while ((dc_super_cap_vout > dc_super_cap_vin) && supcap_reconfig_return) {
+			supcap_reconfig_return = bank->EESBankOperating(dc_super_cap_iin, dc_super_cap_vout, -100.0);
+			dc_super_cap.ConverterModel_EESBank(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, bank);
+		}
+	}
+
+	return;
+}
+
+void ChargeProcess::charge_policy_optimal_vcti(ees_bank *bank) {
+	if (time_index % recompute_vcti_time_index == 0) {
+		vcti = sel_vcti.bestVCTI(power_input, dc_load_iout, dc_load_vout, "out_SupCap", bank);
+	}
+
+	compute_dc_bank_iin();
+	if (power_status == POWER_NORMAL) {
+		dc_super_cap.ConverterModel_EESBank(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, bank);
+	}
+
+	return;
+}
+
+
+int ChargeProcess::ChargeProcessOptimalVcti(double power_input, ees_bank *bank, lionbat *lb, loadApplication *load) {
+
+	this->power_input = power_input;
+	power_status = POWER_INIT;
+
+	// Bind to optimal vcti policy
+	charge_policy = bind(&ChargeProcess::charge_policy_optimal_vcti, this, placeholders::_1);
+
+	return ChargeProcessApplyPolicy(bank, lb, load);
+}
+
+int ChargeProcess::ChargeProcessOurPolicy(double power_input, ees_bank *bank, lionbat *lb, loadApplication *load) {
+
+	this->power_input = power_input;
+	power_status = POWER_INIT;
+
+	supcap_reconfig_return = true;
+
+	// Bind to our policy
+	charge_policy = bind(&ChargeProcess::charge_policy_our_policy, this, placeholders::_1);
+
+	return ChargeProcessApplyPolicy(bank, lb, load);
+}
+
+int ChargeProcess::ChargeProcessApplyPolicy(ees_bank *bank, lionbat *lb, loadApplication *load) {
+	
 	// DC-DC converter for the load
 	dc_load_vout = load->get_vdd();
 	dc_load_iout = load->get_idd();
-	double current_task_remaining_time = load->get_exec_time();
 
 	// Task info and timer stuff
-	double time_elapsed = 0.0;
-	int time_index = 0;
+	current_task_remaining_time = load->get_exec_time();
+	time_elapsed = 0.0;
+	time_index = 0;
 
 	// Output file
 	ofstream output(output_file.c_str(), ios_base::app);
-
-	// Set the VCTI to the load vdd;
-	vcti = dc_load_vout;
-
-	selVcti sel_vcti;
+	if (!output.good()) {
+		cerr << "Can not open files!" << endl;
+	}
 
 	while (current_task_remaining_time > min_time_interval) {
 
-		if (time_index % recompute_vcti_time_index == 0) {
-			vcti = sel_vcti.bestVCTI(power_input, dc_load_iout, dc_load_vout, "out_SupCap", lb, sp);
-		}
+		charge_policy(bank);
 
-		// Compute the current Icti on CTI from bank to load
-		dc_load.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
-
-		dc_super_cap_iin = power_input/vcti - dc_load_iin;
-
-		// Test if the supply power is large enough
-		if (dc_super_cap_iin < 0) {
-			return -1;
+		// Check if we need to break because the power_input is not enough
+		if (power_status == POWER_NOT_ENOUGH_FOR_LOAD) {
+			time_index = -1;
+			break;
 		}
 		
-		dc_super_cap.ConverterModel_SupCap(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, sp);
-
 		// Recorde the curren status of the super capacitor
-		print_super_cap_info(output, sp, power_input);
+		print_super_cap_info(output, bank, power_input);
 
-		sp->SupCapCharge(super_cap_iin, min_time_interval, super_cap_vcc, super_cap_qacc);
+		bank->EESBankCharge(super_cap_iin, min_time_interval, super_cap_vcc, super_cap_qacc);
 
 		current_task_remaining_time -= min_time_interval;
 		time_elapsed += min_time_interval;
@@ -141,10 +142,10 @@ int ChargeProcess::ChargeProcessOptimalVcti(double power_input, supcapacitor *sp
 	return time_index;
 }
 
-void ChargeProcess::print_super_cap_info(ofstream &output, supcapacitor *sp, double power_input) {
+void ChargeProcess::print_super_cap_info(ofstream &output, ees_bank *bank, double power_input) {
 	// Output the status to a file
-	super_cap_voc = sp->SupCapGetVoc();
-	super_cap_qacc = sp->SupCapGetQacc();
+	super_cap_voc = bank->EESBankGetVoc();
+	super_cap_qacc = bank->EESBankGetQacc();
 	output << power_input << "\t"
 			<< vcti << "\t"
 			<< super_cap_voc << "\t"
@@ -153,9 +154,9 @@ void ChargeProcess::print_super_cap_info(ofstream &output, supcapacitor *sp, dou
 			<< super_cap_iin << "\t"
 			<< dc_super_cap_power << "\t"
 			<< dc_load_power << "\t"
-			<< super_cap_iin*(sp->SupCapGetRacc()*sp->SupCapGetRacc()) << "\t"
-			<< sp->SupCapGetEnergy() << "\t"
-			<< sp->SupCapGetCacc() << endl;
+			<< super_cap_iin*(bank->EESBankGetRacc()*bank->EESBankGetRacc()) << "\t"
+			<< bank->EESBankGetEnergy() << "\t"
+			<< bank->EESBankGetCacc() << endl;
 
 	return;
 }
