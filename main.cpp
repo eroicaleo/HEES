@@ -35,7 +35,7 @@ int main(){
 	// timer staff
 	double time_elapsed = 0.0;
 	int total_time_index = 0, time_index = -1;
-	int hh = 11, mm = 0, ss = 0;
+	int hh = 17, mm = 0, ss = 0;
 	int start_time_sec = 3600*hh + 60*mm + ss;
 	int curr_time_sec = start_time_sec;
 	
@@ -45,7 +45,18 @@ int main(){
 	// The main loop
 	while (total_time_index < MAX_TIME_INDEX) {
 
-		power_input = powersource_sec(curr_time_sec);
+		// power_input = powersource_sec(curr_time_sec);
+		power_input = 1.75;
+
+		if ((total_time_index/100) % 2 == 1) {
+		// if (total_time_index == 3000) {
+			load.SetTaskParameters(vdd, 1.3, deadline, exec_time);
+		}
+
+		if ((total_time_index/100) % 2 == 0) {
+		// if (total_time_index == 0) {
+			load.SetTaskParameters(vdd, 1.0, deadline, exec_time);
+		}
 
 		// ChargeProcess
 		time_index = cp.ChargeProcessOurPolicy(power_input, &sp, &lb, &load);
@@ -53,7 +64,7 @@ int main(){
 
 		// DischargeProcess
 		if (time_index < 0) {
-			time_index = dp.DischargeProcessOurPolicy(power_input, &sp, &lb, &load);
+			// time_index = dp.DischargeProcessOurPolicy(power_input, &sp, &lb, &load);
 			// time_index = dp.DischargeProcessOptimalVcti(power_input, &sp, &lb, &load);
 		}
 
