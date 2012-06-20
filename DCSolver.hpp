@@ -89,6 +89,9 @@ extern "C" {
 #define TOL	   1.e-3
 #define ABSTOL RCONST(1.e-3)
 
+const double MinManualStep = 1.e-4;
+const double MaxManualStep = 1.e-1;
+
 class DCSolver;
 
 typedef struct {
@@ -108,8 +111,11 @@ public:
 	~DCSolver();
     int SolveItGivenDCInput(double dc_vin, double dc_iin, double &dc_vout, double &dc_iout, double &dc_power, ees_bank *bank);
 	int SolveItGivenDCOutput(double dc_vout, double dc_iout, double &dc_vin, double &dc_iin, double &dc_power, ees_bank *bank); 
+	int ManualSolverGivenDCOutput();
     double ComputeDCPowerBuck(const double &Vin, const double &Vout, const double &Iout);
     double ComputeDCPowerBoost(const double &Vin, const double &Vout, const double &Iout);
+    double ComputeDCPowerBuckApproximation(const double &Vin, const double &Vout, const double &Iout);
+    double ComputeDCPowerBoostApproximation(const double &Vin, const double &Vout, const double &Iout);
 private:
 	int KINSolverWapper();
     // Data members for DC-DC converter

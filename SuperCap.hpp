@@ -19,6 +19,8 @@ class supcapacitor : public ees_bank {
 		double SupCapGetVoc(void) const;
 		void SupCapReset();
 		void SupCapSetQacc(double Qacc);
+		bool SupCapIsFullySerial(void) const;
+		bool SupCapIsFullyParallel(void) const;
 	/* Inherited public interface from base class ees_bank */
 	public:
 		virtual double EESBankGetCacc() const;

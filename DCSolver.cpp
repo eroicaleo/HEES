@@ -410,6 +410,50 @@ double DCSolver::ComputeDCPowerBoost(const double &Vin, const double &Vout, cons
     return power;
 }
 
+double DCSolver::ComputeDCPowerBoostApproximation(const double &Vin, const double &Vout, const double &Iout) {
+	double power = (Iout*Vout/Vin)*(Iout*Vout/Vin)*(m_RL+m_Rsw[3]+m_Rsw[0]) + Vout*m_fs*(m_Qsw[2]+m_Qsw[3]) + Vin*m_Ictrl;
+	return power;
+}
+
+double DCSolver::ComputeDCPowerBuckApproximation(const double &Vin, const double &Vout, const double &Iout) {
+	double power = Iout*Iout*(m_RL+m_Rsw[3]+m_Rsw[0]) + Vin*m_fs*(m_Qsw[2]+m_Qsw[3]) + Vin*m_Ictrl;
+	return power;
+}
+
+int DCSolver::ManualSolverGivenDCOutput() {
+	double upper_bound = g_bank_vocc, lower_bound = 0.0;
+	double step = MaxManualStep;
+	double delta = 100.0;
+	double neg_delta = -100.0, pos_delta = 100.0;
+	double power = 0.0;
+	double lb = lower_bound, ub = upper_bound;
+
+	while (step > MinManualStep) {
+		for (g_dc_vin = lower_bound; g_dc_vin <= upper_bound; g_dc_vin += step) {
+			g_dc_iin = (g_bank_vocc - g_dc_vin) / g_bank_racc;
+
+			if (g_dc_vin > g_dc_vout)
+				power = ComputeDCPowerBuck(g_dc_vin, g_dc_vout, g_dc_iout);
+			else
+				power = ComputeDCPowerBoost(g_dc_vin, g_dc_vout, g_dc_iout);
+				
+			delta = g_dc_vout*g_dc_iout + power - g_dc_vin*g_dc_iin;
+			if ((delta < 0) && (delta > neg_delta)) {
+				neg_delta = delta;
+				lb = g_dc_vin;
+			} else if ((delta > 0) && (delta < pos_delta)) {
+				pos_delta = delta;
+				ub = g_dc_vin;
+			}
+		}
+		
+		lower_bound = lb;
+		upper_bound = ub;
+		step = min((upper_bound - lower_bound) / 10.0, step);
+	}
+
+	return 0;
+}
 /* 
  * Print solution
  */
