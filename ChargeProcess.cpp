@@ -5,12 +5,15 @@
 #include "ChargeProcess.hpp"
 #include "DCCon_in.hpp"
 #include "DCCon_out.hpp"
+#include "HEESTimer.hpp"
 #include "LoadApp.hpp"
 #include "SuperCap.hpp"
 #include "main.hpp"
 
 using namespace std;
 using namespace std::tr1;
+
+extern HEESTimer HTimer;
 
 ChargeProcess::ChargeProcess() :
 	vcti(0.0), icti(0.0),
@@ -133,12 +136,16 @@ int ChargeProcess::ChargeProcessApplyPolicy(ees_bank *bank, lionbat *lb, loadApp
 		current_task_remaining_time -= min_time_interval;
 		time_elapsed += min_time_interval;
 		++time_index;
+		HTimer.HEESTimerAdvancdTimerIndex(1, bank);
 
-		if (time_index > MAX_TIME_INDEX)
+		if (HTimer.HEESTimerGetCurrentTimeIndex() > MAX_TIME_INDEX)
 			break;
 	}
 
 	output.close();
+	// After charging, reset the power status to POWER_INIT
+	power_status = POWER_INIT;
+
 	return time_index;
 }
 

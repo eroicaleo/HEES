@@ -8,10 +8,14 @@
 #include "LionBat.hpp"
 #include "DischargeProcess.hpp"
 #include "ChargeProcess.hpp"
+#include "HEESTimer.hpp"
+
 #include "main.hpp"
 #include "powersource.hpp"
 
 using namespace std;
+
+HEESTimer HTimer(0, 1000);
 
 int main(){
 	supcapacitor sp;
@@ -23,9 +27,9 @@ int main(){
 
 	sp.SupCapReset();
 	// sp.SupCapSetQacc(22.91672);
-	sp.SupCapReconfig(1, 4);
+	sp.SupCapReconfig(4, 1);
 	// sp.SupCapSetQacc(0.0);
-	sp.SupCapSetQacc(100.0);
+	sp.SupCapSetQacc(0.0);
 
 	// Set current task info
 	double vdd = 1.0, idd = 1.0;
@@ -33,19 +37,17 @@ int main(){
 	load.SetTaskParameters(vdd, idd, deadline, exec_time);
 
 	// timer staff
-	double time_elapsed = 0.0;
-	int total_time_index = 0, time_index = -1;
-	int hh = 17, mm = 0, ss = 0;
-	int start_time_sec = 3600*hh + 60*mm + ss;
-	int curr_time_sec = start_time_sec;
+	int time_index = -1;
+	int hh = 11, mm = 0, ss = 0;
+	HTimer.HEESTimerSetCurrentSecond(3600*hh + 60*mm + ss);
 	
 	// powersource
 	double power_input = 0.0;
 
 	// The main loop
-	while (total_time_index < MAX_TIME_INDEX) {
+	while (HTimer.HEESTimerGetCurrentTimeIndex() < MAX_TIME_INDEX) {
 
-		// power_input = powersource_sec(curr_time_sec);
+		power_input = powersource_sec(HTimer.HEESTimerGetCurrentTimeInSecond());
 		// power_input = 1.75;
 
 		// if ((total_time_index/100) % 2 == 1) {
@@ -59,12 +61,12 @@ int main(){
 		// }
 
 		// ChargeProcess
-		// time_index = cp.ChargeProcessOurPolicy(power_input, &sp, &lb, &load);
+		time_index = cp.ChargeProcessOurPolicy(power_input, &sp, &lb, &load);
 		// time_index = cp.ChargeProcessOptimalVcti(power_input, &sp, &lb, &load);
 
 		// DischargeProcess
 		if (time_index < 0) {
-			time_index = dp.DischargeProcessOurPolicy(power_input, &sp, &lb, &load);
+			// time_index = dp.DischargeProcessOurPolicy(power_input, &sp, &lb, &load);
 			// time_index = dp.DischargeProcessOptimalVcti(power_input, &sp, &lb, &load);
 		}
 
@@ -75,12 +77,6 @@ int main(){
 
 		if (sp.SupCapGetEnergy() <= 0)
 			break;
-
-		// Advance the timer
-		total_time_index += time_index;
-		time_elapsed += (time_index * min_time_interval);
-		curr_time_sec += (int)(time_index * min_time_interval);
-		time_index = -1; 
 	}
 
 #ifdef _COMPLEX_MAIN_
