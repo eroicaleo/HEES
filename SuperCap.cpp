@@ -145,6 +145,14 @@ double supcapacitor::SupCapGetVoc(void) const {
 	return (m_Qacc/m_Cacc);
 }
 
+bool supcapacitor::SupCapIsFullySerial(void) const {
+	return (m_p == 1);
+}
+
+bool supcapacitor::SupCapIsFullyParallel(void) const {
+	return (m_s == 1);
+}
+
 /* Implement the interface inherited from base class ees_bank */
 double supcapacitor::EESBankGetCacc() const {
 	return SupCapGetCacc();

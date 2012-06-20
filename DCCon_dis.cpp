@@ -49,10 +49,21 @@ void dcconvertDIS::ConverterModel_battery(double Vout, double Iout, double &Vin,
 
 void dcconvertDIS::ConverterModel_supcap(double Vout, double Iout, double &Vin, double &Iin, double &Pdcdc, supcapacitor *sp) {
 
+	// We first check if the bank is empty of not
+	if (sp->SupCapGetQacc() <= 0.0) {
+		Vin = 0.0;
+		Iin = 0.0;
+		Pdcdc = 0.0;
+		return;
+	}
+
 	// Using the sundial solver
 	int ret = dc_solver.SolveItGivenDCOutput(Vout, Iout, Vin, Iin, Pdcdc, sp);
 
-	if (ret == -2) {
+	double delta = fabs(Vout*Iout+Pdcdc-Vin*Iin);
+
+	if ((ret == -2) || (delta > 1.e-3)) {
+		cerr << "WARNING: sundial is not able to find valid solution! Try Matlab!" << endl;
 		MatlabSolverGivenDCOutput(Vout, Iout, Vin, Iin, Pdcdc, sp);
 	}
 
@@ -60,6 +71,24 @@ void dcconvertDIS::ConverterModel_supcap(double Vout, double Iout, double &Vin, 
     if ((Vin < 0) && (Iin < 0) && (Pdcdc < 0)) {
         cerr << "ERROR: matlab results are wrong! Negative!" << endl;
     }
+
+	delta = fabs(Vout*Iout+Pdcdc-Vin*Iin);
+
+	if (delta > 1.e-3) {
+		cerr << "WARNING: Can not find valid solutions even in matlab!" << endl; 
+		Vin = 0.0;
+		Iin = 0.0;
+		Pdcdc = 0.0;
+		/* 
+		 * Since we are in discharge mode, if it is most serial configuration
+		 * and we still can not solve it, we are not gonna further discharge it
+		 * just set the Qacc to 0 for now
+		 */
+		if (sp->SupCapIsFullySerial()) {
+			sp->SupCapSetQacc(0.0);
+		}
+		return;
+	}
 
     if ((Iin > 5) || (Pdcdc > 10)) {
         cerr << "ERROR: matlab results are wrong! Too big!" << endl;

@@ -3,6 +3,8 @@
 
 class ees_bank {
 public:
+	enum EESBankDischargingTypeFlag {InvalidForDischarging, ValidForDischarging};
+public:
 	ees_bank() {}
 	virtual ~ees_bank();
 	virtual double EESBankGetCacc() const = 0;
@@ -12,5 +14,10 @@ public:
 	virtual double EESBankGetEnergy() const = 0;
 	virtual bool EESBankOperating(double, double, double) = 0;
 	virtual	void EESBankCharge(double Iin, double Tdur, double &Vs, double &Qacc) = 0;
+	virtual void EESBankSetDischargingFlag(EESBankDischargingTypeFlag flag);
+	virtual bool EESBankIfInvalidForDischarging() const;
+private:
+	EESBankDischargingTypeFlag dischargingFlag;
 };
+
 #endif

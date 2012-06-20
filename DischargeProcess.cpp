@@ -7,8 +7,9 @@
 #include "DCCon_in.hpp"
 #include "LoadApp.hpp"
 #include "SuperCap.hpp"
-#include "selVCTI.hpp"
+#include "ees_bank.hpp"
 #include "main.hpp"
+#include "selVCTI.hpp"
 
 using namespace std;
 
@@ -67,7 +68,7 @@ int DischargeProcess::DischargeProcessOurPolicy(double power_input, supcapacitor
 
 		// Compute the current status of the Supercapacitor bank
 		dc_super_cap.ConverterModel_supcap(dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_power, sp);
-				super_cap_voc = sp->SupCapGetVoc();
+		super_cap_voc = sp->SupCapGetVoc();
 
 		// Doing reconfiguration if necessary
 		while ((dc_super_cap_vin < dc_super_cap_vout) && (could_reconfig_flag)) {
@@ -87,7 +88,7 @@ int DischargeProcess::DischargeProcessOurPolicy(double power_input, supcapacitor
 		++time_index;
 
 		// stop if there is no energy in the supercapacitor
-		if (sp->SupCapGetEnergy() < 0)
+		if (sp->SupCapGetEnergy() <= 0)
 			break;
 	}
 
@@ -153,7 +154,7 @@ int DischargeProcess::DischargeProcessOptimalVcti(double power_input, supcapacit
 		++time_index;
 
 		// stop if there is no energy in the supercapacitor
-		if (sp->SupCapGetEnergy() < 0)
+		if (sp->SupCapGetEnergy() <= 0)
 			break;
 	}
 
