@@ -20,7 +20,7 @@ selVcti::selVcti() :
 	alpha(0.23),
 	epsilon(0.1){}
 
-double selVcti :: bestVCTI(double input_Power, double dccon1_Iout, double dccon1_Vout, string selMode, ees_bank *sp){
+double selVcti::bestVCTI(double input_Power, double dccon1_Iout, double dccon1_Vout, string selMode, ees_bank *sp) {
 	dcconvertIN m_dcin;
 	dcconvertOUT m_dcout;
 	dcconvertDIS m_dcdis;
@@ -59,37 +59,27 @@ double selVcti :: bestVCTI(double input_Power, double dccon1_Iout, double dccon1
        	m_dcin.ConverterModel(m_dccon1_Vin, m_dccon1_Vout, m_dccon1_Iout, m_dccon1_Iin, m_dccon1_Pdcdc);
 		switch (m_selMode){
     		case 0:
-				m_dccon2_Vin = m_VCTI;
-				m_dccon2_Iin = input_Power/m_VCTI - m_dccon1_Iin;
-				if (m_dccon2_Iin <= 0) {
-					m_dccon2_Pdcdc = 100;
-				} else {
-					// m_dcout.ConverterModel_LionBat(m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Pdcdc, lb); 
-				}
-			break;
     		case 1:
 			    m_dccon2_Vin = m_VCTI;
                 m_dccon2_Iin = input_Power/m_VCTI - m_dccon1_Iin;
 				if (m_dccon2_Iin <= 0) {
 					m_dccon2_Pdcdc = 100;
+					m_dccon2_Iout = 0;
 				} else {
                 	m_dcout.ConverterModel_EESBank(m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Pdcdc, sp);
 				}
             break;   
     		case 2:
-				m_dccon2_Vout = m_VCTI;
-                m_dccon2_Iout = m_dccon1_Iin;
-				// m_dcdis.ConverterModel_LionBat(m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Pdcdc, lb); 
-            break;
 			case 3:
 				m_dccon2_Vout = m_VCTI;
                 m_dccon2_Iout = m_dccon1_Iin;
                 // m_dcdis.ConverterModel_supcap(m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Pdcdc, sp);
  			break; 
 		}
-		m_Pup= m_dccon1_Pdcdc + m_dccon2_Pdcdc;
-	    //VCTImin
-		// lb->BatterySetVsoc(m_Vsoc);
+
+		m_Pup = m_dccon2_Iout;
+
+		/* Done with one part, starts another part */
 
 		m_VCTI = (1 - alpha) * m_Vmax + alpha * m_Vmin;
 		m_dccon1_Iout = dccon1_Iout;
@@ -98,45 +88,40 @@ double selVcti :: bestVCTI(double input_Power, double dccon1_Iout, double dccon1
 		m_dcin.ConverterModel(m_dccon1_Vin, m_dccon1_Vout, m_dccon1_Iout, m_dccon1_Iin, m_dccon1_Pdcdc);
         switch (m_selMode){
             case 0:
-                m_dccon2_Vin = m_VCTI;
-                m_dccon2_Iin = input_Power/m_VCTI - m_dccon1_Iin;
-				if (m_dccon2_Iin <= 0) {
-					m_dccon2_Pdcdc = 100;
-				} else {
-                	// m_dcout.ConverterModel_LionBat(m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Pdcdc, lb);
-				}
-            break;
             case 1:
                 m_dccon2_Vin = m_VCTI;
                 m_dccon2_Iin = input_Power/m_VCTI - m_dccon1_Iin;
 				if (m_dccon2_Iin <= 0) {
 					m_dccon2_Pdcdc = 100;
+					m_dccon2_Iout = 0;
 				} else {
                 	m_dcout.ConverterModel_EESBank(m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Pdcdc, sp);
 				}
             break;
             case 2:
-                m_dccon2_Vout = m_VCTI;
-                m_dccon2_Iout = m_dccon1_Iin;
-//                m_dis.ConverterModel_SupCap(m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Pdcdc, lb);
-            break;
             case 3:
                 m_dccon2_Vout = m_VCTI;
                 m_dccon2_Iout = m_dccon1_Iin;
                 // m_dcdis.ConverterModel_supcap(m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Pdcdc, sp);
             break;
         }
-        m_Pdn= m_dccon1_Pdcdc + m_dccon2_Pdcdc;		
-		//Compare
-		if(m_Pup > m_Pdn){
-                    m_Vmin = (1 - alpha) * m_Vmin + alpha * m_Vmax;
-                    m_VCTI = m_Vmin;
-                    m_Pdcdc = m_Pup;
-                }else{
-                    m_Vmax = (1 - alpha) * m_Vmax + alpha * m_Vmin;
-                    m_VCTI = m_Vmax;
-                    m_Pdcdc = m_Pdn;
-                }
-            }
-		return m_ret = m_VCTI;
+        m_Pdn = m_dccon2_Iout;
+
+		// Compare, when both voltages are not working, prefer the min VCTI
+		if (m_Pup >= m_Pdn) {
+           	m_Vmax = (1 - alpha) * m_Vmax + alpha * m_Vmin;
+           	m_Pdcdc = m_Pup;
+        } else {
+        	m_Vmin = (1 - alpha) * m_Vmin + alpha * m_Vmax;
+           	m_Pdcdc = m_Pdn;
+        }
+	}
+
+	// Error check if the m_VCTI is too small
+	// Which means we do not have valid solutions
+	if (m_VCTI < 1e-2) {
+		cout << "The select VCTI is too small!" << endl;
+	}
+
+	return m_ret = m_VCTI;
 }

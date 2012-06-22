@@ -47,47 +47,50 @@ dcconvertOUT::dcconvertOUT() :
 	return;
 }
 */
-void dcconvertOUT::ConverterModel_SupCap(double Vin, double Iin, double &Vout, double &Iout, double &Pdcdc, supcapacitor *sp){
+
+void dcconvertOUT::MatlabSolverGivenDCInput(double Vin, double Iin, double &Vout, double &Iout, double &Pdcdc, ees_bank *bank) {
 
     // Write the Vin, Iin, SoC of the battery to the dcdc_input.txt for Matlab
-// ofstream dcdc_input_file("./matlab/dcdc_supcap_input.txt");
-// dcdc_input_file << Vin << endl
-//                 << Iin << endl
-//                 << sp->SupCapGetRacc()<< endl 
-// 				<< sp->SupCapGetCacc()<< endl
-// 				<< sp->SupCapGetQacc()<< endl;
-// dcdc_input_file.close();
+	ofstream dcdc_input_file("./matlab/dcdc_supcap_input.txt");
+	dcdc_input_file << Vin << endl
+					<< Iin << endl
+					<< bank->EESBankGetRacc()<< endl 
+					<< bank->EESBankGetCacc()<< endl
+					<< bank->EESBankGetQacc()<< endl;
+	dcdc_input_file.close();
 
-// // Call the matlab to solve the Vout and Iout
-// system("matlab -nojvm -nodisplay -nosplash < ./matlab/dcdc_supcap_test.m");
-// // Call the sundials to solve the Vout and Iout
-// // bsolver->SolveItGivenDCInput(Vin, Iin, Vout, Iout, Pdcdc, lion_battery);
+	// Call the matlab to solve the Vout and Iout
+	system("matlab -nojvm -nodisplay -nosplash < ./matlab/dcdc_supcap_test.m");
 
-// // Retrieve the Vout, Iout and Pdcdc infomation
-// ifstream dcdc_output_file("dcdc_supcap_output.txt");
-// dcdc_output_file >> Vout >> Iout >> Pdcdc;
-// dcdc_output_file.close();
+	// Retrieve the Vout, Iout and Pdcdc infomation
+	ifstream dcdc_output_file("dcdc_supcap_output.txt");
+	dcdc_output_file >> Vout >> Iout >> Pdcdc;
+	dcdc_output_file.close();
 
-	// Using the sundial solver
-	dc_solver.SolveItGivenDCInput(Vin, Iin, Vout, Iout, Pdcdc, sp);
-
-    // Error check
-    if ((Vout < 0) || (Iout < 0) || (Pdcdc < 0)) {
-        cerr << "ERROR: matlab results are wrong!" << endl;
-    }
-
-    return;
+	return;
 }
 
 void dcconvertOUT::ConverterModel_EESBank(double Vin, double Iin, double &Vout, double &Iout, double &Pdcdc, ees_bank *bank){
 
 	// Using the sundial solver
-	dc_solver.SolveItGivenDCInput(Vin, Iin, Vout, Iout, Pdcdc, bank);
+	int ret = dc_solver.SolveItGivenDCInput(Vin, Iin, Vout, Iout, Pdcdc, bank);
 
-    // Error check
-    if ((Vout < 0) || (Iout < 0) || (Pdcdc < 0)) {
-        cerr << "ERROR: matlab results are wrong!" << endl;
-    }
+	double delta = fabs(Vout*Iout+Pdcdc-Vin*Iin);
+
+	if ((ret == -2) || (delta > 1.e-3)) {
+#ifdef DEBUG_YANGGE
+		cerr << "WARNING: sundial is not able to find valid solution! Try Matlab!" << endl;
+#endif
+
+#ifdef USING_MATLAB
+		MatlabSolverGivenDCInput(Vin, Iin, Vout, Iout, Pdcdc, bank);
+		delta = fabs(Vout*Iout+Pdcdc-Vin*Iin);
+		// Error check
+		if ((Vout < 0) || (Iout < 0) || (Pdcdc < 0) || (delta > 1.e-3)) {
+			cerr << "WARNING: matlab can't get valid results either!" << endl;
+		}
+#endif
+	}
 
     return;
 }

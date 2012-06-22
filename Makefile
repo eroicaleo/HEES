@@ -13,6 +13,9 @@ LDFLAGS = -L/home/yzhang/usr/sundials/lib
 SUNDIALS_LIBS = -lsundials_kinsol -lsundials_nvecserial
 # SUNDIALS_LIBS = 
 
+# CFLAGS += -DDEBUG_YANGGE
+# CFLAGS += -DUSING_MATLAB
+
 all : $(bin)
 
 $(bin) : $(OBJ)

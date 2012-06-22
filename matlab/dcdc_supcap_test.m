@@ -11,24 +11,26 @@ I_in = input(2);
 Racc = input(3);
 Cacc = input(4);
 Qacc = input(5);
+Voc = Qacc / Cacc;
 
 % Guess a solution as initial point
-x0 = [10; 0];
+x0 = [0.01; 0];
 options=optimset('Display','off');
 % Assume first it is in buck mode
 [x,fval] = fsolve(@dcdc_model_to_supcap_buck, x0, options);
 V_out = x(1);
 I_out = x(2);
 
-if (V_out > V_in)
+if ((V_out > V_in) || (abs(fval(1, 1))))
     % If it actually is not in buck mode, recompute it using boost mode
     [x,fval] = fsolve(@dcdc_model_to_supcap_boost, x, options);
     V_out = x(1);
     I_out = x(2);
     if (V_out < V_in)
-        x = [-1.0; -1.0; -1.0];
-        save('dcdc_supcap_output.txt', '-ascii', 'x');
-        error('Neither buck mode or boost mode!');
+		x = [Voc; 0.0];
+        V_out = Voc; 
+        I_out = 0.0;
+        warning('Neither buck mode or boost mode!');
     end
 end
 
