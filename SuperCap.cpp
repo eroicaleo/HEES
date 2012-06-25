@@ -16,7 +16,7 @@ supcapacitor::supcapacitor() :
 	m_Rs(0e-3), m_Rp(0e-3),
 	m_Rbank(0),
     m_Qacc(0.0),
-	m_Cacc(0.0), m_Cacc1(100){
+	m_Cacc1(100.0), m_Cacc(m_p / m_s * m_Cacc1) {
 }
 
 void supcapacitor::SupCapCharge(double Iin, double Tdur, double &Vs, double &Qacc){

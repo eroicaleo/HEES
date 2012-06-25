@@ -39,7 +39,7 @@ class supcapacitor : public ees_bank {
 		double m_Rs, m_Rp;
 		double m_Rbank;
 		double m_Qacc;
-		double m_Cacc, m_Cacc1;
+		double m_Cacc1, m_Cacc;
 		double m_Energy;
 };
 #endif

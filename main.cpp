@@ -17,7 +17,7 @@ using namespace std;
 
 HEESTimer HTimer(0, 1000);
 
-int main(){
+int main(int argc, char *argv[]){
 	supcapacitor sp;
 	lionbat lb; 
 	loadApplication load;
@@ -25,11 +25,10 @@ int main(){
 	DischargeProcess dp;
 	ChargeProcess cp;
 
-	sp.SupCapReset();
-	// sp.SupCapSetQacc(22.91672);
-	sp.SupCapReconfig(4, 1);
-	// sp.SupCapSetQacc(0.0);
-	sp.SupCapSetQacc(0.0);
+	hees_parse_command_line(argc, argv);
+
+	sp.SupCapSetQacc(supcap_init_charge);
+	sp.SupCapReconfig(supcap_serial_conf, supcap_parallel_conf);
 
 	// Set current task info
 	double vdd = 1.0, idd = 1.0;
@@ -38,8 +37,8 @@ int main(){
 
 	// timer staff
 	int time_index = -1;
-	int hh = 11, mm = 0, ss = 0;
-	HTimer.HEESTimerSetCurrentSecond(3600*hh + 60*mm + ss);
+	HTimer.HEESTimerSetCurrentSecond(3600*start_time_hh + 60*start_time_mm + start_time_ss);
+	HTimer.HEESTimerSetRecordStep(delta_energy_steps);
 	
 	// powersource
 	double power_input = 0.0;

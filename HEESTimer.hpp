@@ -13,8 +13,9 @@ public:
 	HEESTimer(double start_time_sec, int record_step);
 	void HEESTimerAdvancdTimerIndex(int TimerIndex, ees_bank *bank);
 	void HEESTimerSetCurrentSecond(int curr_time_sec);
-	int HEESTimerGetCurrentTimeIndex(void);
-	double HEESTimerGetCurrentTimeInSecond(void); 
+	void HEESTimerSetRecordStep(int record_step);
+	int HEESTimerGetCurrentTimeIndex(void) const;
+	double HEESTimerGetCurrentTimeInSecond(void) const; 
 private:
 	void RecordNewEnergy(ees_bank *bank);
 private:

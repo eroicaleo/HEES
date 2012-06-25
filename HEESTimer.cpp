@@ -22,6 +22,11 @@ void HEESTimer::HEESTimerSetCurrentSecond(int curr_time_sec) {
 	return;
 }
 
+void HEESTimer::HEESTimerSetRecordStep(int record_step) {
+	RecordStep = record_step;
+	return;
+}
+
 void HEESTimer::HEESTimerAdvancdTimerIndex(int TimerIndex, ees_bank *bank) {
 	CurrentTimeIndex += TimerIndex;
 	CurrentTimeInSecond += TimerIndex * min_time_interval;
@@ -41,10 +46,10 @@ void HEESTimer::RecordNewEnergy(ees_bank *bank) {
 	return;
 }
 
-int HEESTimer::HEESTimerGetCurrentTimeIndex(void) {
+int HEESTimer::HEESTimerGetCurrentTimeIndex(void) const {
 	return CurrentTimeIndex;
 }
 
-double HEESTimer::HEESTimerGetCurrentTimeInSecond(void) {
+double HEESTimer::HEESTimerGetCurrentTimeInSecond(void) const {
 	return CurrentTimeInSecond;
 }
