@@ -149,7 +149,7 @@ int DCSolver::SolveItGivenDCInput(double dc_vin, double dc_iin, double &dc_vout,
     if (check_flag(&flag, "KINSetSysFunc", 1)) return(1);
 
 	// Set the lower bound and initial guess
-	data->lb[0] = max(RCONST(g_bank_vocc - TOL), ABSTOL);
+	data->lb[0] = max(RCONST(g_bank_vocc), ABSTOL);
 	PrimaryGuess(u1,data);
 
 	KINSolverWapper();

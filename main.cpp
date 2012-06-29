@@ -27,8 +27,8 @@ int main(int argc, char *argv[]){
 
 	hees_parse_command_line(argc, argv);
 
-	sp.SupCapSetQacc(supcap_init_charge);
 	sp.SupCapReconfig(supcap_serial_conf, supcap_parallel_conf);
+	sp.SupCapSetQacc(supcap_init_charge);
 
 	// Set current task info
 	double vdd = 1.0, idd = 1.0;
