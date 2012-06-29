@@ -97,6 +97,7 @@ bool supcapacitor::SupCapMoreSeriesReconfig() {
 
 double supcapacitor::SupCapReconfig(double new_s, double new_p) {
 	double new_C = new_p / new_s * m_Cacc1;
+	this->m_Totl = new_s * new_p;
 
 	// E_sup = (1/2)*Q^2/C
 	// After reconfiguration, the energy is same
