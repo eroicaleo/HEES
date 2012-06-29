@@ -60,8 +60,8 @@ int main(int argc, char *argv[]){
 		// }
 
 		// ChargeProcess
-		// time_index = cp.ChargeProcessOurPolicy(power_input, &sp, &lb, &load);
-		time_index = cp.ChargeProcessOptimalVcti(power_input, &sp, &lb, &load);
+		time_index = cp.ChargeProcessOurPolicy(power_input, &sp, &lb, &load);
+		// time_index = cp.ChargeProcessOptimalVcti(power_input, &sp, &lb, &load);
 
 		// DischargeProcess
 		if (time_index < 0) {

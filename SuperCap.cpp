@@ -13,7 +13,7 @@ supcapacitor::supcapacitor() :
 	m_s(4),
 	m_Totl(4),
 	m_Racc(0.0), m_Racc1(34e-3),
-	m_Rs(0e-3), m_Rp(0e-3),
+	m_Rs(10e-3), m_Rp(10e-3),
 	m_Rbank(0),
     m_Qacc(0.0),
 	m_Cacc1(100.0), m_Cacc(m_p / m_s * m_Cacc1) {
