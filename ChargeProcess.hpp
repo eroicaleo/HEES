@@ -21,8 +21,8 @@ enum POWER_STATUS {POWER_INIT, POWER_NORMAL, POWER_NOT_ENOUGH_FOR_LOAD};
 class ChargeProcess {
 public:
 	ChargeProcess();
-	int ChargeProcessOurPolicy(double power_input, ees_bank *bank, lionbat *lb, loadApplication *load);
-	int ChargeProcessOptimalVcti(double power_input, ees_bank *bank, lionbat *lb, loadApplication *load); 
+	int ChargeProcessOurPolicy(ees_bank *bank, lionbat *lb, loadApplication *load);
+	int ChargeProcessOptimalVcti(ees_bank *bank, lionbat *lb, loadApplication *load); 
 	void print_super_cap_info(std::ofstream &output_file, ees_bank *bank, double power_input);
 // Private member function
 private:
@@ -52,7 +52,6 @@ private:
 	// Task info and timer stuff
 	double time_elapsed;
 	int time_index;
-	double current_task_remaining_time;
 
 	// dc-dc converters
 	dcconvertIN dc_load;

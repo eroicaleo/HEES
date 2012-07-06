@@ -21,7 +21,7 @@ ChargeProcess::ChargeProcess() :
 	dc_super_cap_vout(super_cap_vcc), dc_super_cap_iout(super_cap_iin), dc_super_cap_vin(vcti), dc_super_cap_iin(0.0), dc_super_cap_power(0.0),
 	dc_load_vin(vcti), dc_load_iin(icti), dc_load_vout(1.0), dc_load_iout(1.0), 
 	power_input(0.0),
-	time_elapsed(0.0), time_index(0), current_task_remaining_time(0.0), 
+	time_elapsed(0.0), time_index(0),
 	output_file("OverallProcess.txt") { 
 	
 	ofstream output(output_file.c_str());
@@ -77,9 +77,9 @@ void ChargeProcess::charge_policy_optimal_vcti(ees_bank *bank) {
 }
 
 
-int ChargeProcess::ChargeProcessOptimalVcti(double power_input, ees_bank *bank, lionbat *lb, loadApplication *load) {
+int ChargeProcess::ChargeProcessOptimalVcti(ees_bank *bank, lionbat *lb, loadApplication *load) {
 
-	this->power_input = power_input;
+	this->power_input = power_source_func(HTimer.HEESTimerGetCurrentTimeInSecond());
 	power_status = POWER_INIT;
 
 	// Bind to optimal vcti policy
@@ -88,9 +88,9 @@ int ChargeProcess::ChargeProcessOptimalVcti(double power_input, ees_bank *bank, 
 	return ChargeProcessApplyPolicy(bank, lb, load);
 }
 
-int ChargeProcess::ChargeProcessOurPolicy(double power_input, ees_bank *bank, lionbat *lb, loadApplication *load) {
+int ChargeProcess::ChargeProcessOurPolicy(ees_bank *bank, lionbat *lb, loadApplication *load) {
 
-	this->power_input = power_input;
+	this->power_input = power_source_func(HTimer.HEESTimerGetCurrentTimeInSecond());
 	power_status = POWER_INIT;
 
 	supcap_reconfig_return = true;
@@ -108,7 +108,6 @@ int ChargeProcess::ChargeProcessApplyPolicy(ees_bank *bank, lionbat *lb, loadApp
 	dc_load_iout = load->get_idd();
 
 	// Task info and timer stuff
-	current_task_remaining_time = load->get_exec_time();
 	time_elapsed = 0.0;
 	time_index = 0;
 
@@ -118,8 +117,13 @@ int ChargeProcess::ChargeProcessApplyPolicy(ees_bank *bank, lionbat *lb, loadApp
 		cerr << "Can not open files!" << endl;
 	}
 
-	while (current_task_remaining_time > min_time_interval) {
+	while (fabs(load->CurrentTaskRemainingTime()) > 1e-3) {
 
+		// Every second, update the power input
+		if (time_index % 10 == 0) {
+			this->power_input = power_source_func(HTimer.HEESTimerGetCurrentTimeInSecond());
+			power_status = POWER_INIT;
+		}
 		charge_policy(bank);
 
 		// Check if we need to break because the power_input is not enough
@@ -133,10 +137,10 @@ int ChargeProcess::ChargeProcessApplyPolicy(ees_bank *bank, lionbat *lb, loadApp
 
 		bank->EESBankCharge(super_cap_iin, min_time_interval, super_cap_vcc, super_cap_qacc);
 
-		current_task_remaining_time -= min_time_interval;
 		time_elapsed += min_time_interval;
 		++time_index;
 		HTimer.HEESTimerAdvancdTimerIndex(1, bank);
+		load->AdvanceLoadProgress(min_time_interval);
 
 		if (HTimer.HEESTimerGetCurrentTimeIndex() > MAX_TIME_INDEX)
 			break;

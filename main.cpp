@@ -31,22 +31,18 @@ int main(int argc, char *argv[]){
 	sp.SupCapSetQacc(supcap_init_charge);
 
 	// Set current task info
-	double vdd = 1.0, idd = 1.0;
-	double deadline = 10.0, exec_time = 10.0;
-	load.SetTaskParameters(vdd, idd, deadline, exec_time);
+	// double vdd = 1.0, idd = 1.0;
+	// double deadline = 10.0, exec_time = 10.0;
+	// load.SetTaskParameters(vdd, idd, deadline, exec_time);
 
 	// timer staff
 	int time_index = -1;
 	HTimer.HEESTimerSetCurrentSecond(3600*start_time_hh + 60*start_time_mm + start_time_ss);
 	HTimer.HEESTimerSetRecordStep(delta_energy_steps);
 	
-	// powersource
-	double power_input = 0.0;
-
 	// The main loop
 	while (HTimer.HEESTimerGetCurrentTimeIndex() < MAX_TIME_INDEX) {
 
-		power_input = powersource_sec(HTimer.HEESTimerGetCurrentTimeInSecond());
 		// power_input = 1.75;
 
 		// if ((total_time_index/100) % 2 == 1) {
@@ -56,11 +52,11 @@ int main(int argc, char *argv[]){
 
 		// if ((total_time_index/100) % 2 == 0) {
 		// if (total_time_index == 0) {
-			load.SetTaskParameters(vdd, 1.0, deadline, exec_time);
+		// 	load.SetTaskParameters(vdd, 1.0, deadline, exec_time);
 		// }
 
 		// ChargeProcess
-		time_index = cp.ChargeProcessOurPolicy(power_input, &sp, &lb, &load);
+		time_index = cp.ChargeProcessOurPolicy(&sp, &lb, &load);
 		// time_index = cp.ChargeProcessOptimalVcti(power_input, &sp, &lb, &load);
 
 		// DischargeProcess
@@ -74,7 +70,7 @@ int main(int argc, char *argv[]){
 			break;
 		}
 
-		if (sp.SupCapGetEnergy() <= 0)
+		if ((sp.SupCapGetEnergy() <= 0) || (load.IsNoTaskToDo()))
 			break;
 	}
 

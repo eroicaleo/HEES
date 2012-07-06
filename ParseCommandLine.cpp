@@ -1,11 +1,16 @@
 #include <boost/program_options.hpp>
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <iterator>
 #include <string>
+#include <tr1/functional>
+
+#include "powersource.hpp"
 
 using namespace std;
+using namespace std::tr1;
 using namespace boost::program_options;
 
 int supcap_parallel_conf;
@@ -22,6 +27,13 @@ int start_time_ss;
 
 int max_simu_steps;
 int delta_energy_steps;
+
+string power_source_type;
+double constant_power_value;
+ConstantPowerSource cps;
+
+function<double(double)> power_source_func;
+
 
 int hees_parse_command_line(int argc, char *argv[]) {
 	
@@ -57,11 +69,18 @@ int hees_parse_command_line(int argc, char *argv[]) {
 			("delta_energy_steps", value<int>(&delta_energy_steps)->default_value(1000), "We record the delta energy evergy delta_energy_steps, one step = 0.1 sec")
 		;
 
+		/* Power options */
+		options_description power_options("Power source options");
+		power_options.add_options()
+			("power_source", value<string>(&power_source_type)->default_value("constant_power"), "Use a constant power, must specify the constant_power_value option")
+			("constant_power_value", value<double>(&constant_power_value)->default_value(0.0), "The value of the constant power source")
+		;
+
 		options_description cmdline_options;
-		cmdline_options.add(generic).add(bank_config_options).add(time_config_options);
+		cmdline_options.add(generic).add(bank_config_options).add(time_config_options).add(power_options);
 
 		options_description config_file_options;
-		config_file_options.add(bank_config_options).add(time_config_options);
+		config_file_options.add(bank_config_options).add(time_config_options).add(power_options);
 
 		variables_map vm;
 		store(parse_command_line(argc, argv, cmdline_options), vm);
@@ -82,6 +101,13 @@ int hees_parse_command_line(int argc, char *argv[]) {
             cout << generic;
 			exit(0);
         }
+
+		if (power_source_type == "solar_power") {
+			power_source_func = solar_power_source_sec;
+		} else if (vm.count("constant_power_value")) {
+			cps.SetPowerValue(constant_power_value);
+			power_source_func = bind(&ConstantPowerSource::GetConstantPower, &cps, placeholders::_1);
+		}
 
 	} catch (exception &e) {
 		cerr << "Error: " << e.what() << endl;

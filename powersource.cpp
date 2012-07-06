@@ -28,7 +28,7 @@ double powersource(double stHour, double stMin, double stSec) {
 	}
 }
 
-double powersource_sec(double m_Tdur) {
+double solar_power_source_sec(double m_Tdur) {
 	double m_power;
 
 	if (m_Tdur < 29520) {

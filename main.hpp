@@ -1,11 +1,15 @@
 #ifndef _MAIN_HPP_
 #define _MAIN_HPP_
 
+#include <tr1/functional>
+
 #define MAX_TIME_INDEX max_simu_steps
 
 const double min_time_interval = 0.1;
 
 const int recompute_vcti_time_index = 10;
+
+const double time_near_zero = 1e-4;
 
 int hees_parse_command_line(int argc, char *argv[]); 
 
@@ -24,5 +28,8 @@ extern int start_time_ss;
 
 extern int max_simu_steps;
 extern int delta_energy_steps;
+
+extern std::tr1::function<double(double)> power_source_func;
+
 
 #endif

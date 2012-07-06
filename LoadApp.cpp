@@ -6,12 +6,16 @@
 #include <math.h>
 #include "LoadApp.hpp"
 
+using namespace std;
+
 loadApplication::loadApplication() :
 	m_Ta(-0.0111),
 	m_Tb(0.0164),
 	m_Pa(470.59),
 	m_Pb(-83.59),
-	m_Pc(-164.05){
+	m_Pc(-164.05)
+	{
+		InitilizeTaskQueue();
 }
 
 void loadApplication::SetTaskParameters(double vdd, double idd, double deadline, double exec_time) {
@@ -24,20 +28,32 @@ void loadApplication::SetTaskParameters(double vdd, double idd, double deadline,
 }
 
 double loadApplication::get_vdd() {
-	return vdd;
+	ContextSwitch();
+	return current_task->GetVDD();
 }
 
 double loadApplication::get_idd() {
-	return idd;
+	ContextSwitch();
+	return current_task->GetIDD();
 }
 
+double loadApplication::CurrentTaskRemainingTime() const {
+	return current_task->GetRemainingTime();
+}
+
+bool loadApplication::IsNoTaskToDo() const {
+	return (task_queue.empty());
+}
+
+/*
 double loadApplication::get_deadline() {
 	return deadline;
-}
+} */
 
+/*
 double loadApplication::get_exec_time() {
 	return exec_time;
-}
+} */
 
 double loadApplication::LoadModel(double Vdd, double &Iload, double &Tur){
 	double m_Iload = 0.0;
@@ -65,4 +81,45 @@ double loadApplication::TimeDuration(double Vdd){
 	double m_ret = 0.0;
 
 	return m_ret = (m_Ta * Vdd + m_Tb) * 1000;
+}
+
+static task_struct idle_task(0.0, 0.0, 0.0);
+
+void loadApplication::InitilizeTaskQueue() {
+	/* Read tasks from a file */
+	double vdd(0.0), idd(0.0), exec_time(0.0);
+	ifstream infile("Tasks.txt");
+	if (!infile) {
+		cerr << "Can not find task file! Abort!" << endl;
+	}
+
+	while ((infile >> vdd >> idd >> exec_time).good()) {
+		task_struct t1(vdd, idd, exec_time);
+		task_queue.push_back(t1);
+	}
+
+	infile.close();
+
+	if (!task_queue.empty())
+		current_task = &task_queue.front();
+	else
+		current_task = &idle_task;
+
+	return;
+}
+
+void loadApplication::AdvanceLoadProgress(double t) {
+	current_task->AdvanceTaskProgress(t);
+	return;
+}
+
+void loadApplication::ContextSwitch() {
+
+	if ((!task_queue.empty()) && (current_task->GetRemainingTime() <= time_near_zero)) {
+		task_queue.pop_front();
+		if (!task_queue.empty())
+			current_task = &task_queue.front();
+		else
+			current_task = &idle_task;
+	}
 }

@@ -34,7 +34,6 @@ int DischargeProcess::DischargeProcessOurPolicy(double power_input, supcapacitor
 	// FIXME: should initilized from load
 	dc_load_vout = load->get_vdd();
 	dc_load_iout = load->get_idd();
-	double current_task_remaining_time = load->get_exec_time();
 
 	// Task info and timer stuff
 	double time_elapsed = 0.0;
@@ -64,7 +63,7 @@ int DischargeProcess::DischargeProcessOurPolicy(double power_input, supcapacitor
 	}
 
 	bool could_reconfig_flag = true;
-	while (current_task_remaining_time > min_time_interval) {
+	while (load->CurrentTaskRemainingTime() > min_time_interval) {
 
 		// Compute the current status of the Supercapacitor bank
 		dc_super_cap.ConverterModel_supcap(dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_power, sp);
@@ -83,7 +82,6 @@ int DischargeProcess::DischargeProcessOurPolicy(double power_input, supcapacitor
 		sp->SupCapCharge(-super_cap_iout, min_time_interval, super_cap_vcc, super_cap_qacc);
 
 		// time elapse
-		current_task_remaining_time -= min_time_interval;
 		time_elapsed += min_time_interval;
 		++time_index;
 
@@ -107,7 +105,6 @@ int DischargeProcess::DischargeProcessOptimalVcti(double power_input, supcapacit
 	// FIXME: should initilized from load
 	dc_load_vout = load->get_vdd();
 	dc_load_iout = load->get_idd();
-	double current_task_remaining_time = load->get_exec_time();
 
 	// Task info and timer stuff
 	double time_elapsed = 0.0;
@@ -121,7 +118,7 @@ int DischargeProcess::DischargeProcessOptimalVcti(double power_input, supcapacit
 
 	vcti = dc_load_vout;
 
-	while (current_task_remaining_time > min_time_interval) {
+	while (load->CurrentTaskRemainingTime() > min_time_interval) {
 
 		if (time_index % 10 == 0) {
 			// vcti = sel_vcti.bestVCTI(0.0, dc_load_iout, dc_load_vout, "dis_SupCap", lb, sp);
@@ -149,7 +146,6 @@ int DischargeProcess::DischargeProcessOptimalVcti(double power_input, supcapacit
 		sp->SupCapCharge(-super_cap_iout, min_time_interval, super_cap_vcc, super_cap_qacc);
 
 		// time elapse
-		current_task_remaining_time -= min_time_interval;
 		time_elapsed += min_time_interval;
 		++time_index;
 
