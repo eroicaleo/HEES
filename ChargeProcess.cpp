@@ -47,14 +47,17 @@ void ChargeProcess::charge_policy_our_policy(ees_bank *bank) {
 
 	// Set the VCTI to the load vdd;
 	if (power_status == POWER_INIT) {
-		vcti = dc_load_vout;
+		if (fixed_vcti > 0.0)
+			vcti = fixed_vcti;
+		else
+			vcti = dc_load_vout;
 		compute_dc_bank_iin();
 	}
 
 	if (power_status == POWER_NORMAL) {
 		dc_super_cap.ConverterModel_EESBank(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, bank);
 		// Reconfig if necessary
-		while ((dc_super_cap_vout > dc_super_cap_vin) && supcap_reconfig_return) {
+		while ((dc_super_cap_vout > dc_super_cap_vin) && supcap_reconfig_return && bank_reconfig_enable) {
 			supcap_reconfig_return = bank->EESBankOperating(dc_super_cap_iin, dc_super_cap_vout, -100.0);
 			dc_super_cap.ConverterModel_EESBank(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, bank);
 		}
@@ -132,8 +135,9 @@ int ChargeProcess::ChargeProcessApplyPolicy(ees_bank *bank, lionbat *lb, loadApp
 			break;
 		}
 		
-		// Recorde the curren status of the super capacitor
-		print_super_cap_info(output, bank, power_input);
+		// Record the current status of the super capacitor
+		if (HTimer.HEESTimerGetCurrentTimeIndex() % delta_energy_steps == 0)
+			print_super_cap_info(output, bank, power_input);
 
 		bank->EESBankCharge(super_cap_iin, min_time_interval, super_cap_vcc, super_cap_qacc);
 

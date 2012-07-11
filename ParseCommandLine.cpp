@@ -13,6 +13,7 @@ using namespace std;
 using namespace std::tr1;
 using namespace boost::program_options;
 
+/* Bank related parameters */
 int supcap_parallel_conf;
 int supcap_serial_conf;
 int battery_parallel_conf;
@@ -21,6 +22,12 @@ int battery_serial_conf;
 double supcap_init_charge;
 double battery_init_charge;
 
+int bank_reconfig_enable;
+
+/* VCTI related parameters */
+double fixed_vcti;
+
+/* Time related parameters */
 int start_time_hh;
 int start_time_mm;
 int start_time_ss;
@@ -28,6 +35,7 @@ int start_time_ss;
 int max_simu_steps;
 int delta_energy_steps;
 
+/* Power source related parameters */
 string power_source_type;
 double constant_power_value;
 ConstantPowerSource cps;
@@ -57,6 +65,8 @@ int hees_parse_command_line(int argc, char *argv[]) {
 			("battery_serial_conf", value<int>(&battery_serial_conf)->default_value(4), "no. of serial connected battery cell")
 			("supcap_init_charge", value<double>(&supcap_init_charge)->default_value(0.0), "amount of initial charge in supercapacitor bank")
 			("battery_init_charge", value<double>(&battery_init_charge)->default_value(0.0), "amount of initial charge in battery bank")
+			("bank_reconfig_enable", value<int>(&bank_reconfig_enable)->default_value(1), "If hees bank reconfiguration is enabled or not")
+			("fixed_vcti", value<double>(&fixed_vcti)->default_value(0.0), "Set it to > 0, if you want to fix the Vcti")
 		;
 
 		/* Time related parameters */
