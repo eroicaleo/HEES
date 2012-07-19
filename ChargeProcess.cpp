@@ -25,7 +25,7 @@ ChargeProcess::ChargeProcess() :
 	output_file("OverallProcess.txt") { 
 	
 	ofstream output(output_file.c_str());
-	output << "power_intput\tVCTI\tVcap_oc\tVcap_cc\tQacc\tIsup\tPdcsup\tPdcload\tPrbank\tEsup\tCacc" << endl;
+	output << "Pinput\tVCTI\tVcap_oc\tVcap_cc\tQacc\tIsup\tPdcsup\tPdcload\tPrbank\tEsup\tCacc" << endl;
 	output.close();
 }
 
@@ -161,6 +161,8 @@ void ChargeProcess::print_super_cap_info(ofstream &output, ees_bank *bank, doubl
 	// Output the status to a file
 	super_cap_voc = bank->EESBankGetVoc();
 	super_cap_qacc = bank->EESBankGetQacc();
+	output.precision(5);
+	output.setf(ios::fixed,ios::floatfield);
 	output << power_input << "\t"
 			<< vcti << "\t"
 			<< super_cap_voc << "\t"

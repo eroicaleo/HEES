@@ -5,6 +5,7 @@
 #include "DischargeProcess.hpp"
 #include "DCCon_dis.hpp"
 #include "DCCon_in.hpp"
+#include "HEESTimer.hpp"
 #include "LoadApp.hpp"
 #include "SuperCap.hpp"
 #include "ees_bank.hpp"
@@ -12,6 +13,8 @@
 #include "selVCTI.hpp"
 
 using namespace std;
+
+extern HEESTimer HTimer;
 
 DischargeProcess::DischargeProcess() :
 	vcti(0.0), icti(0.0),
@@ -70,7 +73,7 @@ int DischargeProcess::DischargeProcessOurPolicy(double power_input, supcapacitor
 		super_cap_voc = sp->SupCapGetVoc();
 
 		// Doing reconfiguration if necessary
-		while ((dc_super_cap_vin < dc_super_cap_vout) && (could_reconfig_flag)) {
+		while ((dc_super_cap_vin < dc_super_cap_vout) && (could_reconfig_flag) && (bank_reconfig_enable)) {
 			could_reconfig_flag = sp->SupCapMoreSeriesReconfig();
 			dc_super_cap.ConverterModel_supcap(dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_power, sp);
 		}
@@ -84,9 +87,11 @@ int DischargeProcess::DischargeProcessOurPolicy(double power_input, supcapacitor
 		// time elapse
 		time_elapsed += min_time_interval;
 		++time_index;
+		HTimer.HEESTimerAdvancdTimerIndex(1, sp);
+		load->AdvanceLoadProgress(min_time_interval);
 
 		// stop if there is no energy in the supercapacitor
-		if (sp->SupCapGetEnergy() <= 0)
+		if ((sp->SupCapGetEnergy() <= 0) || (HTimer.HEESTimerGetCurrentTimeIndex() > MAX_TIME_INDEX))
 			break;
 	}
 
@@ -121,8 +126,7 @@ int DischargeProcess::DischargeProcessOptimalVcti(double power_input, supcapacit
 	while (load->CurrentTaskRemainingTime() > min_time_interval) {
 
 		if (time_index % 10 == 0) {
-			// vcti = sel_vcti.bestVCTI(0.0, dc_load_iout, dc_load_vout, "dis_SupCap", lb, sp);
-			vcti = 1.58251;
+			vcti = sel_vcti.bestVCTI(0.0, dc_load_iout, dc_load_vout, "dis_SupCap", sp);
 			// Compute the current Icti on CTI from bank to load
 			dc_load.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
 		}
@@ -148,9 +152,11 @@ int DischargeProcess::DischargeProcessOptimalVcti(double power_input, supcapacit
 		// time elapse
 		time_elapsed += min_time_interval;
 		++time_index;
+		HTimer.HEESTimerAdvancdTimerIndex(1, sp);
+		load->AdvanceLoadProgress(min_time_interval);
 
 		// stop if there is no energy in the supercapacitor
-		if (sp->SupCapGetEnergy() <= 0)
+		if ((sp->SupCapGetEnergy() <= 0) || (HTimer.HEESTimerGetCurrentTimeIndex() > MAX_TIME_INDEX))
 			break;
 	}
 

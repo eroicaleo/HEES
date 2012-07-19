@@ -68,16 +68,17 @@ double selVcti::bestVCTI(double input_Power, double dccon1_Iout, double dccon1_V
 				} else {
                 	m_dcout.ConverterModel_EESBank(m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Pdcdc, sp);
 				}
+				m_Pup = m_dccon2_Iout;
             break;   
     		case 2:
 			case 3:
 				m_dccon2_Vout = m_VCTI;
                 m_dccon2_Iout = m_dccon1_Iin;
-                // m_dcdis.ConverterModel_supcap(m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Pdcdc, sp);
+                m_dcdis.ConverterModel_supcap(m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Pdcdc, (supcapacitor *)sp);
+				/* Here, because the current is drawn from the bank, we set '-' here */
+				m_Pup = -m_dccon2_Iin;
  			break; 
 		}
-
-		m_Pup = m_dccon2_Iout;
 
 		/* Done with one part, starts another part */
 
@@ -97,15 +98,17 @@ double selVcti::bestVCTI(double input_Power, double dccon1_Iout, double dccon1_V
 				} else {
                 	m_dcout.ConverterModel_EESBank(m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Pdcdc, sp);
 				}
+        		m_Pdn = m_dccon2_Iout;
             break;
             case 2:
             case 3:
                 m_dccon2_Vout = m_VCTI;
                 m_dccon2_Iout = m_dccon1_Iin;
-                // m_dcdis.ConverterModel_supcap(m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Pdcdc, sp);
+                m_dcdis.ConverterModel_supcap(m_dccon2_Vout, m_dccon2_Iout, m_dccon2_Vin, m_dccon2_Iin, m_dccon2_Pdcdc, (supcapacitor *)sp);
+				/* Here, because the current is drawn from the bank, we set '-' here */
+				m_Pdn = -m_dccon2_Iin;
             break;
         }
-        m_Pdn = m_dccon2_Iout;
 
 		// Compare, when both voltages are not working, prefer the min VCTI
 		if (m_Pup >= m_Pdn) {

@@ -57,12 +57,12 @@ int main(int argc, char *argv[]){
 
 		// ChargeProcess
 		time_index = cp.ChargeProcessOurPolicy(&sp, &lb, &load);
-		// time_index = cp.ChargeProcessOptimalVcti(power_input, &sp, &lb, &load);
+		// time_index = cp.ChargeProcessOptimalVcti(&sp, &lb, &load);
 
 		// DischargeProcess
 		if (time_index < 0) {
-			// time_index = dp.DischargeProcessOurPolicy(power_input, &sp, &lb, &load);
-			// time_index = dp.DischargeProcessOptimalVcti(power_input, &sp, &lb, &load);
+			// time_index = dp.DischargeProcessOurPolicy(0.0, &sp, &lb, &load);
+			time_index = dp.DischargeProcessOptimalVcti(0.0, &sp, &lb, &load);
 		}
 
 		if (time_index < 0) {
