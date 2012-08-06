@@ -82,7 +82,7 @@ int DischargeProcess::DischargeProcessOurPolicy(double power_input, supcapacitor
 		print_super_cap_info(output, sp, power_input);
 
 		// compute the energy consumption
-		sp->SupCapCharge(-super_cap_iout, min_time_interval, super_cap_vcc, super_cap_qacc);
+		sp->SupCapCharge(-super_cap_iout, dc_super_cap_vin, min_time_interval, super_cap_vcc, super_cap_qacc);
 
 		// time elapse
 		time_elapsed += min_time_interval;
@@ -147,7 +147,7 @@ int DischargeProcess::DischargeProcessOptimalVcti(double power_input, supcapacit
 		print_super_cap_info(output, sp, power_input);
 		
 		// compute the energy consumption
-		sp->SupCapCharge(-super_cap_iout, min_time_interval, super_cap_vcc, super_cap_qacc);
+		sp->SupCapCharge(-super_cap_iout, dc_super_cap_vin, min_time_interval, super_cap_vcc, super_cap_qacc);
 
 		// time elapse
 		time_elapsed += min_time_interval;
@@ -201,7 +201,7 @@ void DischargeProcess::print_super_cap_info(ofstream &output, supcapacitor *sp, 
 			<< super_cap_iout << "\t"
 			<< dc_super_cap_power << "\t"
 			<< dc_load_power << "\t"
-			<< super_cap_iout*(sp->SupCapGetRacc()*sp->SupCapGetRacc()) << "\t"
+			<< super_cap_iout*super_cap_iout*sp->SupCapGetRacc() << "\t"
 			<< sp->SupCapGetEnergy() << "\t"
 			<< sp->SupCapGetCacc() << endl;
 

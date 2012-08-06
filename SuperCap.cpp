@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "SuperCap.hpp"
+#include "main.hpp"
 #include <vector>
  using namespace std;
 
@@ -19,21 +20,16 @@ supcapacitor::supcapacitor() :
 	m_Cacc1(100.0), m_Cacc(m_p / m_s * m_Cacc1) {
 }
 
-void supcapacitor::SupCapCharge(double Iin, double Tdur, double &Vs, double &Qacc){
-	double m_Vs =0;
-	//Qacc = It, Vs = Qacc/Cacc + Iin*Racc
-	//Rbank =(2/3 * n - 1 + 1/(3 * n)) * n * Rp + n/m * Racc + (m - 1) * Rs
-	//Cacc  = m/n * Cacc1
-	m_Cacc = m_p / m_s * m_Cacc1;
-	m_Racc = m_s / m_p * m_Racc1;
-	m_Rbank = (2.0 / 3.0 * m_p - 1.0 + 1.0 /(3.0 * m_p)) * m_s * m_Rp + m_Racc + (m_s - 1.0) * m_Rs;
+void supcapacitor::SupCapCharge(double Iin, double Vin, double Tdur, double &Vs, double &Qacc) {
+	
+	// Recalculate the charge
 	m_Qacc = m_Qacc + Iin * Tdur;
-	m_Vs = m_Qacc / m_Cacc + Iin * m_Rbank;
 
-	Vs = m_Vs;
-	Qacc = m_Qacc;
-
+	// Recalculate the energy
 	m_Energy = (0.5)*(m_Qacc*m_Qacc)/m_Cacc;
+
+	Qacc = m_Qacc;
+	Vs = m_Qacc / m_Cacc + Iin * m_Rbank;
 }
 
 bool supcapacitor::SupCapOperating(double Iin, double VCTI, double delVCTI){
@@ -113,6 +109,40 @@ double supcapacitor::SupCapReconfig(double new_s, double new_p) {
 	return new_Q;
 }
 
+bool supcapacitor::SupCapReconfiguration(double Iin, double VCTI, dcconvertOUT *dc_super_cap) {
+	/*
+	 * We start from the most serial config
+	 */
+	int total = (int)m_Totl, s = total, p = 1;
+	bool flag = false;
+	/*
+	 * If there is no energy stored in the bank, just set most serial config
+	 */
+	if (SupCapGetEnergy() < near_zero) {
+		SupCapReconfig(s, p);
+		return true;
+	}
+	for (; s > 0; --s) {
+		if (total % s == 0) {
+			p = total / s;
+			SupCapReconfig(s, p);
+
+			double Iout, Vout, Power;
+			dc_super_cap->ConverterModel_EESBank(VCTI, Iin, Vout, Iout, Power, this);
+			/* 
+			 * If we found the Vout < Vin, 
+			 * this means we found the current best config
+			 * because we start from the most serial config
+			 */
+			if (Vout < VCTI) {
+				flag = true;
+				break;
+			}
+		}
+	}
+	return true;
+}
+
 double supcapacitor::SupCapGetRacc() const {
 	return m_Rbank;
 }
@@ -179,6 +209,10 @@ bool supcapacitor::EESBankOperating(double Iin, double VCTI, double delVCTI) {
 	return SupCapOperating(Iin, VCTI, delVCTI);
 }
 
-void supcapacitor::EESBankCharge(double Iin, double Tdur, double &Vs, double &Qacc) {
-	return SupCapCharge(Iin, Tdur, Vs, Qacc);
+bool supcapacitor::EESBankReconfiguration(double Iin, double VCTI, dcconvertOUT *dc_super_cap) {
+	return SupCapReconfiguration(Iin, VCTI, dc_super_cap);
+}
+
+void supcapacitor::EESBankCharge(double Iin, double Vin, double Tdur, double &Vs, double &Qacc) {
+	return SupCapCharge(Iin, Vin, Tdur, Vs, Qacc);
 }

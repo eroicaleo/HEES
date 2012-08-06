@@ -8,7 +8,7 @@ class supcapacitor : public ees_bank {
 		//Default Constructor
 		supcapacitor();
 		//SuperCapacitor Model
-		void SupCapCharge(double Iin, double Tdur, double &Vs, double &Qacc);
+		void SupCapCharge(double Iin, double Vin, double Tdur, double &Vs, double &Qacc);
 		bool SupCapOperating(double Iin, double VCTI, double delVCTI);
 		bool SupCapMoreSeriesReconfig(); 
 		double SupCapReconfig(double new_s, double new_p); 
@@ -21,6 +21,7 @@ class supcapacitor : public ees_bank {
 		void SupCapSetQacc(double Qacc);
 		bool SupCapIsFullySerial(void) const;
 		bool SupCapIsFullyParallel(void) const;
+		bool SupCapReconfiguration(double Iin, double VCTI, dcconvertOUT *dc_super_cap);
 	/* Inherited public interface from base class ees_bank */
 	public:
 		virtual double EESBankGetCacc() const;
@@ -29,7 +30,8 @@ class supcapacitor : public ees_bank {
 		virtual double EESBankGetRacc() const;
 		virtual double EESBankGetEnergy() const;
 		virtual bool EESBankOperating(double, double, double);
-		virtual	void EESBankCharge(double Iin, double Tdur, double &Vs, double &Qacc);
+		virtual bool EESBankReconfiguration(double, double, dcconvertOUT *);
+		virtual	void EESBankCharge(double Iin, double Vin, double Tdur, double &Vs, double &Qacc);
 		
 	private:
 		double m_p;

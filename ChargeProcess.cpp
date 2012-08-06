@@ -15,6 +15,9 @@ using namespace std::tr1;
 
 extern HEESTimer HTimer;
 
+double dc_super_cap_energy = 0.0;
+double bank_res_energy = 0.0;
+
 ChargeProcess::ChargeProcess() :
 	vcti(0.0), icti(0.0),
 	super_cap_iin(0.0), super_cap_qacc(0.0), super_cap_voc(0.0), super_cap_vcc(0.0), dc_load_power(0.0),
@@ -57,8 +60,13 @@ void ChargeProcess::charge_policy_our_policy(ees_bank *bank) {
 	if (power_status == POWER_NORMAL) {
 		dc_super_cap.ConverterModel_EESBank(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, bank);
 		// Reconfig if necessary
-		while ((dc_super_cap_vout > dc_super_cap_vin) && supcap_reconfig_return && bank_reconfig_enable) {
-			supcap_reconfig_return = bank->EESBankOperating(dc_super_cap_iin, dc_super_cap_vout, -100.0);
+		// while ((dc_super_cap_vout > dc_super_cap_vin) && supcap_reconfig_return && bank_reconfig_enable) {
+			// supcap_reconfig_return = bank->EESBankOperating(dc_super_cap_iin, dc_super_cap_vout, -100.0);
+			// supcap_reconfig_return = bank->EESBankReconfiguration(dc_super_cap_iin, dc_super_cap_vout, &dc_super_cap);
+			// dc_super_cap.ConverterModel_EESBank(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, bank);
+		// }
+		if ((dc_super_cap_vout > dc_super_cap_vin) && supcap_reconfig_return && bank_reconfig_enable) {
+			supcap_reconfig_return = bank->EESBankReconfiguration(dc_super_cap_iin, dc_super_cap_vout, &dc_super_cap);
 			dc_super_cap.ConverterModel_EESBank(dc_super_cap_vin, dc_super_cap_iin, dc_super_cap_vout, dc_super_cap_iout, dc_super_cap_power, bank);
 		}
 	}
@@ -139,12 +147,16 @@ int ChargeProcess::ChargeProcessApplyPolicy(ees_bank *bank, lionbat *lb, loadApp
 		if (HTimer.HEESTimerGetCurrentTimeIndex() % delta_energy_steps == 0)
 			print_super_cap_info(output, bank, power_input);
 
-		bank->EESBankCharge(super_cap_iin, min_time_interval, super_cap_vcc, super_cap_qacc);
+		bank->EESBankCharge(super_cap_iin, dc_super_cap_vout, min_time_interval, super_cap_vcc, super_cap_qacc);
 
 		time_elapsed += min_time_interval;
 		++time_index;
 		HTimer.HEESTimerAdvancdTimerIndex(1, bank);
 		load->AdvanceLoadProgress(min_time_interval);
+
+		// Recorde the wasted energy on dcdc and bank resistance
+		dc_super_cap_energy += min_time_interval * dc_super_cap_power;
+		bank_res_energy += min_time_interval * super_cap_iin * super_cap_iin *bank->EESBankGetRacc();
 
 		if (HTimer.HEESTimerGetCurrentTimeIndex() > MAX_TIME_INDEX)
 			break;
@@ -171,7 +183,7 @@ void ChargeProcess::print_super_cap_info(ofstream &output, ees_bank *bank, doubl
 			<< super_cap_iin << "\t"
 			<< dc_super_cap_power << "\t"
 			<< dc_load_power << "\t"
-			<< super_cap_iin*(bank->EESBankGetRacc()*bank->EESBankGetRacc()) << "\t"
+			<< super_cap_iin*super_cap_iin*bank->EESBankGetRacc() << "\t"
 			<< bank->EESBankGetEnergy() << "\t"
 			<< bank->EESBankGetCacc() << endl;
 

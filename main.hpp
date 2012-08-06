@@ -11,6 +11,8 @@ const int recompute_vcti_time_index = 10;
 
 const double time_near_zero = 1e-4;
 
+const double near_zero = 1e-4;
+
 int hees_parse_command_line(int argc, char *argv[]); 
 
 // Declare the global variables
@@ -35,5 +37,7 @@ extern int delta_energy_steps;
 
 extern std::tr1::function<double(double)> power_source_func;
 
+extern double dc_super_cap_energy;
+extern double bank_res_energy;
 
 #endif

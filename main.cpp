@@ -74,6 +74,7 @@ int main(int argc, char *argv[]){
 			break;
 	}
 
+	cout << "The total energy wasted are: " << dc_super_cap_energy << "\t" << bank_res_energy << endl; 
 #ifdef _COMPLEX_MAIN_
 	dcconvertOUT dcout;
 

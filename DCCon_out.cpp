@@ -9,6 +9,8 @@
 #include <vector>
 //#include "LionBat.hpp"
 #include "SuperCap.hpp"
+#include "main.hpp"
+
 using namespace std;
 
 dcconvertOUT::dcconvertOUT() :

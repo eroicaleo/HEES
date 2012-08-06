@@ -1,6 +1,7 @@
 
 #include "DCSolver.hpp"
 #include "SuperCap.hpp"
+#include "main.hpp"
 
 #include <algorithm>
 #include <iostream>
@@ -24,7 +25,7 @@ static int check_flag(void *flagvalue, char *funcname, int opt);
 static double g_dc_vout, g_dc_iout;
 static double g_dc_vin, g_dc_iin;
 static double g_dc_power;
-static double g_bank_vocc(0.0), g_bank_racc(0.166);
+static double g_bank_vocc(0.0), g_bank_racc(0.166), g_bank_cap(0.0);
 
 static function<double(const double, const double, const double)> power_calculator;
 
@@ -140,6 +141,7 @@ int DCSolver::SolveItGivenDCInput(double dc_vin, double dc_iin, double &dc_vout,
 	g_dc_iin = dc_iin;
 	g_bank_racc = bank->EESBankGetRacc();
 	g_bank_vocc = bank->EESBankGetVoc();
+	g_bank_cap  = bank->EESBankGetCacc();
 
 	PrimaryGuess = SetInitialGuess1;
 	SecondaryGuess = SetInitialGuess2;
@@ -182,6 +184,7 @@ int DCSolver::SolveItGivenDCOutput(double dc_vout, double dc_iout, double &dc_vi
 	g_dc_iout = dc_iout;
 	g_bank_racc = bank->EESBankGetRacc();
 	g_bank_vocc = bank->EESBankGetVoc();
+	g_bank_cap  = bank->EESBankGetCacc();
 
 	PrimaryGuess = SetInitialGuess2;
 	SecondaryGuess = SetInitialGuess1;
@@ -305,7 +308,7 @@ static int func_given_input(N_Vector u, N_Vector f, void *user_data)
 
   // x1 is the dc_vout, y1 is the dc_iout
   g_dc_vout = x1;
-  g_dc_iout = (g_dc_vout - g_bank_vocc)/g_bank_racc;
+  g_dc_iout = (g_dc_vout - g_bank_vocc)/(g_bank_racc + min_time_interval/(2.0*g_bank_cap));
   g_dc_power = power_calculator(g_dc_vin, g_dc_vout, g_dc_iout);
 
   // fdata[0] = x1*x1 - 1; 
@@ -336,7 +339,7 @@ static int func_given_output(N_Vector u, N_Vector f, void *user_data)
 
   // x1 is the dc_vout, y1 is the dc_iout
   g_dc_vin = x1;
-  g_dc_iin = (g_bank_vocc - g_dc_vin)/g_bank_racc;
+  g_dc_iin = (g_bank_vocc - g_dc_vin)/(g_bank_racc + min_time_interval/(2.0*g_bank_cap));
   g_dc_power = power_calculator(g_dc_vin, g_dc_vout, g_dc_iout);
 
   // fdata[0] = x1*x1 - 1; 
