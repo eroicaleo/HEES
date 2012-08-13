@@ -29,6 +29,8 @@ int main(int argc, char *argv[]){
 
 	sp.SupCapReconfig(supcap_serial_conf, supcap_parallel_conf);
 	sp.SupCapSetQacc(supcap_init_charge);
+	sp.SupCapSetCellRes(supcap_res, supcap_res);
+	sp.SupCapSetCellCap(supcap_cap);
 
 	// Set current task info
 	// double vdd = 1.0, idd = 1.0;

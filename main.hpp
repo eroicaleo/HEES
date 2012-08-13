@@ -26,6 +26,9 @@ extern double battery_init_charge;
 
 extern int bank_reconfig_enable;
 
+extern double supcap_res;
+extern double supcap_cap;
+
 extern double fixed_vcti;
 
 extern int start_time_hh;

@@ -32,6 +32,21 @@ void supcapacitor::SupCapCharge(double Iin, double Vin, double Tdur, double &Vs,
 	Vs = m_Qacc / m_Cacc + Iin * m_Rbank;
 }
 
+double supcapacitor::ComputeRbank(double Rs, double Rp) {
+	return m_Rbank = (2.0/3.0*m_p - 1.0 + 1.0/(3.0*m_p)) * m_s * Rp + m_Racc + (m_s - 1.0) * Rs;
+}
+
+void supcapacitor::SupCapSetCellRes(double Rs, double Rp) {
+	m_Rs = Rs;
+	m_Rp = Rp;
+	m_Rbank = ComputeRbank(Rs, Rp);
+}
+
+void supcapacitor::SupCapSetCellCap(double Cap) {
+	m_Cacc1 = Cap;
+	m_Cacc = m_p / m_s * m_Cacc1;
+}
+
 bool supcapacitor::SupCapOperating(double Iin, double VCTI, double delVCTI){
 	double m_Vs = 0.0;
 	double m_R = 0.0;
@@ -56,7 +71,7 @@ bool supcapacitor::SupCapOperating(double Iin, double VCTI, double delVCTI){
 		double p = 0, s =0;
 		p = m_comb.back();
 		s = m_Totl / p;
-		m_R = (2.0/3.0 * p - 1.0 + 1.0/(3.0 * p)) * s * m_Rp + s / p  * m_Racc1 + (s - 1.0) * m_Rs;// m_Racc
+		m_R = ComputeRbank(m_Rs, m_Rp);
         m_C = p / s * m_Cacc1;//m_Cacc
         m_Vs = m_Qacc * sqrt(m_C/m_Cacc) / m_C;
         m_del = m_Vs - VCTI;
@@ -103,7 +118,7 @@ double supcapacitor::SupCapReconfig(double new_s, double new_p) {
 	m_Cacc = new_C;
 	m_p = new_p;
 	m_s = new_s;
-	m_Rbank = (2.0/3.0 * m_p - 1.0 + 1.0/(3.0 * m_p)) * m_s * m_Rp + m_s / m_p  * m_Racc1 + (m_s - 1.0) * m_Rs;
+	m_Rbank = ComputeRbank(m_Rs, m_Rp);
 	m_Racc = m_s / m_p * m_Racc1;
 
 	return new_Q;
@@ -156,7 +171,7 @@ void supcapacitor::SupCapReset(){
 	m_Qacc = 0;
 	m_Cacc = m_p / m_s * m_Cacc1;
 	m_Racc = m_s / m_p * m_Racc1;
-	m_Rbank = (2.0 / 3.0 * m_p - 1.0 + 1.0/(3.0 * m_p)) * m_s * m_Rp + m_Racc + (m_s - 1.0) * m_Rs;
+	m_Rbank = ComputeRbank(m_Rs, m_Rp);
 
 	m_Energy = (0.5)*(m_Qacc*m_Qacc)/m_Cacc;
 }

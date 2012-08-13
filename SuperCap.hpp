@@ -19,6 +19,8 @@ class supcapacitor : public ees_bank {
 		double SupCapGetVoc(void) const;
 		void SupCapReset();
 		void SupCapSetQacc(double Qacc);
+		void SupCapSetCellRes(double Rs, double Rp); 
+		void SupCapSetCellCap(double Cap); 
 		bool SupCapIsFullySerial(void) const;
 		bool SupCapIsFullyParallel(void) const;
 		bool SupCapReconfiguration(double Iin, double VCTI, dcconvertOUT *dc_super_cap);
@@ -32,6 +34,11 @@ class supcapacitor : public ees_bank {
 		virtual bool EESBankOperating(double, double, double);
 		virtual bool EESBankReconfiguration(double, double, dcconvertOUT *);
 		virtual	void EESBankCharge(double Iin, double Vin, double Tdur, double &Vs, double &Qacc);
+
+	/* Private functions */
+	private:
+		double ComputeRbank(double Rs, double Rp); 
+		
 		
 	private:
 		double m_p;

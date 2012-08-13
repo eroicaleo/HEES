@@ -24,6 +24,9 @@ double battery_init_charge;
 
 int bank_reconfig_enable;
 
+double supcap_res;
+double supcap_cap;
+
 /* VCTI related parameters */
 double fixed_vcti;
 
@@ -67,6 +70,8 @@ int hees_parse_command_line(int argc, char *argv[]) {
 			("battery_init_charge", value<double>(&battery_init_charge)->default_value(0.0), "amount of initial charge in battery bank")
 			("bank_reconfig_enable", value<int>(&bank_reconfig_enable)->default_value(1), "If hees bank reconfiguration is enabled or not")
 			("fixed_vcti", value<double>(&fixed_vcti)->default_value(0.0), "Set it to > 0, if you want to fix the Vcti")
+			("supcap_res", value<double>(&supcap_res)->default_value(10e-3), "The internal resistance of each cell in the supercapacitor bank")
+			("supcap_cap", value<double>(&supcap_cap)->default_value(10e-3), "The capacitance of each cell in the supercapacitor bank")
 		;
 
 		/* Time related parameters */
