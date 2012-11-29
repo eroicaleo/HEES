@@ -42,6 +42,7 @@ int delta_energy_steps;
 string power_source_type;
 double constant_power_value;
 ConstantPowerSource cps;
+VariablePowerSource vps;
 
 function<double(double)> power_source_func;
 
@@ -119,9 +120,12 @@ int hees_parse_command_line(int argc, char *argv[]) {
 
 		if (power_source_type == "solar_power") {
 			power_source_func = solar_power_source_sec;
-		} else if (vm.count("constant_power_value")) {
+		} else if ((power_source_type == "constant_power") && (vm.count("constant_power_value"))) {
 			cps.SetPowerValue(constant_power_value);
 			power_source_func = bind(&ConstantPowerSource::GetConstantPower, &cps, placeholders::_1);
+		} else if (power_source_type == "variable_power") {
+			vps.ReadVariablePowerSource("VariablePowerSource.txt");
+			power_source_func = bind(&VariablePowerSource::AdvanceVariablePowerSource, &vps, placeholders::_1);
 		}
 
 	} catch (exception &e) {
