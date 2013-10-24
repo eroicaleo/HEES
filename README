@@ -1,0 +1,27 @@
+
+1. How to run the code?
+Change the settings in the hees.cfg file in the
+current directory and in the command line, type
+
+./energysys > 1
+
+Then, you could find the final energy stored in the bank
+in the file OverallProcess.txt.
+
+2. How to change the workload?
+You can specify the workload in Task.txt. A workload 
+consists of three parameters in the following format.
+
+1.0 0.5 600
+1.0 0.8 300
+
+The first one is the voltage, you could fix it to be 1.0 (Volt).
+The second one is the current, e.g. 0.5 (Amps).
+The third one is the task length in seconds, e.g. 600 (Seconds).
+You can play with the second and the third parameters.
+
+3. What experiments we want to do?
+We want to find if task scheduling will affect the energy stored in
+the EES bank when the task duration is small, for different capacitance. 
+So, you could change the capacitance and run two tasks in different order
+and see if the energy stored in the bank has large difference.
