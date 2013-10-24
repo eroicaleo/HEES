@@ -1,0 +1,27 @@
+** Integrate the command argument parsing library
+-- commit bc97033e8f5228cbd88f4b5909b855553c325631
+
+** Using function object to simplify the Discharge function
+--
+
+** Replace the SupCap class by ees_bank base class in Discharge functions
+--
+
+** Fix the case when the Matlab and sundial solver can not solving 
+** the equations during discharging when the charge left in the bank is low
+--
+
+** Fix the error when sundial solver can not solve the problem during charging
+-- commit 4242807a70afe6ae9700c4b6ea704a1366b07c48
+
+** Make the workload more self-contained, get rid of the configuration of workload in main.cpp
+-- commit 56fa92d81b83fbc77710d8b43b6bd88816e672c4
+
+** Make the reconfigration more intelligently
+-- commit b75f05ba9389596992054d324cccd4e264003416
+
+** Fix the bug, when discharging current at the load side is too big > 2.4 A, the simulator can not work.
+--
+
+** Fix the bug, when load side supply voltage is too high, the simulator can not work.
+--
