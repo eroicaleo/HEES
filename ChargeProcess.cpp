@@ -28,7 +28,7 @@ ChargeProcess::ChargeProcess() :
 	output_file("OverallProcess.txt") { 
 	
 	ofstream output(output_file.c_str());
-	output << "Pinput\tVCTI\tVcap_oc\tVcap_cc\tQacc\tIsup\tPdcsup\tPdcload\tPrbank\tEsup\tCacc" << endl;
+	output << "Pinput\tVCTI\tVcap_oc\tVcap_cc\tQacc\t\tIsup\tPdcsup\tPdcsupIin\tPdcload\tPrbank\tEsup\tCacc" << endl;
 	output.close();
 }
 
@@ -182,6 +182,7 @@ void ChargeProcess::print_super_cap_info(ofstream &output, ees_bank *bank, doubl
 			<< super_cap_qacc << "\t"
 			<< super_cap_iin << "\t"
 			<< dc_super_cap_power << "\t"
+			<< dc_super_cap_iin << "\t\t"
 			<< dc_load_power << "\t"
 			<< super_cap_iin*super_cap_iin*bank->EESBankGetRacc() << "\t"
 			<< bank->EESBankGetEnergy() << "\t"
