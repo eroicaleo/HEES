@@ -9,12 +9,12 @@ class dynProg {
 	private:
 		int m_numOfTask; //Number of task
 		int m_numOfVolt;
-		double m_deadline;// The deadline of all the task
+		int m_deadline;// The deadline of all the task
 		vector<double>m_inputDuration; // The task duration on 1.0V
 		vector<double>m_inputEnergy; // The task energy on 1.0V
 
 		//double m_taskDuration[m_numOfTask][5];
-		vector< vector<double> > m_taskDuration;// The task duration from 0.8V to 1.2V
+		vector< vector<int> > m_taskDuration;// The task duration from 0.8V to 1.2V
 		//double m_taskEnergy[m_numOfTask][5];
 		vector< vector<double> > m_taskEnergy;// The task energy from 0.8V to 1.2V
 		//double m_scheduleEnergy[m_numOfTask][m_deadline * 10 + 1];
