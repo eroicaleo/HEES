@@ -6,10 +6,12 @@
 #include <vector>
 
 #include "taskScheduling.hpp"
+#include "../nnet/nnetmultitask.hpp"
 
 using namespace std;
+using namespace std::tr1;
 
-static const double CRAZY_ENERGY(1000.0);
+static const double CRAZY_ENERGY(-1000.0);
 
 dynProg::dynProg(int numOfTask, double deadline, vector<double> taskDuration, vector<double> taskEnergy) {
 
@@ -28,6 +30,8 @@ dynProg::dynProg(int numOfTask, double deadline, vector<double> taskDuration, ve
 
 	m_taskDuration = vector<vector<int> >(numOfTask, vector<int>(m_numOfVolt, 0));
 	m_taskEnergy = vector<vector<double> >(numOfTask, vector<double>(m_numOfVolt, 0.0));
+	m_taskCurrent = vector<vector<double> >(numOfTask, vector<double>(m_numOfVolt, 0.0));
+
 	m_scheduleEnergy = vector<vector<double> >(numOfTask, vector<double>(m_deadline * 10 + 1 , 0.0));
 	m_scheduleVolt =  vector<vector<double> >(numOfTask, vector<double>(m_deadline * 10 + 1, 0.0));
 	m_lastStepDuration = vector<vector<double> >(numOfTask, vector<double>(m_deadline * 10 + 1, 0.0));
@@ -41,9 +45,14 @@ dynProg::dynProg(int numOfTask, double deadline, vector<double> taskDuration, ve
 		for (int k = 0; k < m_numOfVolt; k++) {
 			m_taskDuration[i][k] = (int)ceil(m_inputDuration[i] * 10.0 / volSel[k]);
 			m_taskEnergy[i][k] = m_inputEnergy[i] * volSel[k] * volSel[k];
+			m_taskCurrent[i][k] = m_inputEnergy[i] / m_inputDuration[i] * volSel[k] * volSel[k] ;
 			// cout<<m_taskDuration[i][k]<<","<<m_taskEnergy[i][k]<<endl;
 		}
 	}
+
+	// System model related parameters
+	m_initialEnergy = 20;
+	m_solarPower = 3.0;
 }
 
 void dynProg::taskTimeline() {
@@ -86,10 +95,12 @@ void dynProg::taskTimeline() {
 			m_lastStepDuration[i][j] = -1;
 		}
 	}
-	for (int j = 0; j < m_numOfVolt; ++j) {
-		int taskDur = m_taskDuration[0][j];
-		m_scheduleVolt[0][taskDur] = volSel[j];
-		m_scheduleEnergy[0][taskDur] = m_taskEnergy[0][j];
+	for (int k = 0; k < m_numOfVolt; ++k) {
+		int taskDur = m_taskDuration[0][k];
+		double inputPower = getExtraChargePower(0, k);
+		double energy = energyCalculator(inputPower, m_initialEnergy, taskDur);
+		m_scheduleVolt[0][taskDur] = volSel[k];
+		m_scheduleEnergy[0][taskDur] = energy;
 	}
 
 	//	for(int j = 0; j <= (int)(m_deadline * 10.0); j ++){
@@ -134,14 +145,20 @@ void dynProg::taskTimeline() {
 	//			}
 	//		}
 	//	}
+
 	for (int i = 1; i < m_numOfTask; i++) {
 		for (size_t j = 0; j < m_scheduleVolt[0].size(); ++j) {
 			if (m_scheduleVolt[i-1][j] > 0) {
 				for (int k = 0; k < m_numOfVolt; ++k) {
-					double energy = m_scheduleEnergy[i-1][j] + m_taskEnergy[i][k];
+
 					int taskDur = m_taskDuration[i][k];
+
+					double inputPower = getExtraChargePower(i, k);
+					double energy = energyCalculator(inputPower, m_scheduleEnergy[i-1][j], taskDur);
+
 					int taskiFinishTime = j + taskDur;
-					if (m_scheduleEnergy[i][taskiFinishTime] > energy) {
+
+					if (m_scheduleEnergy[i][taskiFinishTime] < energy) {
 						// Reset the energy
 						m_scheduleVolt[i][taskiFinishTime] = volSel[k];
 						m_scheduleEnergy[i][taskiFinishTime] = energy;
@@ -160,6 +177,16 @@ void dynProg::taskTimeline() {
 		cout<<endl;
 	}
 }
+
+double dynProg::getExtraChargePower(int taskIdx, int volLevel) {
+
+	double dc_load_vin(1.0), dc_load_vout(volSel[volLevel]), dc_load_iout(m_taskCurrent[taskIdx][volLevel]);
+	double dc_load_iin(0.0), dc_load_power(0.0);
+
+	m_dcLoad.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
+	return m_solarPower - dc_load_vin*dc_load_iin;
+}
+
 void dynProg::taskScheduling(){
 	taskTimeline();
 	int i = m_numOfTask - 1;
@@ -207,9 +234,11 @@ int main(){
 	vector<double>outDuration;
 	vector<double>outVolt;
     dynProg taskSet1 (numOfTask, deadline, InDuration, InEnergy);
-	// taskSet1.taskTimeline();
-	outDuration = taskSet1.getDurationSet();
-	outVolt = taskSet1.getVoltSet();
+	nnetmultitask nnetPredictor;
+	taskSet1.energyCalculator = bind(&nnetmultitask::predictWithEnergyLength, nnetPredictor, placeholders::_1, placeholders::_2, placeholders::_3);
+	taskSet1.taskTimeline();
+	// outDuration = taskSet1.getDurationSet();
+	// outVolt = taskSet1.getVoltSet();
 	for(int i = 0; i < numOfTask; i ++){
 		cout<<outDuration[i]<<", ";
 		cout<<outVolt[i]<<endl;
