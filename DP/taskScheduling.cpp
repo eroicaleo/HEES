@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <stack>
 #include <vector>
 
 #include "taskScheduling.hpp"
@@ -169,6 +170,7 @@ void dynProg::taskTimeline() {
 		} // for j
 	} // for i
 
+	#ifdef DEBUG_VERBOSE
 	for (int i = 0; i < m_numOfTask; i++) {
 			cout<<"Task "<<i<<":";
 		for (int j = 0; j <= m_deadline * 10; j++) {
@@ -176,6 +178,7 @@ void dynProg::taskTimeline() {
 		}
 		cout<<endl;
 	}
+	#endif
 }
 
 double dynProg::getExtraChargePower(int taskIdx, int volLevel) {
@@ -185,6 +188,48 @@ double dynProg::getExtraChargePower(int taskIdx, int volLevel) {
 
 	m_dcLoad.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
 	return m_solarPower - dc_load_vin*dc_load_iin;
+}
+
+void dynProg::backTracing() {
+	size_t optIdx = max_element(m_scheduleEnergy.back().begin(), m_scheduleEnergy.back().end()) - m_scheduleEnergy.back().begin();
+	for (int i = m_numOfTask-1; i >= 0; --i) {
+		dpTableEntry entry;
+		entry.totalEnergy = m_scheduleEnergy[i][optIdx];
+		entry.voltage = m_scheduleVolt[i][optIdx];
+		entry.volLevel = find(volSel, volSel+m_numOfVolt, entry.voltage) - volSel;
+		entry.taskID = i;
+		entry.len = (i > 0) ? optIdx - (int)m_lastStepDuration[i][optIdx] : optIdx;
+		entry.current = m_taskCurrent[i][entry.volLevel];
+		optimalSchedule.push(entry);
+
+		optIdx = (i > 0) ? (int)m_lastStepDuration[i][optIdx] : 0;
+	}
+	return;
+}
+
+void dynProg::genScheduleForEES() {
+	ofstream outfile;
+	outfile.open("Task.txt");
+	if (!outfile) {
+		cerr << "can not open Task.txt for write" << endl;
+		exit(66);
+	}
+	stack<dpTableEntry> tmpSchedule(optimalSchedule);
+	while(!tmpSchedule.empty()) {
+		dpTableEntry tmpTaskEntry = tmpSchedule.top();
+		outfile << tmpTaskEntry.voltage << " ";
+		outfile << tmpTaskEntry.current << " ";
+		outfile << (tmpTaskEntry.len / 10.0) << endl;
+		#ifdef DEBUG_VERBOSE
+			cout << "Task id: " << tmpTaskEntry.taskID
+				<< " run for " << tmpTaskEntry.len << "timestamp (0.1s) "
+				<< " voltage: " << tmpTaskEntry.voltage
+				<< " current: " << tmpTaskEntry.current
+				<< " final energy: " << tmpTaskEntry.totalEnergy << endl;
+		#endif
+		tmpSchedule.pop();
+	}
+	outfile.close();
 }
 
 void dynProg::taskScheduling(){
@@ -237,12 +282,14 @@ int main(){
 	nnetmultitask nnetPredictor;
 	taskSet1.energyCalculator = bind(&nnetmultitask::predictWithEnergyLength, nnetPredictor, placeholders::_1, placeholders::_2, placeholders::_3);
 	taskSet1.taskTimeline();
+	taskSet1.backTracing();
+	taskSet1.genScheduleForEES();
 	// outDuration = taskSet1.getDurationSet();
 	// outVolt = taskSet1.getVoltSet();
-	for(int i = 0; i < numOfTask; i ++){
-		cout<<outDuration[i]<<", ";
-		cout<<outVolt[i]<<endl;
-	}
+	// for(int i = 0; i < numOfTask; i ++){
+	// 	cout<<outDuration[i]<<", ";
+	// 	cout<<outVolt[i]<<endl;
+	// }
 }
 
 #endif
