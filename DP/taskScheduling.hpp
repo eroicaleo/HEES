@@ -1,12 +1,15 @@
 #ifndef _DYNAMIC_PROGRAMMING_H_
 #define _DYNAMIC_PROGRAMMING_H_
 
+#include <stack>
 #include <tr1/functional>
 #include <vector>
 
 #include "../DCCon_in.hpp"
 
 using std::vector;
+
+struct dpTableEntry;
 
 class dynProg {
 	private:
@@ -40,6 +43,8 @@ class dynProg {
 		double m_solarPower;
 		double m_initialEnergy;
 
+		std::stack<dpTableEntry> optimalSchedule;
+
 	public:
 		//default construction method :
 		//Table the task energy and duration at each voltage
@@ -54,7 +59,25 @@ class dynProg {
 		// The function object take two variables, current energy and task length
 		std::tr1::function<double(double, double, double)> energyCalculator;
 
+		void backTracing();
+		void genScheduleForEES();
+
 	private:
 		double getExtraChargePower(int taskIdx, int volLevel);
 };
+
+struct dpTableEntry {
+
+	// We use the compiler generated copy constructor and operator=
+	// Should be OK, because they are all built-in type.
+	// dpTableEntry(const dpTableEntry &);
+
+	double totalEnergy;
+	double voltage;
+	double current;
+	int volLevel;
+	int taskID;
+	int len;
+};
+
 #endif
