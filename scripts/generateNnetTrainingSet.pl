@@ -4,15 +4,13 @@ use warnings;
 use strict;
 
 # usage:
-# ./generateNnetTrainingSet.pl OverallProcess.txt [steps of start and end] [steps between this start and next start]
+# ./generateNnetTrainingSet.pl OverallProcess.txt <steps of start and end> [steps between this start and next start] <max number of steps>
 
 die "Please provide OverallProcess.txt file and a steps!" if @ARGV < 2;
 
-my ($filename, $len, $step) = @ARGV;
+my ($filename, $len, $step, $maxStep) = @ARGV;
 
-if (!$step) {
-  $step = $len;
-}
+$step = $len unless $step;
 
 open my $inputfh, "<", "$filename" or
   die "Can not open $filename! $!";
@@ -31,9 +29,13 @@ while (<$inputfh>) {
 }
 
 my $i = 0;
-for ($i = 0; $i < $#energyArrary; $i += $step) {
-  if ($i + $len < $#energyArrary) {
+$maxStep = @energyArrary unless $maxStep;
+
+for ($i = 0; $i < $maxStep; $i += $step) {
+  if ($i + $len < $maxStep) {
     print "$inputPower\t$energyArrary[$i]\t$len\t$energyArrary[$i+$len]\n";
+  } else {
+    last;
   }
 }
 
