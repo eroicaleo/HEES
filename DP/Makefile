@@ -1,5 +1,5 @@
 
-CFLAG = -c -g -Wall
+CFLAG = -c -g -Wall -DDEBUG_VERBOSE
 CFLAG_DP = $(CFLAG) -DDP_BINARY -DDEBUG_VERBOSE
 EXT_OBJ = ../nnet/nnetmultitask.o ../nnet/nnet.o ../nnet/util.o \
           ../DCCon_in.o
