@@ -14,11 +14,11 @@ using namespace std::tr1;
 
 static const double CRAZY_ENERGY(-1000.0);
 
-dynProg::dynProg(int numOfTask, double deadline, vector<double> taskDuration, vector<double> taskEnergy) {
+dynProg::dynProg(int numOfTask, int numOfVolt, double deadline, vector<double> taskDuration, vector<double> taskEnergy) {
 
 	m_numOfTask = numOfTask;
 	m_numOfVolt = 5;
-	m_deadline = (int)deadline;
+	m_deadline = (int)(deadline*10);
 	m_inputDuration = taskDuration;
 	m_inputEnergy = taskEnergy;
 
@@ -33,9 +33,9 @@ dynProg::dynProg(int numOfTask, double deadline, vector<double> taskDuration, ve
 	m_taskEnergy = vector<vector<double> >(numOfTask, vector<double>(m_numOfVolt, 0.0));
 	m_taskCurrent = vector<vector<double> >(numOfTask, vector<double>(m_numOfVolt, 0.0));
 
-	m_scheduleEnergy = vector<vector<double> >(numOfTask, vector<double>(m_deadline * 10 + 1 , 0.0));
-	m_scheduleVolt =  vector<vector<double> >(numOfTask, vector<double>(m_deadline * 10 + 1, 0.0));
-	m_lastStepDuration = vector<vector<double> >(numOfTask, vector<double>(m_deadline * 10 + 1, 0.0));
+	m_scheduleEnergy = vector<vector<double> >(numOfTask, vector<double>(m_deadline + 1 , 0.0));
+	m_scheduleVolt =  vector<vector<double> >(numOfTask, vector<double>(m_deadline + 1, 0.0));
+	m_lastStepDuration = vector<vector<double> >(numOfTask, vector<double>(m_deadline + 1, 0.0));
 
 	// for(int i = 0; i < numOfTask; i ++){
 	// 	cout<<"Task "<<i<<" :"<<m_inputDuration[i]<<", "<<m_inputEnergy[i]<<endl;
@@ -97,11 +97,13 @@ void dynProg::taskTimeline() {
 		}
 	}
 	for (int k = 0; k < m_numOfVolt; ++k) {
-		int taskDur = m_taskDuration[0][k];
+		size_t taskDur = m_taskDuration[0][k];
 		double inputPower = getExtraChargePower(0, k);
-		double energy = energyCalculator(inputPower, m_initialEnergy, taskDur);
-		m_scheduleVolt[0][taskDur] = volSel[k];
-		m_scheduleEnergy[0][taskDur] = energy;
+		if ((inputPower > 0) && (taskDur < m_scheduleVolt[0].size())) {
+			double energy = energyCalculator(inputPower, m_initialEnergy, taskDur);
+			m_scheduleVolt[0][taskDur] = volSel[k];
+			m_scheduleEnergy[0][taskDur] = energy;
+		}
 	}
 
 	//	for(int j = 0; j <= (int)(m_deadline * 10.0); j ++){
@@ -155,15 +157,19 @@ void dynProg::taskTimeline() {
 					int taskDur = m_taskDuration[i][k];
 
 					double inputPower = getExtraChargePower(i, k);
-					double energy = energyCalculator(inputPower, m_scheduleEnergy[i-1][j], taskDur);
+					// Must guarantee there is enough power for charging
+					if (inputPower > 0) {
+						double energy = energyCalculator(inputPower, m_scheduleEnergy[i-1][j], taskDur);
 
-					int taskiFinishTime = j + taskDur;
+						size_t taskiFinishTime = j + taskDur;
 
-					if (m_scheduleEnergy[i][taskiFinishTime] < energy) {
-						// Reset the energy
-						m_scheduleVolt[i][taskiFinishTime] = volSel[k];
-						m_scheduleEnergy[i][taskiFinishTime] = energy;
-						m_lastStepDuration[i][taskiFinishTime] = j;
+						// Must guarantee that the schedule is feasible
+						if ((m_scheduleEnergy[i][taskiFinishTime] < energy) && (taskiFinishTime < m_scheduleVolt[i].size())) {
+							// Reset the energy
+							m_scheduleVolt[i][taskiFinishTime] = volSel[k];
+							m_scheduleEnergy[i][taskiFinishTime] = energy;
+							m_lastStepDuration[i][taskiFinishTime] = j;
+						}
 					}
 				} // for k
 			} // if last task schedule
@@ -173,7 +179,7 @@ void dynProg::taskTimeline() {
 	#ifdef DEBUG_VERBOSE
 	for (int i = 0; i < m_numOfTask; i++) {
 			cout<<"Task "<<i<<":";
-		for (int j = 0; j <= m_deadline * 10; j++) {
+		for (int j = 0; j <= m_deadline; j++) {
 			cout<<"Time step "<< j <<": ("<< m_scheduleEnergy[i][j]<<","<<m_scheduleVolt[i][j]<<","<<m_lastStepDuration[i][j]<<")-->"<<endl;
 		}
 		cout<<endl;
@@ -187,7 +193,8 @@ double dynProg::getExtraChargePower(int taskIdx, int volLevel) {
 	double dc_load_iin(0.0), dc_load_power(0.0);
 
 	m_dcLoad.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
-	return m_solarPower - dc_load_vin*dc_load_iin;
+	double chargingPower =  m_solarPower - dc_load_vin*dc_load_iin;
+	return (chargingPower < 0) ? 0.001 : chargingPower;
 }
 
 void dynProg::backTracing() {
@@ -209,9 +216,9 @@ void dynProg::backTracing() {
 
 void dynProg::genScheduleForEES() {
 	ofstream outfile;
-	outfile.open("Task.txt");
+	outfile.open("TasksDP.txt");
 	if (!outfile) {
-		cerr << "can not open Task.txt for write" << endl;
+		cerr << "can not open TasksDP.txt for write" << endl;
 		exit(66);
 	}
 	stack<dpTableEntry> tmpSchedule(optimalSchedule);
@@ -219,10 +226,10 @@ void dynProg::genScheduleForEES() {
 		dpTableEntry tmpTaskEntry = tmpSchedule.top();
 		outfile << tmpTaskEntry.voltage << " ";
 		outfile << tmpTaskEntry.current << " ";
-		outfile << (tmpTaskEntry.len / 10.0) << endl;
+		outfile << (tmpTaskEntry.len) << endl;
 		#ifdef DEBUG_VERBOSE
 			cout << "Task id: " << tmpTaskEntry.taskID
-				<< " run for " << tmpTaskEntry.len << "timestamp (0.1s) "
+				<< " run for " << tmpTaskEntry.len << " timestamp (0.1s) "
 				<< " voltage: " << tmpTaskEntry.voltage
 				<< " current: " << tmpTaskEntry.current
 				<< " final energy: " << tmpTaskEntry.totalEnergy << endl;
@@ -262,23 +269,45 @@ vector<double> dynProg::getVoltSet(){
 
 #ifdef DP_BINARY
 
+static void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &deadline) {
+	ifstream infile;
+	double tasklen, power, energy;
+	deadline = 0.0;
+	infile.open("TasksOrig.txt");
+	if (!infile) {
+		cerr << "Can not open TasksOrig.txt for read!" << endl;
+		exit(66);
+	}
+
+	while ((infile >> tasklen >> power >> energy).good()) {
+		InDuration.push_back(tasklen);
+		InEnergy.push_back(energy);
+		deadline += tasklen;
+	}
+
+	deadline /= 1.1;
+
+	infile.close();
+	return;
+}
+
 /* Testbench */
 int main(){
 	double deadline = 25.0;
-	int numOfTask = 3;
 	vector<double>InDuration;
-	InDuration.push_back(6.0);
-	InDuration.push_back(7.0);
-	InDuration.push_back(8.0);
+	// InDuration.push_back(6.0);
+	// InDuration.push_back(7.0);
+	// InDuration.push_back(8.0);
 
 	vector<double>InEnergy;
-	InEnergy.push_back(6.0);
-	InEnergy.push_back(7.0);
-	InEnergy.push_back(8.0);
-
+	// InEnergy.push_back(6.0);
+	// InEnergy.push_back(7.0);
+	// InEnergy.push_back(8.0);
+	
+	readInput(InDuration, InEnergy, deadline);
 	vector<double>outDuration;
 	vector<double>outVolt;
-    dynProg taskSet1 (numOfTask, deadline, InDuration, InEnergy);
+    dynProg taskSet1 (InDuration.size(), 5, deadline, InDuration, InEnergy);
 	nnetmultitask nnetPredictor;
 	taskSet1.energyCalculator = bind(&nnetmultitask::predictWithEnergyLength, nnetPredictor, placeholders::_1, placeholders::_2, placeholders::_3);
 	taskSet1.taskTimeline();
