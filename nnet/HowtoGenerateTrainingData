@@ -1,0 +1,8 @@
+Here is how to generate training data:
+We set the solor power at 3.0w, and we sweep
+the task current from 0.7 to 2.0.
+
+We make 5 sets of training data, with a step of
+100, 40, 20, 10 and all less than 5.
+We generate more data when the supercapacitor energy is small.
+Because the energy changing slope is more steep.
