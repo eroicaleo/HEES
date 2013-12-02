@@ -269,28 +269,6 @@ vector<double> dynProg::getVoltSet(){
 
 #ifdef DP_BINARY
 
-static void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &deadline) {
-	ifstream infile;
-	double tasklen, power, energy;
-	deadline = 0.0;
-	infile.open("TasksOrig.txt");
-	if (!infile) {
-		cerr << "Can not open TasksOrig.txt for read!" << endl;
-		exit(66);
-	}
-
-	while ((infile >> tasklen >> power >> energy).good()) {
-		InDuration.push_back(tasklen);
-		InEnergy.push_back(energy);
-		deadline += tasklen;
-	}
-
-	deadline /= 1.1;
-
-	infile.close();
-	return;
-}
-
 /* Testbench */
 int main(){
 	double deadline = 25.0;
