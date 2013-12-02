@@ -14,20 +14,15 @@ using namespace std::tr1;
 
 static const double CRAZY_ENERGY(-1000.0);
 
-dynProg::dynProg(int numOfTask, int numOfVolt, double deadline, vector<double> taskDuration, vector<double> taskEnergy) {
+dynProg::dynProg(int numOfTask, vector<double> voltageTable, double deadline, vector<double> taskDuration, vector<double> taskEnergy) {
 
 	m_numOfTask = numOfTask;
-	m_numOfVolt = 5;
+	m_numOfVolt = voltageTable.size();
 	m_deadline = (int)(deadline*10);
 	m_inputDuration = taskDuration;
 	m_inputEnergy = taskEnergy;
 
-	// volSel[] = {1.2, 1.1, 1.0, 0.9, 0.8};
-	volSel[0] = 1.2;
-	volSel[1] = 1.1;
-	volSel[2] = 1.0;
-	volSel[3] = 0.9;
-	volSel[4] = 0.8;
+	volSel = voltageTable;
 
 	m_taskDuration = vector<vector<int> >(numOfTask, vector<int>(m_numOfVolt, 0));
 	m_taskEnergy = vector<vector<double> >(numOfTask, vector<double>(m_numOfVolt, 0.0));
@@ -203,7 +198,7 @@ void dynProg::backTracing() {
 		dpTableEntry entry;
 		entry.totalEnergy = m_scheduleEnergy[i][optIdx];
 		entry.voltage = m_scheduleVolt[i][optIdx];
-		entry.volLevel = find(volSel, volSel+m_numOfVolt, entry.voltage) - volSel;
+		entry.volLevel = find(volSel.begin(), volSel.end(), entry.voltage) - volSel.begin();
 		entry.taskID = i;
 		entry.len = (i > 0) ? optIdx - (int)m_lastStepDuration[i][optIdx] : optIdx;
 		entry.current = m_taskCurrent[i][entry.volLevel];
@@ -285,7 +280,7 @@ int main(){
 	readInput(InDuration, InEnergy, deadline);
 	vector<double>outDuration;
 	vector<double>outVolt;
-    dynProg taskSet1 (InDuration.size(), 5, deadline, InDuration, InEnergy);
+    dynProg taskSet1 (InDuration.size(), vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), deadline, InDuration, InEnergy);
 	nnetmultitask nnetPredictor;
 	taskSet1.energyCalculator = bind(&nnetmultitask::predictWithEnergyLength, nnetPredictor, placeholders::_1, placeholders::_2, placeholders::_3);
 	taskSet1.taskTimeline();
@@ -298,5 +293,10 @@ int main(){
 	// 	cout<<outVolt[i]<<endl;
 	// }
 }
+
+const size_t syntheticVoltageLevel = 5;
+const double syntheticVoltageTable[syntheticVoltageLevel] = {0.8, 0.9, 1.0, 1.1, 1.2};
+const size_t pxaVoltageLevel = 4;
+const double pxaVoltageTable[pxaVoltageLevel] = {0.75, 1.0, 1.3, 1.6};
 
 #endif

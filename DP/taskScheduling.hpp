@@ -35,7 +35,7 @@ class dynProg {
 		vector<double>m_durationSet;//scheduled task set
 		vector<double>m_voltSet;//scheduled voltage set
 
-		double volSel[5];
+		vector<double> volSel;
 
 		// DC-DC converter related variable
 		dcconvertIN m_dcLoad;
@@ -49,7 +49,7 @@ class dynProg {
 	public:
 		//default construction method :
 		//Table the task energy and duration at each voltage
-	    dynProg(int numOfTask, int numOfVolt, double deadline, vector<double> taskDuration, vector<double> taskEnergy);
+	    dynProg(int numOfTask, vector<double> voltageTable, double deadline, vector<double> taskDuration, vector<double> taskEnergy);
 		//memoried the voltage selection of each task at each time step	  
 		void taskTimeline();
 		//taskScheduling method: recurrsive method for task schedule
@@ -103,5 +103,10 @@ void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &dea
 	infile.close();
 	return;
 }
+
+extern const size_t syntheticVoltageLevel;
+extern const double syntheticVoltageTable[];
+extern const size_t pxaVoltageLevel;
+extern const double pxaVoltageTable[];
 
 #endif
