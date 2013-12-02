@@ -89,14 +89,14 @@ int minEnergySchedule(int m_numOfTask, int m_numOfVolt, double m_deadline, vecto
 		exit(66);
 	}
 	for (int i = 0; i < m_numOfTask; i++) {
-		double tasklen = m_inputDuration[i] / selVolt * changePoint * 10;
+		double tasklen = ceil(m_inputDuration[i] / selVolt * changePoint * 100) / 10.0;
 		if (tasklen > 0.01) {
 			outfile << volSel[up] << " ";
 			outfile << m_inputEnergy[i] / m_inputDuration[i] * volSel[up] * volSel[up] << " ";
 			outfile << tasklen << endl;
 		}
 
-		tasklen = m_inputDuration[i] / selVolt * (1 - changePoint) * 10;
+		tasklen = floor(m_inputDuration[i] / selVolt * (1 - changePoint) * 100) / 10.0;
 		if (tasklen > 0.01) {
 			outfile << volSel[bottom] << " ";
 			outfile << m_inputEnergy[i] / m_inputDuration[i] * volSel[bottom] * volSel[bottom] << " ";
@@ -129,6 +129,7 @@ int main() {
 //	InEnergy.push_back();
 
 	readInput(InDuration, InEnergy, deadline);
+	deadline = 12.2;
 	minEnergySchedule(numOfTask, numOfVoltage, deadline, InDuration, InEnergy);	
 
 	return 0;
