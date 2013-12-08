@@ -61,7 +61,7 @@ class dynProg {
 		std::tr1::function<double(double, double, double)> energyCalculator;
 
 		void backTracing();
-		void genScheduleForEES();
+		int genScheduleForEES();
 
 	private:
 		double getExtraChargePower(int taskIdx, int volLevel);
@@ -81,32 +81,6 @@ struct dpTableEntry {
 	int len;
 };
 
-void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &deadline) {
-	using namespace std;
-	ifstream infile;
-	double tasklen, power, energy;
-	deadline = 0.0;
-	infile.open("TasksOrig.txt");
-	if (!infile) {
-		cerr << "Can not open TasksOrig.txt for read!" << endl;
-		exit(66);
-	}
-
-	while ((infile >> tasklen >> power >> energy).good()) {
-		InDuration.push_back(tasklen);
-		InEnergy.push_back(energy);
-		deadline += tasklen;
-	}
-
-	deadline /= 0.89;
-
-	infile.close();
-	return;
-}
-
-extern const size_t syntheticVoltageLevel;
-extern const double syntheticVoltageTable[];
-extern const size_t pxaVoltageLevel;
-extern const double pxaVoltageTable[];
+void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &deadline);
 
 #endif

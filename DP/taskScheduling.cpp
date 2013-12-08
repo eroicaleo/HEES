@@ -209,8 +209,9 @@ void dynProg::backTracing() {
 	return;
 }
 
-void dynProg::genScheduleForEES() {
+int dynProg::genScheduleForEES() {
 	ofstream outfile;
+	int totalLength = 0;
 	outfile.open("TasksDP.txt");
 	if (!outfile) {
 		cerr << "can not open TasksDP.txt for write" << endl;
@@ -230,8 +231,11 @@ void dynProg::genScheduleForEES() {
 				<< " final energy: " << tmpTaskEntry.totalEnergy << endl;
 		#endif
 		tmpSchedule.pop();
+		totalLength += tmpTaskEntry.len;
 	}
 	outfile.close();
+
+	return totalLength;
 }
 
 void dynProg::taskScheduling(){
@@ -262,7 +266,35 @@ vector<double> dynProg::getVoltSet(){
     return m_voltSet;
 }
 
+const size_t syntheticVoltageLevel = 5;
+const double syntheticVoltageTable[syntheticVoltageLevel] = {0.8, 0.9, 1.0, 1.1, 1.2};
+const size_t pxaVoltageLevel = 4;
+const double pxaVoltageTable[pxaVoltageLevel] = {0.75, 1.0, 1.3, 1.6};
+
 #ifdef DP_BINARY
+
+void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &deadline) {
+	using namespace std;
+	ifstream infile;
+	double tasklen, power, energy;
+	deadline = 0.0;
+	infile.open("TasksOrig.txt");
+	if (!infile) {
+		cerr << "Can not open TasksOrig.txt for read!" << endl;
+		exit(66);
+	}
+
+	while ((infile >> tasklen >> power >> energy).good()) {
+		InDuration.push_back(tasklen);
+		InEnergy.push_back(energy);
+		deadline += tasklen;
+	}
+
+	deadline /= 1.05;
+
+	infile.close();
+	return;
+}
 
 /* Testbench */
 int main(){
@@ -293,10 +325,5 @@ int main(){
 	// 	cout<<outVolt[i]<<endl;
 	// }
 }
-
-const size_t syntheticVoltageLevel = 5;
-const double syntheticVoltageTable[syntheticVoltageLevel] = {0.8, 0.9, 1.0, 1.1, 1.2};
-const size_t pxaVoltageLevel = 4;
-const double pxaVoltageTable[pxaVoltageLevel] = {0.75, 1.0, 1.3, 1.6};
 
 #endif
