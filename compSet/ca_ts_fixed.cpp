@@ -71,26 +71,18 @@ int minEnergyScheduleFixed(int m_numOfTask, int m_numOfVolt, double m_deadline, 
 	if (bottom == up) {
 		changePoint = 1;
 	} else {
-		changePoint = (selVolt - volSel[up]) / (volSel[bottom] - volSel[up]);
+		changePoint = (volSel[bottom] - selVolt) / (volSel[bottom] - volSel[up]);
 	}
 	cout<< "the changePoint is:"<< changePoint << endl;
 
 	double firstHalfDuration = 0.0;
-	int passFlag = 0;
-	firstHalfDuration +=  m_inputDuration[0] *  volSel[up] * volSel[up];
 	for (int i = 0; i < m_numOfTask ; i ++) {
-		if( firstHalfDuration < totalDuration * changePoint){
+		if ( firstHalfDuration < totalDuration * changePoint){
 			cout<< volSel[up] << " ";
 			cout<< m_inputEnergy[i] / m_inputDuration[i] * volSel[up] * volSel[up] << " ";
 			cout<< m_inputDuration[i] / volSel[up]<<endl ;//* changePoint <<endl;
-			firstHalfDuration +=  m_inputDuration[i] *  volSel[up] * volSel[up];
-		}else if(passFlag == 0){
-			cout<< volSel[up] << " ";
-			cout<< m_inputEnergy[i] / m_inputDuration[i] * volSel[up] * volSel[up] << " ";
-			cout<< m_inputDuration[i] / volSel[up]<<endl;// * (1 - changePoint) <<endl;
-			firstHalfDuration +=  m_inputDuration[i] *  volSel[up] * volSel[up];
-			passFlag = 1;
-		}else if(passFlag == 1){
+			firstHalfDuration +=  m_inputDuration[i] /  volSel[up];
+		} else {
 			cout<< volSel[bottom] << " ";
 			cout<< m_inputEnergy[i] / m_inputDuration[i] * volSel[bottom] * volSel[bottom] << " ";
 			cout<< m_inputDuration[i] / volSel[bottom]<<endl;// * (1 - changePoint) <<endl;
@@ -104,21 +96,13 @@ int minEnergyScheduleFixed(int m_numOfTask, int m_numOfVolt, double m_deadline, 
 		exit(66);
 	}
 	firstHalfDuration = 0.0;
-	passFlag = 0;
-	firstHalfDuration +=  m_inputDuration[0] *  volSel[up] * volSel[up];
 	for (int i = 0; i < m_numOfTask ; i ++) {
 		if (firstHalfDuration < totalDuration * changePoint) {
 			outfile << volSel[up] << " ";
 			outfile << m_inputEnergy[i] / m_inputDuration[i] * volSel[up] * volSel[up] << " ";
 			outfile << m_inputDuration[i] / volSel[up] * 10 << endl;//* changePoint <<endl;
-			firstHalfDuration +=  m_inputDuration[i] *  volSel[up] * volSel[up];
-		} else if (passFlag == 0) {
-			outfile << volSel[up] << " ";
-			outfile << m_inputEnergy[i] / m_inputDuration[i] * volSel[up] * volSel[up] << " ";
-			outfile << m_inputDuration[i] / volSel[up] * 10 << endl;// * (1 - changePoint) <<endl;
-			firstHalfDuration +=  m_inputDuration[i] *  volSel[up] * volSel[up];
-			passFlag = 1;
-		} else if (passFlag == 1) {
+			firstHalfDuration +=  m_inputDuration[i] /  volSel[up];
+		} else {
 			outfile << volSel[bottom] << " ";
 			outfile << m_inputEnergy[i] / m_inputDuration[i] * volSel[bottom] * volSel[bottom] << " ";
 			outfile << m_inputDuration[i] / volSel[bottom] * 10 <<endl;// * (1 - changePoint) <<endl;
@@ -131,20 +115,38 @@ int minEnergyScheduleFixed(int m_numOfTask, int m_numOfVolt, double m_deadline, 
 
 #ifdef CATS_BINARY
 
+void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &deadline) {
+	using namespace std;
+	ifstream infile;
+	double tasklen, power, energy;
+	deadline = 0.0;
+	infile.open("TasksOrig.txt");
+	if (!infile) {
+		cerr << "Can not open TasksOrig.txt for read!" << endl;
+		exit(66);
+	}
+
+	while ((infile >> tasklen >> power >> energy).good()) {
+		InDuration.push_back(tasklen);
+		InEnergy.push_back(energy);
+		deadline += tasklen;
+	}
+
+	deadline /= 0.89;
+
+	infile.close();
+	return;
+}
+
 int main() {
 	double deadline = 24;
 	int numOfTask = 3;
 	int numOfVoltage = 5;
 	vector<double>InDuration;
-	InDuration.push_back(6.0);
-	InDuration.push_back(7.0);
-	InDuration.push_back(8.0);
-
 	vector<double>InEnergy;
-	InEnergy.push_back(6.0);
-	InEnergy.push_back(7.0);
-	InEnergy.push_back(8.0);
 
+	readInput(InDuration, InEnergy, deadline);
+	deadline = 13.3;
 	minEnergyScheduleFixed(numOfTask, numOfVoltage, deadline, InDuration, InEnergy);	
 
 	return 0;

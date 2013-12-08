@@ -41,6 +41,7 @@ int minEnergySchedule(int m_numOfTask, int m_numOfVolt, double m_deadline, vecto
 		allDuration += m_inputDuration[i];
 	}
 	selVolt = allDuration / m_deadline;
+	cout << "allDuration: " << allDuration << endl;
 	cout<<"the continuous voltage: "<<selVolt<<endl;
 
 	if (selVolt > volSel[0]) {
@@ -66,7 +67,7 @@ int minEnergySchedule(int m_numOfTask, int m_numOfVolt, double m_deadline, vecto
 	if (bottom == up) {
 		changePoint = 1;
 	} else {
-		changePoint = (selVolt - volSel[up]) / (volSel[bottom] - volSel[up]);
+		changePoint = (volSel[bottom] - selVolt) / (volSel[bottom] - volSel[up]);
 	}
 	cout<< "the changePoint is:"<< changePoint << endl;
 
@@ -110,6 +111,29 @@ int minEnergySchedule(int m_numOfTask, int m_numOfVolt, double m_deadline, vecto
 
 #ifdef CATS_BINARY
 
+void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &deadline) {
+	using namespace std;
+	ifstream infile;
+	double tasklen, power, energy;
+	deadline = 0.0;
+	infile.open("TasksOrig.txt");
+	if (!infile) {
+		cerr << "Can not open TasksOrig.txt for read!" << endl;
+		exit(66);
+	}
+
+	while ((infile >> tasklen >> power >> energy).good()) {
+		InDuration.push_back(tasklen);
+		InEnergy.push_back(energy);
+		deadline += tasklen;
+	}
+
+	deadline /= 0.89;
+
+	infile.close();
+	return;
+}
+
 int main() {
 	double deadline = 25;
 	int numOfTask = 3;
@@ -129,7 +153,7 @@ int main() {
 //	InEnergy.push_back();
 
 	readInput(InDuration, InEnergy, deadline);
-	deadline = 12.2;
+	deadline = 13.3;
 	minEnergySchedule(numOfTask, numOfVoltage, deadline, InDuration, InEnergy);	
 
 	return 0;
