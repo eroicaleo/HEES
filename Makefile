@@ -5,8 +5,9 @@ bin = energysys
 OBJ = DCCon_out.o SuperCap.o main.o DischargeProcess.o ChargeProcess.o DCCon_in.o DCCon_dis.o LionBat.o LoadApp.o selVCTI.o \
 			powersource.o DCSolver.o ees_bank.o HEESTimer.o ParseCommandLine.o
 
-NNET_OBJ = nnet/nnet.o nnet/util.o
+NNET_OBJ = nnet/nnet.o nnet/util.o nnet/nnetmultitask.o
 DP_OBJ = DP/taskScheduling.o
+CATS_OBJ = compSet/ca_ts.o compSet/ca_ts_fixed.o
 
 CC = g++
 # CFLAGS = -c -Wall -I/home/yzhang/usr/sundials/include
@@ -25,6 +26,9 @@ all : $(bin)
 $(bin) : $(OBJ) nnet_obj dp_obj
 	g++ $(LDFLAGS) $(OBJ) -o $@ $(SUNDIALS_LIBS) $(BOOST_LIBS) $(NNET_OBJ) $(DP_OBJ)
 
+sched :  $(OBJ) nnet_obj dp_obj cats_obj Scheduler.o
+	g++ $(LDFLAGS) DCCon_in.o $(NNET_OBJ) $(DP_OBJ) $(CATS_OBJ) $(SUNDIALS_LIBS) $(BOOST_LIBS) Scheduler.o -o Scheduler
+
 %.o : %.cpp
 	g++ $(CFLAGS) $< -o $@
 
@@ -34,7 +38,10 @@ nnet_obj :
 dp_obj :
 	make -C DP/ all
 
+cats_obj :
+	make -C compSet/ all
+
 clean :
 	make -C nnet/ $@
 	make -C DP/ $@
-	rm -rf *.o $(bin)
+	rm -rf *.o $(bin) Scheduler

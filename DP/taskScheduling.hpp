@@ -1,6 +1,7 @@
 #ifndef _DYNAMIC_PROGRAMMING_H_
 #define _DYNAMIC_PROGRAMMING_H_
 
+#include <fstream>
 #include <stack>
 #include <tr1/functional>
 #include <vector>
@@ -34,7 +35,7 @@ class dynProg {
 		vector<double>m_durationSet;//scheduled task set
 		vector<double>m_voltSet;//scheduled voltage set
 
-		double volSel[5];
+		vector<double> volSel;
 
 		// DC-DC converter related variable
 		dcconvertIN m_dcLoad;
@@ -48,7 +49,7 @@ class dynProg {
 	public:
 		//default construction method :
 		//Table the task energy and duration at each voltage
-	    dynProg(int numOfTask, int numOfVolt, double deadline, vector<double> taskDuration, vector<double> taskEnergy);
+	    dynProg(int numOfTask, vector<double> voltageTable, double deadline, vector<double> taskDuration, vector<double> taskEnergy);
 		//memoried the voltage selection of each task at each time step	  
 		void taskTimeline();
 		//taskScheduling method: recurrsive method for task schedule
@@ -60,7 +61,7 @@ class dynProg {
 		std::tr1::function<double(double, double, double)> energyCalculator;
 
 		void backTracing();
-		void genScheduleForEES();
+		int genScheduleForEES();
 
 	private:
 		double getExtraChargePower(int taskIdx, int volLevel);
@@ -79,5 +80,7 @@ struct dpTableEntry {
 	int taskID;
 	int len;
 };
+
+void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &deadline);
 
 #endif
