@@ -13,6 +13,7 @@ class nnetmultitask {
 	private:
 		std::vector<int> interalVec;
 		nnetmodel nnet1to5;
+		nnetmodel nnet10;
 		nnetmodel nnet20;
 		nnetmodel nnet40;
 		nnetmodel nnet100;
