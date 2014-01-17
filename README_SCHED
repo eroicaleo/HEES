@@ -1,11 +1,15 @@
 1. How to use Scheduler.cpp to generate dynamic programming based schedule to
 generate schedule and baseline policy schedule.
 
-* Compile the code:
+* To compile the code:
 make sched
 This build the binary Scheduler
 
-* Run the scheduler
+* To run the scheduler
 ./Scheduler 0.9
 The only argument is the ratio between the deadline and all task length in nominal
 speed (1.0V)
+
+*** CAUTIONS ***
+Since it will use the neural network to predict task energy, it is necessary to 
+keep a set of valid nnet model under the run directory. You can use symbolic link though.
