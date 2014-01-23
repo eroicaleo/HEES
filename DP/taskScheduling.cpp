@@ -52,38 +52,6 @@ dynProg::dynProg(int numOfTask, vector<double> voltageTable, double deadline, ve
 }
 
 void dynProg::taskTimeline() {
-	// memory the voltage and the energy of each task at every time step:
-	// The first task
-	// for (int j = 0; j <= (int)(m_deadline * 10.0); j ++) { //Timeline
-	// 	// The time is less than the duration at the max voltage
-	// 	if (j - (int)(m_taskDuration[0][0] * 10.0) < 0) {
-	// 		// cout<<j<<",";
-	// 		m_scheduleEnergy[0][j] = -1;
-	// 		m_scheduleVolt[0][j] = -1;
-	// 		m_lastStepDuration[0][j] = -1;
-	// 	} else if (j - (int)(m_taskDuration[0][0] * 10.0) >= 0) {
-	// 	//	double tmpEnergyAtVol[5];
-	// 		vector<double>tmpEnergyAtVol;
-	// 		tmpEnergyAtVol = vector<double>( m_numOfVolt, -1);
-	// 		// The time is larger than the duration at the max voltage;
-	// 		tmpEnergyAtVol[0] = m_taskEnergy[0][0];
-	// 		for(int k = 1; k < m_numOfVolt; k++){//Voltage
-	// 			if(j - (int)(m_taskDuration[0][k] * 10.0) < 0)
-	// 				tmpEnergyAtVol[k] = -1;
-	// 			else
-	// 				tmpEnergyAtVol[k] = m_taskEnergy[0][k];
-	// 		 }
-	// 		int minTemp = 0;
-	// 		//choose voltage at which energy is min
-	// 		for(int k = 1; k < m_numOfVolt; k++){
-	// 			if((tmpEnergyAtVol[k] < tmpEnergyAtVol[minTemp]) && (tmpEnergyAtVol[k] > 0))
-	// 				minTemp = k;
-	// 		}
-	// 		m_scheduleEnergy[0][j] = tmpEnergyAtVol[minTemp];
-	// 		m_scheduleVolt[0][j] = volSel[minTemp];
-	// 		m_lastStepDuration[0][j] = -1;
-	// 	}
-	// }
 	for (int i = 0; i < m_numOfTask; i++) {
 		for (size_t j = 0; j < m_scheduleVolt[0].size(); ++j) {
 			m_scheduleVolt[i][j] = -1;
@@ -100,49 +68,6 @@ void dynProg::taskTimeline() {
 			m_scheduleEnergy[0][taskDur] = energy;
 		}
 	}
-
-	//	for(int j = 0; j <= (int)(m_deadline * 10.0); j ++){
-	//		cout<<"time step "<<j<<":"<<m_scheduleEnergy[0][j]<<endl;
-	//	}
-
-	//The left task set
-	//	for (int i = 1; i < m_numOfTask; i++) { // Task
-	//		for (int j = 0; j <= (int)(m_deadline * 10.0); j ++) { // Timeline
-	//			// The predecessors have not been processed
-	//			if (j <= (int)(m_taskDuration[i][0] * 10.0)) {
-	//				m_scheduleEnergy[i][j] = -1;
-	//				m_scheduleVolt[i][j] = -1;
-	//				m_lastStepDuration[i][j] = -1;
-	//			}else if(m_scheduleEnergy[i-1][j - (int)(m_taskDuration[i][0] * 10.0)] == -1){
-
-	//					//The left time is less than current task duration at max voltage
-	//					m_scheduleEnergy[i][j] = -1;
-	//					m_scheduleVolt[i][j] = -1;
-	//					m_lastStepDuration[i][j] = -1;
-	//			}else{
-	//				//double tmpEnergyAtVol[5];
-	//				vector<double>tmpEnergyAtVol;
-	//				tmpEnergyAtVol = vector<double>( m_numOfVolt, -1);
-	//				for(int k = 0; k < m_numOfVolt; k++){ // Voltage
-	//					if((j - m_taskDuration[i][k] <= 0) || (m_scheduleEnergy[i-1][j - (int)(m_taskDuration[i][k] * 10.0)] == -1))
-	//						tmpEnergyAtVol[k] = -1;
-	//					else
-	//						tmpEnergyAtVol[k] = m_taskEnergy[i][k] + m_scheduleEnergy[i-1][j - (int)(m_taskDuration[i][k] *10.0)];
-	//				}
-	//				int minTemp = 0;
-	//				//choose voltage at which energy is min
-	//				for(int k = 1; k < m_numOfVolt; k++){
-	//					if((tmpEnergyAtVol[k] < tmpEnergyAtVol[minTemp]) && (tmpEnergyAtVol[k] > 0))
-	//						minTemp = k;
-	//				}
-	//						cout<<"Task "<<i<<" 's minTemp:"<<minTemp<<" @"<<j<<endl;
-
-	//				m_scheduleEnergy[i][j] = tmpEnergyAtVol[minTemp];
-	//				m_scheduleVolt[i][j] = volSel[minTemp];
-	//				m_lastStepDuration[i][j] = (double)(j - (int)(m_taskDuration[i][minTemp] * 10.0)) / 10.0;
-	//			}
-	//		}
-	//	}
 
 	for (int i = 1; i < m_numOfTask; i++) {
 		for (size_t j = 0; j < m_scheduleVolt[0].size(); ++j) {
