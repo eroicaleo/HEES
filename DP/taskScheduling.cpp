@@ -49,6 +49,13 @@ dynProg::dynProg(int numOfTask, vector<double> voltageTable, double deadline, ve
 	// System model related parameters
 	m_initialEnergy = 20;
 	m_solarPower = 3.0;
+
+	// Initialize DP table with idle task
+	m_scheduleWithIdleTask(m_numOfTask, vector<dpTableEntry>(m_deadline));
+}
+
+void dynProg::taskTimelineWithIdle() {
+	
 }
 
 void dynProg::taskTimeline() {

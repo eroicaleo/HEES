@@ -45,6 +45,7 @@ class dynProg {
 		double m_initialEnergy;
 
 		std::stack<dpTableEntry> optimalSchedule;
+		std::vector<vector<dpTableEntry> > m_scheduleWithIdleTask;
 
 	public:
 		//default construction method :
