@@ -1,5 +1,6 @@
 // File: nnet.cpp
 
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 
