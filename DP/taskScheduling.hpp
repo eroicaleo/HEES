@@ -55,6 +55,7 @@ class dynProg {
 		void taskTimeline();
 		//taskScheduling method: recurrsive method for task schedule
 	    void taskScheduling();
+		void taskTimelineWithIdle();
 		vector<double>getDurationSet();
 		vector<double>getVoltSet();
 
@@ -80,6 +81,11 @@ struct dpTableEntry {
 	int volLevel;
 	int taskID;
 	int len;
+
+	// Record when the last task finishes must be non-negative number.
+	size_t lastTaskFinishTime;
+
+	dpTableEntry();
 };
 
 void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &deadline);

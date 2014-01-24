@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <stack>
 #include <vector>
+#include <algorithm>
 
 #include "taskScheduling.hpp"
 #include "../nnet/nnetmultitask.hpp"
@@ -51,11 +52,13 @@ dynProg::dynProg(int numOfTask, vector<double> voltageTable, double deadline, ve
 	m_solarPower = 3.0;
 
 	// Initialize DP table with idle task
-	m_scheduleWithIdleTask(m_numOfTask, vector<dpTableEntry>(m_deadline));
+	m_scheduleWithIdleTask = vector<vector<dpTableEntry> >(m_numOfTask, vector<dpTableEntry>(m_deadline, dpTableEntry()));
 }
 
 void dynProg::taskTimelineWithIdle() {
-	
+	// initialize the first task -- idle task
+	// populating for the even number tasks -- real tasks
+	// populating for the odd number tasks -- idle tasks
 }
 
 void dynProg::taskTimeline() {
@@ -202,6 +205,14 @@ const size_t syntheticVoltageLevel = 5;
 const double syntheticVoltageTable[syntheticVoltageLevel] = {0.8, 0.9, 1.0, 1.1, 1.2};
 const size_t pxaVoltageLevel = 4;
 const double pxaVoltageTable[pxaVoltageLevel] = {0.75, 1.0, 1.3, 1.6};
+
+dpTableEntry::dpTableEntry():
+	totalEnergy(CRAZY_ENERGY),
+	voltage(0.0),
+	current(0.0),
+	volLevel(-1),
+	taskID(-1),
+	len(-1) {}
 
 #ifdef DP_BINARY
 
