@@ -198,7 +198,7 @@ vector<double> dynProg::getDurationSet(){
 }
 vector<double> dynProg::getVoltSet(){
 	taskScheduling();
-    return m_voltSet;
+	return m_voltSet;
 }
 
 const size_t syntheticVoltageLevel = 5;
@@ -251,11 +251,11 @@ int main(){
 	// InEnergy.push_back(6.0);
 	// InEnergy.push_back(7.0);
 	// InEnergy.push_back(8.0);
-	
+
 	readInput(InDuration, InEnergy, deadline);
 	vector<double>outDuration;
 	vector<double>outVolt;
-    dynProg taskSet1 (InDuration.size(), vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), deadline, InDuration, InEnergy);
+	dynProg taskSet1 (InDuration.size(), vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), deadline, InDuration, InEnergy);
 	nnetmultitask nnetPredictor;
 	taskSet1.energyCalculator = bind(&nnetmultitask::predictWithEnergyLength, nnetPredictor, placeholders::_1, placeholders::_2, placeholders::_3);
 	taskSet1.taskTimeline();
