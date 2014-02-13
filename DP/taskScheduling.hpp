@@ -67,6 +67,9 @@ class dynProg {
 
 	private:
 		double getExtraChargePower(int taskIdx, int volLevel);
+		void populateFirstIdleTask(vector<dpTableEntry> &);
+		void populateRealTask(const vector<dpTableEntry> &lastIdleRow, vector<dpTableEntry> &thisRealRow);
+		void populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<dpTableEntry> &thisIdleRow);
 };
 
 struct dpTableEntry {
@@ -86,8 +89,19 @@ struct dpTableEntry {
 	size_t lastTaskFinishTime;
 
 	dpTableEntry();
+	void setAllFields(double e, double v, double c, int vl, int id, int l, size_t f) {
+		totalEnergy = e;
+		voltage = v;
+		current = c;
+		volLevel = vl;
+		taskID = id;
+		len = l;
+		lastTaskFinishTime = f;
+	}
 };
 
 void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &deadline);
+
+typedef vector<dpTableEntry>::iterator tableEntryIter;
 
 #endif
