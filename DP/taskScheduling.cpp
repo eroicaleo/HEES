@@ -67,7 +67,7 @@ void dynProg::taskTimelineWithIdle() {
 		// populating for the even number tasks -- real tasks
 		populateRealTask(m_scheduleWithIdleTask[i], m_scheduleWithIdleTask[i+1]);
 		// populating for the odd number tasks -- idle tasks
-		populateRealTask(m_scheduleWithIdleTask[i+1], m_scheduleWithIdleTask[i+2]);
+		populateIdleTask(m_scheduleWithIdleTask[i+1], m_scheduleWithIdleTask[i+2]);
 	}
 }
 
@@ -94,6 +94,10 @@ void dynProg::populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<d
 			int taskDur = iterIdle - iterIdleHead;
 			double energy = energyCalculator(inputPower, iter->totalEnergy, taskDur);
 			if (energy > iterIdle->totalEnergy) {
+#ifdef DEBUG_VERBOSE
+					cout << "Taskid: idle" << " entry " << iterIdle-thisIdleRow.begin() << " has been updated from "
+						<< iterIdle->totalEnergy << " to " << energy << endl;;
+#endif
 				// Update the table entry
 				iterIdle->setAllFields(energy, -1.0, -1.0, -1, -1, taskDur, iterIdleHead-thisIdleRow.begin());
 			}
@@ -118,8 +122,12 @@ void dynProg::populateRealTask(const vector<dpTableEntry> &lastIdleRow, vector<d
 
 				// Must guarantee that the schedule is feasible
 				if ((realTaskIter->totalEnergy < energy) && (realTaskIter < thisRealRow.end())) {
+#ifdef DEBUG_VERBOSE
+					cout << "Taskid: " << taskID << " entry " << taskiFinishTime << " has been updated from "
+						<< realTaskIter->totalEnergy << " to " << energy << endl;;
+#endif
 					// Update the table entry
-					thisRealRow[taskiFinishTime].setAllFields(energy, volSel[k], -1.0, k, taskID, taskDur, taskiFinishTime-taskDur);
+					realTaskIter->setAllFields(energy, volSel[k], -1.0, k, taskID, taskDur, taskiFinishTime-taskDur);
 				}
 			}
 		} // iterate over 'k': number of voltage
