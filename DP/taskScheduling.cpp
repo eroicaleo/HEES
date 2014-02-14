@@ -63,7 +63,7 @@ dynProg::dynProg(int numOfTask, vector<double> voltageTable, double deadline, ve
 void dynProg::taskTimelineWithIdle() {
 	// initialize the first task -- idle task
 	populateFirstIdleTask(m_scheduleWithIdleTask[0]);
-	for (size_t i = 0; i < m_scheduleWithIdleTask.size(); i += 2) {
+	for (size_t i = 0; i < m_scheduleWithIdleTask.size()-1; i += 2) {
 		// populating for the even number tasks -- real tasks
 		populateRealTask(m_scheduleWithIdleTask[i], m_scheduleWithIdleTask[i+1]);
 		// populating for the odd number tasks -- idle tasks
@@ -334,9 +334,9 @@ int main(){
 	nnetmultitask nnetPredictor;
 	taskSet1.energyCalculator = bind(&nnetmultitask::predictWithEnergyLength, nnetPredictor, placeholders::_1, placeholders::_2, placeholders::_3);
 	taskSet1.taskTimelineWithIdle();
-	taskSet1.taskTimeline();
-	taskSet1.backTracing();
-	taskSet1.genScheduleForEES();
+	// taskSet1.taskTimeline();
+	// taskSet1.backTracing();
+	// taskSet1.genScheduleForEES();
 	// outDuration = taskSet1.getDurationSet();
 	// outVolt = taskSet1.getVoltSet();
 	// for(int i = 0; i < numOfTask; i ++){
