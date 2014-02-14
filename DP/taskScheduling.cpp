@@ -114,13 +114,10 @@ void dynProg::populateRealTask(const vector<dpTableEntry> &lastIdleRow, vector<d
 			if (inputPower > 0) {
 				double energy = energyCalculator(inputPower, iter->totalEnergy, taskDur);
 				size_t taskiFinishTime = (iter-lastIdleRow.begin()) + taskDur;
+				tableEntryIter realTaskIter = thisRealRow.begin() + taskiFinishTime;
 
 				// Must guarantee that the schedule is feasible
-				if ((m_scheduleEnergy[taskID][taskiFinishTime] < energy) && (taskiFinishTime < m_scheduleVolt[taskID].size())) {
-					// Reset the energy
-					m_scheduleVolt[taskID][taskiFinishTime] = volSel[k];
-					m_scheduleEnergy[taskID][taskiFinishTime] = energy;
-					m_lastStepDuration[taskID][taskiFinishTime] = taskiFinishTime - taskDur;
+				if ((realTaskIter->totalEnergy < energy) && (realTaskIter < thisRealRow.end())) {
 					// Update the table entry
 					thisRealRow[taskiFinishTime].setAllFields(energy, volSel[k], -1.0, k, taskID, taskDur, taskiFinishTime-taskDur);
 				}
