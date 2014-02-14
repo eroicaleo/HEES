@@ -52,7 +52,7 @@ dynProg::dynProg(int numOfTask, vector<double> voltageTable, double deadline, ve
 	m_solarPower = 3.0;
 
 	// Initialize DP table with idle task
-	m_scheduleWithIdleTask = vector<vector<dpTableEntry> >(m_numOfTask, vector<dpTableEntry>(m_deadline, dpTableEntry()));
+	m_scheduleWithIdleTask = vector<vector<dpTableEntry> >(m_numOfTask+m_numOfTask+1, vector<dpTableEntry>(m_deadline, dpTableEntry()));
 	for (size_t i = 1; i < m_scheduleWithIdleTask.size(); i += 2) {
 		for (size_t j = 0; j != m_scheduleWithIdleTask[i].size(); ++j) {
 			m_scheduleWithIdleTask[i][j].taskID = (i-1)/2;
