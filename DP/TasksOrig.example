@@ -1,0 +1,9 @@
+# An example of TaskOrig.txt
+# This file will be checked in in git database
+# When doing dynamic programming test
+# Just copy this file to TaskOrig.txt
+# And do the whatever modification you want
+# The first field is task length, second is the power
+# Third field is the energy, basically it is first times second
+2 0.9 1.8
+3 1.0 3.0
