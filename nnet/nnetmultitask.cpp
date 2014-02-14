@@ -33,35 +33,43 @@ double nnetmultitask::predictWithEnergyLength(double inputPower, double startEne
 
 	/* Preprocessing the length, rounding it to the nearest one */
 	int intlen = (int)len;
-	int lendiff = intlen;
-	if (intlen % 10 < 5) {
-		len = (intlen / 10) * 10;
-	} else {
-		len = (intlen / 10 + 1) * 10;
-	}
-	lendiff -= (int)len;
-
 	nnetInput[0] = inputPower;
 	nnetInput[1] = startEnergy;
 	nnetInput[2] = intlen;
 
-	double energydiff = 0.0;
 	for (size_t i = 0; i < interalVec.size(); ++i) {
 		bindCalculator(interalVec[i]);
-		while (len >= interalVec[i]) {
+		while (intlen >= interalVec[i]) {
 			double initEnergy = nnetInput[1];
 			startEnergy = computeEnergy(nnetInput);
-			len -= interalVec[i];
+			intlen -= interalVec[i];
 			nnetInput[0] = inputPower;
 			nnetInput[1] = startEnergy;
-			nnetInput[2] = len;
-			energydiff = startEnergy - initEnergy;
+			nnetInput[2] = intlen;
 			cout << "my prediction: " << inputPower << ", " << initEnergy << ", " << interalVec[i] << ", " << startEnergy << endl;
 		}
 	}
-	// Here we compute the energy might need compensate
-	energydiff = ((double)lendiff / (double)interalVec.back()) * energydiff;
-	startEnergy += energydiff;
+
+	// Here the remaining length must be less than interalVec.back()
+	nnetInput[0] = inputPower;
+	nnetInput[1] = startEnergy;
+	nnetInput[2] = interalVec.back();
+	// We need to deal with when len < interalVec.back()
+	// So we precompute the energy increase as if we charge for the minimum prediction granularity
+	// And then we do compensation later
+	double energydiff = 0.0;
+	int lendiff = 0;
+	if (intlen > 0) {
+		bindCalculator(interalVec.back());
+		energydiff = computeEnergy(nnetInput) - startEnergy;
+		startEnergy += energydiff;
+
+		lendiff = (intlen == 0) ? 0 : intlen - interalVec.back();
+
+		// Here we compute the energy might need compensate
+		energydiff = ((double)lendiff / (double)interalVec.back()) * energydiff;
+		startEnergy += energydiff;
+	}
 	cout << "We round the task length by: " << lendiff << " so we compensate energy by: " << energydiff << " and the final energy is: " << startEnergy << endl;
 
 	return startEnergy;
