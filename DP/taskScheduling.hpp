@@ -14,6 +14,9 @@ using std::vector;
 using std::ostream;
 
 struct dpTableEntry;
+typedef vector<dpTableEntry>::iterator tableEntryIter;
+typedef vector<vector<dpTableEntry> >::iterator tableRowIter;
+typedef vector<vector<dpTableEntry> >::reverse_iterator tableRowRIter;
 
 class dynProg {
 	private:
@@ -74,6 +77,7 @@ class dynProg {
 		void populateFirstIdleTask(vector<dpTableEntry> &);
 		void populateRealTask(const vector<dpTableEntry> &lastIdleRow, vector<dpTableEntry> &thisRealRow);
 		void populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<dpTableEntry> &thisIdleRow);
+		void findMaxEnergyTableEntry(tableRowRIter &row, tableEntryIter &col);
 };
 
 struct dpTableEntry {
@@ -115,9 +119,5 @@ bool dpTableEntryComp(const dpTableEntry &a, const dpTableEntry &b) {
 }
 
 void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &deadline);
-
-typedef vector<dpTableEntry>::iterator tableEntryIter;
-typedef vector<vector<dpTableEntry> >::iterator tableRowIter;
-typedef vector<vector<dpTableEntry> >::reverse_iterator tableRowRIter;
 
 #endif

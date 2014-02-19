@@ -220,20 +220,29 @@ double dynProg::getExtraChargePower(int taskIdx, int volLevel) {
 	return (chargingPower < 0) ? 0.001 : chargingPower;
 }
 
+void dynProg::findMaxEnergyTableEntry(tableRowRIter &row, tableEntryIter &col) {
+
+	row = m_scheduleWithIdleTask.rbegin();
+
+	tableEntryIter optIdxIdleTask = max_element(row->begin(), row->end(), dpTableEntryComp);
+	++row;
+	tableEntryIter optIdxRealTask = max_element(row->begin(), row->end(), dpTableEntryComp);
+	if (*optIdxRealTask < *optIdxIdleTask) {
+		--row;
+		col = optIdxIdleTask;
+	} else {
+		col = optIdxRealTask;
+	}
+
+	return;
+}
+
 void dynProg::backTracingWithIdleTasks() {
 
 	// Find the entry in the table with optimal energy
-	tableRowRIter iter = m_scheduleWithIdleTask.rbegin();
-	tableEntryIter optIdxIdleTask = max_element(iter->begin(), iter->end(), dpTableEntryComp);
-	++iter;
-	tableEntryIter optIdxRealTask = max_element(iter->begin(), iter->end(), dpTableEntryComp);
+	tableRowRIter iter;
 	tableEntryIter entryIter;
-	if (*optIdxRealTask < *optIdxIdleTask) {
-		--iter;
-		entryIter = optIdxIdleTask;
-	} else {
-		entryIter = optIdxRealTask;
-	}
+	findMaxEnergyTableEntry(iter, entryIter);
 
 	// Backing tracing loop
 	optimalSchedule.push(*entryIter);
