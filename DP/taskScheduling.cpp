@@ -250,6 +250,25 @@ void dynProg::backTracingWithIdleTasks() {
 		entryIter = iter->begin() + optimalSchedule.top().lastTaskFinishTime;
 		optimalSchedule.push(*entryIter);
 	}
+#ifdef DEBUG_VERBOSE
+	dumpOptimalSchedule();
+#endif
+}
+
+void dynProg::dumpOptimalSchedule() {
+
+	stack<dpTableEntry> tmpSchedule(optimalSchedule);
+	cout << "#########################################################" << endl;
+	cout << "############### Begin to dump schedule! #################" << endl;
+	cout << "#########################################################" << endl;
+	while (!tmpSchedule.empty()) {
+		cout << tmpSchedule.top() << endl;
+		tmpSchedule.pop();
+	}
+	cout << "#########################################################" << endl;
+	cout << "###############  End to dump schedule!  #################" << endl;
+	cout << "#########################################################" << endl;
+
 }
 
 void dynProg::backTracing() {
