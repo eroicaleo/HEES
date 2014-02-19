@@ -103,7 +103,7 @@ void dynProg::populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<d
 		if (iter->totalEnergy < 0)
 			continue;
 		tableEntryIter iterIdleHead = thisIdleRow.begin()+(iter-lastRealRow.begin());
-		for (tableEntryIter iterIdle = iterIdleHead + 1; iterIdle != thisIdleRow.end(); ++iterIdle) {
+		for (tableEntryIter iterIdle = iterIdleHead; iterIdle != thisIdleRow.end(); ++iterIdle) {
 			int taskDur = iterIdle - iterIdleHead;
 #ifdef DEBUG_VERBOSE
 			cout << "I am predicting idle task " << iterIdle->taskID << " from time " << iterIdleHead - thisIdleRow.begin() << " to " << iterIdle - thisIdleRow.begin() << "." << endl;
