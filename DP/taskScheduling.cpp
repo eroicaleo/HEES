@@ -53,9 +53,14 @@ dynProg::dynProg(int numOfTask, vector<double> voltageTable, double deadline, ve
 
 	// Initialize DP table with idle task
 	m_scheduleWithIdleTask = vector<vector<dpTableEntry> >(m_numOfTask+m_numOfTask+1, vector<dpTableEntry>(m_deadline+1, dpTableEntry()));
-	for (size_t i = 1; i < m_scheduleWithIdleTask.size(); i += 2) {
+	for (size_t i = 0; i < m_scheduleWithIdleTask.size(); i += 2) {
 		for (size_t j = 0; j != m_scheduleWithIdleTask[i].size(); ++j) {
-			m_scheduleWithIdleTask[i][j].taskID = (i-1)/2;
+			// Idle tasks
+			m_scheduleWithIdleTask[i][j].taskID = i/2;
+			// Real tasks
+			if (i+1 < m_scheduleWithIdleTask.size()) {
+				m_scheduleWithIdleTask[i+1][j].taskID = i/2;
+			}
 		}
 	}
 }
@@ -69,6 +74,14 @@ void dynProg::taskTimelineWithIdle() {
 		// populating for the odd number tasks -- idle tasks
 		populateIdleTask(m_scheduleWithIdleTask[i+1], m_scheduleWithIdleTask[i+2]);
 	}
+#ifdef DEBUG_VERBOSE
+	for (size_t i = 0; i != m_scheduleWithIdleTask.size(); ++i) {
+		for (size_t j = 0; j != m_scheduleWithIdleTask[i].size(); ++j) {
+			cout << "row: " << std::setw(4) << i << " col: " << std::setw(4) << j << " ";
+			cout << m_scheduleWithIdleTask[i][j] << endl;
+		}
+	}
+#endif
 }
 
 void dynProg::populateFirstIdleTask(vector<dpTableEntry> &firstIdleRow) {
@@ -92,14 +105,17 @@ void dynProg::populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<d
 		tableEntryIter iterIdleHead = thisIdleRow.begin()+(iter-lastRealRow.begin());
 		for (tableEntryIter iterIdle = iterIdleHead + 1; iterIdle != thisIdleRow.end(); ++iterIdle) {
 			int taskDur = iterIdle - iterIdleHead;
+#ifdef DEBUG_VERBOSE
+			cout << "I am predicting idle task " << iterIdle->taskID << " from time " << iterIdleHead - thisIdleRow.begin() << " to " << iterIdle - thisIdleRow.begin() << "." << endl;
+#endif
 			double energy = energyCalculator(inputPower, iter->totalEnergy, taskDur);
 			if (energy > iterIdle->totalEnergy) {
 #ifdef DEBUG_VERBOSE
-					cout << "Taskid: idle" << " entry " << iterIdle-thisIdleRow.begin() << " has been updated from "
-						<< iterIdle->totalEnergy << " to " << energy << endl;;
+				cout << "Taskid: idle " << iterIdle->taskID << " entry " << iterIdle-thisIdleRow.begin() << " has been updated from "
+					<< iterIdle->totalEnergy << " to " << energy << endl;;
 #endif
 				// Update the table entry
-				iterIdle->setAllFields(energy, -1.0, -1.0, -1, -1, taskDur, iterIdleHead-thisIdleRow.begin());
+				iterIdle->setAllFields(energy, -1.0, -1.0, -1, iterIdle->taskID, taskDur, iterIdleHead-thisIdleRow.begin());
 			}
 		}
 	}
@@ -114,14 +130,17 @@ void dynProg::populateRealTask(const vector<dpTableEntry> &lastIdleRow, vector<d
 			int taskID = thisRealRow[0].taskID;
 			int taskDur = m_taskDuration[taskID][k];
 			double inputPower = getExtraChargePower(taskID, k);
+			size_t taskiFinishTime = (iter-lastIdleRow.begin()) + taskDur;
+			tableEntryIter realTaskIter = thisRealRow.begin() + taskiFinishTime;
 			// Must guarantee there is enough power for charging
-			if (inputPower > 0) {
+			if ((inputPower > 0) && (realTaskIter < thisRealRow.end())) {
+#ifdef DEBUG_VERBOSE
+				cout << "I am predicting real task " << taskID << " from time " << (iter-lastIdleRow.begin()) << " to " << taskiFinishTime << "." << endl;
+#endif
 				double energy = energyCalculator(inputPower, iter->totalEnergy, taskDur);
-				size_t taskiFinishTime = (iter-lastIdleRow.begin()) + taskDur;
-				tableEntryIter realTaskIter = thisRealRow.begin() + taskiFinishTime;
 
 				// Must guarantee that the schedule is feasible
-				if ((realTaskIter->totalEnergy < energy) && (realTaskIter < thisRealRow.end())) {
+				if (realTaskIter->totalEnergy < energy) {
 #ifdef DEBUG_VERBOSE
 					cout << "Taskid: " << taskID << " entry " << taskiFinishTime << " has been updated from "
 						<< realTaskIter->totalEnergy << " to " << energy << endl;;
@@ -199,6 +218,29 @@ double dynProg::getExtraChargePower(int taskIdx, int volLevel) {
 	m_dcLoad.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
 	double chargingPower =  m_solarPower - dc_load_vin*dc_load_iin;
 	return (chargingPower < 0) ? 0.001 : chargingPower;
+}
+
+void dynProg::backTracingWithIdleTasks() {
+
+	// Find the entry in the table with optimal energy
+	tableRowRIter iter = m_scheduleWithIdleTask.rbegin();
+	tableEntryIter optIdxIdleTask = max_element(iter->begin(), iter->end(), dpTableEntryComp);
+	++iter;
+	tableEntryIter optIdxRealTask = max_element(iter->begin(), iter->end(), dpTableEntryComp);
+	tableEntryIter entryIter;
+	if (*optIdxRealTask < *optIdxIdleTask) {
+		--iter;
+		entryIter = optIdxIdleTask;
+	} else {
+		entryIter = optIdxRealTask;
+	}
+
+	// Backing tracing loop
+	optimalSchedule.push(*entryIter);
+	for (++iter; iter != m_scheduleWithIdleTask.rend(); ++iter) {
+		entryIter = iter->begin() + optimalSchedule.top().lastTaskFinishTime;
+		optimalSchedule.push(*entryIter);
+	}
 }
 
 void dynProg::backTracing() {
@@ -287,7 +329,21 @@ dpTableEntry::dpTableEntry():
 	volLevel(-1),
 	taskID(-1),
 	len(-1),
-	lastTaskFinishTime(-1) {}
+	lastTaskFinishTime(0) {}
+
+ostream& operator<<(ostream& os, const dpTableEntry &e) {
+	os << "In this entry, ";
+	os.precision(4);
+	os << "totalEnergy: " << std::fixed << std::setw(12) << e.totalEnergy;
+	os << ", voltage: " << std::setprecision(2) << std::fixed << std::setw(8) << e.voltage;
+	os << ", current: " << std::setw(8) << e.current;
+	os << ", volLevel: " << std::setw(4) << e.volLevel;
+	os << ", taskID: " << std::setw(4) << e.taskID;
+	os << ", len: " << std::setw(4) << e.len;
+	os << ", lastTaskFinishTime: " << e.lastTaskFinishTime;
+	os << ".";
+	return os;
+}
 
 #ifdef DP_BINARY
 
@@ -334,6 +390,7 @@ int main(){
 	nnetmultitask nnetPredictor;
 	taskSet1.energyCalculator = bind(&nnetmultitask::predictWithEnergyLength, nnetPredictor, placeholders::_1, placeholders::_2, placeholders::_3);
 	taskSet1.taskTimelineWithIdle();
+	taskSet1.backTracingWithIdleTasks();
 	// taskSet1.taskTimeline();
 	// taskSet1.backTracing();
 	// taskSet1.genScheduleForEES();

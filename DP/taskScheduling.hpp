@@ -5,10 +5,13 @@
 #include <stack>
 #include <tr1/functional>
 #include <vector>
+#include <iostream>
+#include <iomanip>
 
 #include "../DCCon_in.hpp"
 
 using std::vector;
+using std::ostream;
 
 struct dpTableEntry;
 
@@ -64,6 +67,7 @@ class dynProg {
 
 		void backTracing();
 		int genScheduleForEES();
+		void backTracingWithIdleTasks();
 
 	private:
 		double getExtraChargePower(int taskIdx, int volLevel);
@@ -98,10 +102,22 @@ struct dpTableEntry {
 		len = l;
 		lastTaskFinishTime = f;
 	}
+
+	bool operator<(const dpTableEntry &d) {
+		return this->totalEnergy < d.totalEnergy;
+	}
 };
+
+ostream& operator<<(ostream& os, const dpTableEntry &e);
+
+bool dpTableEntryComp(const dpTableEntry &a, const dpTableEntry &b) {
+	return a.totalEnergy < b.totalEnergy;
+}
 
 void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &deadline);
 
 typedef vector<dpTableEntry>::iterator tableEntryIter;
+typedef vector<vector<dpTableEntry> >::iterator tableRowIter;
+typedef vector<vector<dpTableEntry> >::reverse_iterator tableRowRIter;
 
 #endif
