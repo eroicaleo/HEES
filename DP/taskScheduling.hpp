@@ -71,6 +71,7 @@ class dynProg {
 		void backTracing();
 		int genScheduleForEES();
 		void backTracingWithIdleTasks();
+		void dynamicProgrammingWithIdleTasks();
 
 	private:
 		double getExtraChargePower(int taskIdx, int volLevel);

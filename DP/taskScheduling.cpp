@@ -141,7 +141,7 @@ void dynProg::populateRealTask(const vector<dpTableEntry> &lastIdleRow, vector<d
 						<< realTaskIter->totalEnergy << " to " << energy << endl;;
 #endif
 					// Update the table entry
-					realTaskIter->setAllFields(energy, volSel[k], -1.0, k, taskID, taskDur, taskiFinishTime-taskDur);
+					realTaskIter->setAllFields(energy, volSel[k], m_taskCurrent[taskID][k], k, taskID, taskDur, taskiFinishTime-taskDur);
 				}
 			}
 		} // iterate over 'k': number of voltage
@@ -315,22 +315,27 @@ int dynProg::genScheduleForEES() {
 	stack<dpTableEntry> tmpSchedule(optimalSchedule);
 	while(!tmpSchedule.empty()) {
 		dpTableEntry tmpTaskEntry = tmpSchedule.top();
-		outfile << tmpTaskEntry.voltage << " ";
-		outfile << tmpTaskEntry.current << " ";
-		outfile << (tmpTaskEntry.len) << endl;
-		#ifdef DEBUG_VERBOSE
-			cout << "Task id: " << tmpTaskEntry.taskID
-				<< " run for " << tmpTaskEntry.len << " timestamp (0.1s) "
-				<< " voltage: " << tmpTaskEntry.voltage
-				<< " current: " << tmpTaskEntry.current
-				<< " final energy: " << tmpTaskEntry.totalEnergy << endl;
-		#endif
+		if (tmpTaskEntry.len > 0) {
+			outfile << tmpTaskEntry.voltage << " ";
+			outfile << tmpTaskEntry.current << " ";
+			outfile << (tmpTaskEntry.len) << endl;
+		}
 		tmpSchedule.pop();
 		totalLength += tmpTaskEntry.len;
 	}
 	outfile.close();
 
 	return totalLength;
+}
+
+void dynProg::dynamicProgrammingWithIdleTasks() {
+
+	nnetmultitask nnetPredictor;
+	energyCalculator = bind(&nnetmultitask::predictWithEnergyLength, nnetPredictor, placeholders::_1, placeholders::_2, placeholders::_3);
+	taskTimelineWithIdle();
+	backTracingWithIdleTasks();
+	genScheduleForEES();
+
 }
 
 void dynProg::taskScheduling(){
@@ -430,14 +435,10 @@ int main(){
 	readInput(InDuration, InEnergy, deadline);
 	vector<double>outDuration;
 	vector<double>outVolt;
-    dynProg taskSet1 (InDuration.size(), vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), deadline, InDuration, InEnergy);
-	nnetmultitask nnetPredictor;
-	taskSet1.energyCalculator = bind(&nnetmultitask::predictWithEnergyLength, nnetPredictor, placeholders::_1, placeholders::_2, placeholders::_3);
-	taskSet1.taskTimelineWithIdle();
-	taskSet1.backTracingWithIdleTasks();
+	dynProg taskSet1 (InDuration.size(), vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), deadline, InDuration, InEnergy);
+	taskSet1.dynamicProgrammingWithIdleTasks();
 	// taskSet1.taskTimeline();
 	// taskSet1.backTracing();
-	// taskSet1.genScheduleForEES();
 	// outDuration = taskSet1.getDurationSet();
 	// outVolt = taskSet1.getVoltSet();
 	// for(int i = 0; i < numOfTask; i ++){
