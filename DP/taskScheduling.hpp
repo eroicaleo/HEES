@@ -64,6 +64,7 @@ class dynProg {
 		void taskTimelineWithIdle();
 		vector<double>getDurationSet();
 		vector<double>getVoltSet();
+		int getDeadline() const { return m_deadline; }
 
 		// The function object take two variables, current energy and task length
 		std::tr1::function<double(double, double, double)> energyCalculator;
