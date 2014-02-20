@@ -5,6 +5,8 @@ bin = energysys
 OBJ = DCCon_out.o SuperCap.o main.o DischargeProcess.o ChargeProcess.o DCCon_in.o DCCon_dis.o LionBat.o LoadApp.o selVCTI.o \
 			powersource.o DCSolver.o ees_bank.o HEESTimer.o ParseCommandLine.o
 
+SCHED_OBJ = DCCon_in.o Scheduler.o
+
 NNET_OBJ = nnet/nnet.o nnet/util.o nnet/nnetmultitask.o
 DP_OBJ = DP/taskScheduling.o
 CATS_OBJ = compSet/ca_ts.o compSet/ca_ts_fixed.o
@@ -26,8 +28,8 @@ all : $(bin)
 $(bin) : $(OBJ) nnet_obj dp_obj
 	g++ $(LDFLAGS) $(OBJ) -o $@ $(SUNDIALS_LIBS) $(BOOST_LIBS) $(NNET_OBJ) $(DP_OBJ)
 
-sched :  $(OBJ) nnet_obj dp_obj cats_obj Scheduler.o
-	g++ $(LDFLAGS) DCCon_in.o $(NNET_OBJ) $(DP_OBJ) $(CATS_OBJ) $(SUNDIALS_LIBS) $(BOOST_LIBS) Scheduler.o -o Scheduler
+sched :  $(SCHED_OBJ) nnet_obj dp_obj cats_obj
+	g++ $(NNET_OBJ) $(DP_OBJ) $(CATS_OBJ) $(SCHED_OBJ) -o Scheduler
 
 %.o : %.cpp
 	g++ $(CFLAGS) $< -o $@
@@ -44,4 +46,5 @@ cats_obj :
 clean :
 	make -C nnet/ $@
 	make -C DP/ $@
+	make -C compSet/ $@
 	rm -rf *.o $(bin) Scheduler
