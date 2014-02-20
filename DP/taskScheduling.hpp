@@ -79,6 +79,7 @@ class dynProg {
 		void populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<dpTableEntry> &thisIdleRow);
 		void findMaxEnergyTableEntry(tableRowRIter &row, tableEntryIter &col);
 		void dumpOptimalSchedule();
+		void dumpDPTable();
 };
 
 struct dpTableEntry {

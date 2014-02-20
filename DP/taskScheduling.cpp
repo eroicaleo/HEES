@@ -75,12 +75,7 @@ void dynProg::taskTimelineWithIdle() {
 		populateIdleTask(m_scheduleWithIdleTask[i+1], m_scheduleWithIdleTask[i+2]);
 	}
 #ifdef DEBUG_VERBOSE
-	for (size_t i = 0; i != m_scheduleWithIdleTask.size(); ++i) {
-		for (size_t j = 0; j != m_scheduleWithIdleTask[i].size(); ++j) {
-			cout << "row: " << std::setw(4) << i << " col: " << std::setw(4) << j << " ";
-			cout << m_scheduleWithIdleTask[i][j] << endl;
-		}
-	}
+	dumpDPTable();
 #endif
 }
 
@@ -255,9 +250,29 @@ void dynProg::backTracingWithIdleTasks() {
 #endif
 }
 
+void dynProg::dumpDPTable() {
+
+	cout << endl;
+	cout << "#########################################################" << endl;
+	cout << "############### Begin to dump DP Table! #################" << endl;
+	cout << "#########################################################" << endl;
+	for (size_t i = 0; i != m_scheduleWithIdleTask.size(); ++i) {
+		for (size_t j = 0; j != m_scheduleWithIdleTask[i].size(); ++j) {
+			cout << "row: " << std::setw(4) << i << " col: " << std::setw(4) << j << " ";
+			cout << m_scheduleWithIdleTask[i][j] << endl;
+		}
+	}
+	cout << "#########################################################" << endl;
+	cout << "###############  End to dump DP Table!  #################" << endl;
+	cout << "#########################################################" << endl;
+	cout << endl;
+
+}
+
 void dynProg::dumpOptimalSchedule() {
 
 	stack<dpTableEntry> tmpSchedule(optimalSchedule);
+	cout << endl;
 	cout << "#########################################################" << endl;
 	cout << "############### Begin to dump schedule! #################" << endl;
 	cout << "#########################################################" << endl;
@@ -268,6 +283,7 @@ void dynProg::dumpOptimalSchedule() {
 	cout << "#########################################################" << endl;
 	cout << "###############  End to dump schedule!  #################" << endl;
 	cout << "#########################################################" << endl;
+	cout << endl;
 
 }
 
