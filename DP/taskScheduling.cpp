@@ -394,6 +394,10 @@ ostream& operator<<(ostream& os, const dpTableEntry &e) {
 	return os;
 }
 
+bool dpTableEntryComp(const dpTableEntry &a, const dpTableEntry &b) {
+	return a.totalEnergy < b.totalEnergy;
+}
+
 #ifdef DP_BINARY
 
 void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &deadline) {
