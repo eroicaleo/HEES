@@ -1,0 +1,35 @@
+# 
+# Specify your configuration options as following
+#
+
+# Bank configuration related parameters 
+supcap_parallel_conf 	= 4
+supcap_serial_conf		= 1
+battery_parallel_conf	= 1
+battery_serial_conf		= 4
+
+supcap_init_charge		= 40.0
+battery_init_charge		= 0.0
+
+bank_reconfig_enable	= 0
+
+supcap_res				= 0
+supcap_cap				= 10
+
+# VCTI related parameters
+fixed_vcti				= 1.0
+
+# Time related parameters
+start_time_hh = 17
+start_time_mm = 0
+start_time_ss = 0
+
+# The step is in 0.1s unit
+max_simu_steps		= 600000
+delta_energy_steps  = 10
+
+# Power source related parameters
+power_source = constant_power
+# power_source = solar_power
+# power_source = variable_power
+constant_power_value = 3.0
