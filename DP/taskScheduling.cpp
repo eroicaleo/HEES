@@ -110,7 +110,7 @@ void dynProg::populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<d
 					<< iterIdle->totalEnergy << " to " << energy << endl;;
 #endif
 				// Update the table entry
-				iterIdle->setAllFields(energy, -1.0, -1.0, -1, iterIdle->taskID, taskDur, iterIdleHead-thisIdleRow.begin());
+				iterIdle->setAllFields(energy, 1.0, 0.0, -1, iterIdle->taskID, taskDur, iterIdleHead-thisIdleRow.begin());
 			}
 		}
 	}
