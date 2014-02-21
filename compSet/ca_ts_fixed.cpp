@@ -8,9 +8,8 @@
 #include "ca_ts.hpp"
 
 using namespace std;
-using std::vector;
 
-int minEnergyScheduleFixed(int m_numOfTask, int m_numOfVolt, double m_deadline, vector<double>m_inputDuration, vector<double>m_inputEnergy) {
+int minEnergyScheduleFixed(int m_numOfTask, int m_numOfVolt, double m_deadline, vector<double>m_inputDuration, vector<double>m_inputEnergy, const vector<TaskVoltageTable> &vec_tvt) {
 	vector<double> volSel;
 	volSel = vector<double> (5, 0.0);	
 	volSel[0] = 1.2;
@@ -89,6 +88,20 @@ int minEnergyScheduleFixed(int m_numOfTask, int m_numOfVolt, double m_deadline, 
 		}
 	}
 
+	firstHalfDuration = 0.0;
+	for (int i = 0; i < m_numOfTask ; i ++) {
+		if ( firstHalfDuration < totalDuration * changePoint){
+			cout<< volSel[up] << " ";
+			cout<< vec_tvt[i].getCurrent(volSel[up]) << " ";
+			cout<< vec_tvt[i].getScaledCeilLength(volSel[up], 10) <<endl ;//* changePoint <<endl;
+			firstHalfDuration +=  m_inputDuration[i] /  volSel[up];
+		} else {
+			cout<< volSel[bottom] << " ";
+			cout<< vec_tvt[i].getCurrent(volSel[bottom]) << " ";
+			cout<< vec_tvt[i].getScaledCeilLength(volSel[bottom], 10) <<endl;// * (1 - changePoint) <<endl;
+		}
+	}
+
 	ofstream outfile;
 	outfile.open("TasksCATSFixed.txt");
 	if (!outfile) {
@@ -99,13 +112,13 @@ int minEnergyScheduleFixed(int m_numOfTask, int m_numOfVolt, double m_deadline, 
 	for (int i = 0; i < m_numOfTask ; i ++) {
 		if (firstHalfDuration < totalDuration * changePoint) {
 			outfile << volSel[up] << " ";
-			outfile << m_inputEnergy[i] / m_inputDuration[i] * volSel[up] * volSel[up] << " ";
-			outfile << m_inputDuration[i] / volSel[up] * 10 << endl;//* changePoint <<endl;
+			outfile << vec_tvt[i].getCurrent(volSel[up]) << " ";
+			outfile << vec_tvt[i].getScaledCeilLength(volSel[up], 10) <<endl ;//* changePoint <<endl;
 			firstHalfDuration +=  m_inputDuration[i] /  volSel[up];
 		} else {
 			outfile << volSel[bottom] << " ";
-			outfile << m_inputEnergy[i] / m_inputDuration[i] * volSel[bottom] * volSel[bottom] << " ";
-			outfile << m_inputDuration[i] / volSel[bottom] * 10 <<endl;// * (1 - changePoint) <<endl;
+			outfile << vec_tvt[i].getCurrent(volSel[bottom]) << " ";
+			outfile << vec_tvt[i].getScaledCeilLength(volSel[bottom], 10) <<endl;// * (1 - changePoint) <<endl;
 		}
 	}
 	outfile.close();
@@ -114,6 +127,9 @@ int minEnergyScheduleFixed(int m_numOfTask, int m_numOfVolt, double m_deadline, 
 }
 
 #ifdef CATS_BINARY
+
+VoltageTable vt(vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), 1.0);
+vector<TaskVoltageTable> vec_tvt;
 
 void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &deadline) {
 	using namespace std;
@@ -130,9 +146,10 @@ void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &dea
 		InDuration.push_back(tasklen);
 		InEnergy.push_back(energy);
 		deadline += tasklen;
+		vec_tvt.push_back(TaskVoltageTable(vt, power, tasklen));
 	}
 
-	deadline /= 0.89;
+	deadline /= 1.1;
 
 	infile.close();
 	return;
@@ -146,8 +163,7 @@ int main() {
 	vector<double>InEnergy;
 
 	readInput(InDuration, InEnergy, deadline);
-	deadline = 13.3;
-	minEnergyScheduleFixed(numOfTask, numOfVoltage, deadline, InDuration, InEnergy);	
+	minEnergyScheduleFixed(numOfTask, numOfVoltage, 18.1, InDuration, InEnergy, vec_tvt);
 
 	return 0;
 }
