@@ -10,14 +10,13 @@
 #include "DP/taskScheduling.hpp"
 #include "compSet/ca_ts.hpp"
 #include "nnet/nnetmultitask.hpp"
+#include "VoltageTable.hpp"
 
 using namespace std;
 using namespace std::tr1;
 
 static double randomRatio;
 
-static const size_t syntheticVoltageLevel = 5;
-static const double syntheticVoltageTable[syntheticVoltageLevel] = {0.8, 0.9, 1.0, 1.1, 1.2};
 static const size_t pxaVoltageLevel = 4;
 static const double pxaVoltageTable[pxaVoltageLevel] = {0.75, 1.0, 1.3, 1.6};
 
@@ -31,6 +30,9 @@ int main(int argc, char *argv[]) {
 	generateSchedule();
 	return 0;
 }
+
+VoltageTable vt(vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), 1.0);
+vector<TaskVoltageTable> vec_tvt;
 
 int generateSchedule() {
 
@@ -49,7 +51,7 @@ int generateSchedule() {
 
 	// Baseline policy
 	minEnergySchedule(m_numOfTask, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy);
-	minEnergyScheduleFixed(m_numOfTask, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy);
+	minEnergyScheduleFixed(m_numOfTask, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy, vec_tvt);
 
 	return 0;
 }
@@ -77,6 +79,8 @@ void randomTaskSetGenerator(int &m_numOfTask, int &m_numOfVolt, double &m_deadli
 		InPower.push_back(taskpower);
 
 		m_deadline += tasklen;
+
+		vec_tvt.push_back(TaskVoltageTable(vt, taskpower, tasklen));
 
 	}
 	outfile.open("TasksOrigNoSorting.txt");
