@@ -50,3 +50,6 @@ TaskVoltageTable::TaskVoltageTable(const VoltageTable &vt, double nomCur, double
 		m_VCLTable[i].l = vt.VoltageFrequencyRelation(m_VCLTable[i].v, m_nominalLength);
 	}
 }
+
+const VoltageTable syntheticCPUVoltageTable(vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), 1.0);
+const TaskVoltageTable idleTaskVoltageTable(syntheticCPUVoltageTable, 0.0, 0.0);
