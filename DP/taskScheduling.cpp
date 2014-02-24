@@ -82,7 +82,8 @@ void dynProg::taskTimelineWithIdle() {
 void dynProg::populateFirstIdleTask(vector<dpTableEntry> &firstIdleRow) {
 	for (tableEntryIter iter = firstIdleRow.begin(); iter != firstIdleRow.end(); ++iter) {
 		size_t len = (iter-firstIdleRow.begin());
-		iter->totalEnergy = energyCalculator(m_solarPower, m_initialEnergy, len);
+		double inputPower = getExtraChargePower(idleTaskVoltageTable, 0);
+		iter->totalEnergy = energyCalculator(inputPower, m_initialEnergy, len);
 		iter->len = len;
 	}
 	return;
@@ -208,6 +209,16 @@ void dynProg::taskTimeline() {
 double dynProg::getExtraChargePower(int taskIdx, int volLevel) {
 
 	double dc_load_vin(1.0), dc_load_vout(volSel[volLevel]), dc_load_iout(m_taskCurrent[taskIdx][volLevel]);
+	double dc_load_iin(0.0), dc_load_power(0.0);
+
+	m_dcLoad.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
+	double chargingPower =  m_solarPower - dc_load_vin*dc_load_iin;
+	return (chargingPower < 0) ? 0.001 : chargingPower;
+}
+
+double dynProg::getExtraChargePower(const TaskVoltageTable &tvt, size_t volLevel) {
+
+	double dc_load_vin(1.0), dc_load_vout(tvt.getVoltage(volLevel)), dc_load_iout(tvt.getCurrent(volLevel));
 	double dc_load_iin(0.0), dc_load_power(0.0);
 
 	m_dcLoad.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
@@ -366,8 +377,6 @@ vector<double> dynProg::getVoltSet(){
     return m_voltSet;
 }
 
-const size_t syntheticVoltageLevel = 5;
-const double syntheticVoltageTable[syntheticVoltageLevel] = {0.8, 0.9, 1.0, 1.1, 1.2};
 const size_t pxaVoltageLevel = 4;
 const double pxaVoltageTable[pxaVoltageLevel] = {0.75, 1.0, 1.3, 1.6};
 

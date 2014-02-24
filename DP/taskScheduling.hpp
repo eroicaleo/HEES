@@ -9,6 +9,7 @@
 #include <iomanip>
 
 #include "../DCCon_in.hpp"
+#include "../VoltageTable.hpp"
 
 using std::vector;
 using std::ostream;
@@ -76,6 +77,7 @@ class dynProg {
 
 	private:
 		double getExtraChargePower(int taskIdx, int volLevel);
+		double getExtraChargePower(const TaskVoltageTable &tvt, size_t volLevel);
 		void populateFirstIdleTask(vector<dpTableEntry> &);
 		void populateRealTask(const vector<dpTableEntry> &lastIdleRow, vector<dpTableEntry> &thisRealRow);
 		void populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<dpTableEntry> &thisIdleRow);
