@@ -46,6 +46,8 @@ VariablePowerSource vps;
 
 function<double(double)> power_source_func;
 
+/* Scheduling related parameters */
+double ratio_runtime_and_deadline;
 
 int hees_parse_command_line(int argc, char *argv[]) {
 	
@@ -90,6 +92,12 @@ int hees_parse_command_line(int argc, char *argv[]) {
 		power_options.add_options()
 			("power_source", value<string>(&power_source_type)->default_value("constant_power"), "Use a constant power, must specify the constant_power_value option")
 			("constant_power_value", value<double>(&constant_power_value)->default_value(0.0), "The value of the constant power source")
+		;
+
+		/* Schedule options */
+		options_description schedule_options("Schedule source options");
+		schedule_options.add_options()
+			("ratio_runtime_and_deadline", value<double>(&ratio_runtime_and_deadline)->default_value(1.0), "The ratio between the runtime @ nominal speed and deadline")
 		;
 
 		options_description cmdline_options;
