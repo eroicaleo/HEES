@@ -17,7 +17,7 @@ dcconvertIN::dcconvertIN() :
 	m_fs(500e3),
 	m_Lf(6e-6) { }
 
-void dcconvertIN::ConverterModel(double Vin, double Vout, double Iout, double &Iin, double &Pdcdc) {
+void dcconvertIN::ConverterModel(double Vin, double Vout, double Iout, double &Iin, double &Pdcdc) const {
 	double m_Iin = 0.0;
 	double m_Pdcdc = 0.0;
 
@@ -34,7 +34,16 @@ void dcconvertIN::ConverterModel(double Vin, double Vout, double Iout, double &I
 	this->m_Pdcdc = m_Pdcdc;
 }
 
-void dcconvertIN::BuckMode(double Vin, double Vout, double Iout, double &Iin, double &Pdcdc){
+double dcconvertIN::GetPowerConsumptionWithLoad(double loadvol, double loadcur) const {
+
+    double dc_load_vin(1.0), dc_load_vout(loadvol), dc_load_iout(loadcur);
+	double dc_load_iin(0.0), dc_load_power(0.0);
+	ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
+
+	return dc_load_vin*dc_load_iin;
+}
+
+void dcconvertIN::BuckMode(double Vin, double Vout, double Iout, double &Iin, double &Pdcdc) const {
 	double m_Iin = 0.0;
 	double m_Pdcdc = 0.0;
 	double m_D = 0.0;
@@ -51,7 +60,7 @@ void dcconvertIN::BuckMode(double Vin, double Vout, double Iout, double &Iin, do
 	Pdcdc = m_Pdcdc;
 }
 
-void dcconvertIN::BoostMode(double Vin, double Vout, double Iout, double &Iin, double &Pdcdc){
+void dcconvertIN::BoostMode(double Vin, double Vout, double Iout, double &Iin, double &Pdcdc) const {
     double m_Iin = 0.0;
     double m_Pdcdc = 0.0;
     double m_D = 0.0;

@@ -10,7 +10,8 @@ class dcconvertIN {
 		//Default Constructor
 		dcconvertIN();
 		//Converter model
-		void ConverterModel(double Vin, double Vout, double Iout, double &Iin, double &Pdcdc);
+		void ConverterModel(double Vin, double Vout, double Iout, double &Iin, double &Pdcdc) const;
+		double GetPowerConsumptionWithLoad(double loadvol, double loadcur) const;
 	private:
 		vector<double> m_Rsw;
 		vector<double> m_Qsw;
@@ -18,9 +19,9 @@ class dcconvertIN {
 		double m_Ictrl;
 		double m_fs;
 		double m_Lf;
-		double m_Pdcdc;
+		mutable double m_Pdcdc;
 
-		void BuckMode(double Vin, double Vout, double Iout, double &Iin, double &Pdcdc);
-		void BoostMode(double Vin, double Vout, double Iout, double &Iin, double &Pdcdc);
+		void BuckMode(double Vin, double Vout, double Iout, double &Iin, double &Pdcdc) const;
+		void BoostMode(double Vin, double Vout, double Iout, double &Iin, double &Pdcdc) const;
 };
 #endif
