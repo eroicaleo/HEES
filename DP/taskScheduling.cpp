@@ -9,11 +9,14 @@
 
 #include "taskScheduling.hpp"
 #include "../nnet/nnetmultitask.hpp"
+#include "../ScheduleBuilder.hpp"
 
 using namespace std;
 using namespace std::tr1;
 
-static const double CRAZY_ENERGY(-1000.0);
+int hees_parse_command_line(int argc, char *argv[]);
+
+extern const double CRAZY_ENERGY(-1000.0);
 
 dynProg::dynProg(int numOfTask, vector<double> voltageTable, double deadline, vector<double> taskDuration, vector<double> taskEnergy) {
 
@@ -91,7 +94,7 @@ void dynProg::populateFirstIdleTask(vector<dpTableEntry> &firstIdleRow) {
 
 void dynProg::populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<dpTableEntry> &thisIdleRow) {
 
-	double inputPower = m_solarPower;
+	double inputPower = getExtraChargePower(idleTaskVoltageTable, 0);
 	if (inputPower < 0.0)
 		return;
 
@@ -433,7 +436,7 @@ void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &dea
 }
 
 /* Testbench */
-int main(){
+int main(int argc, char *argv[]){
 	double deadline = 25.0;
 	vector<double>InDuration;
 	// InDuration.push_back(6.0);
@@ -445,11 +448,16 @@ int main(){
 	// InEnergy.push_back(7.0);
 	// InEnergy.push_back(8.0);
 
+	hees_parse_command_line(argc, argv);
 	readInput(InDuration, InEnergy, deadline);
 	vector<double>outDuration;
 	vector<double>outVolt;
 	dynProg taskSet1 (InDuration.size(), vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), deadline, InDuration, InEnergy);
 	taskSet1.dynamicProgrammingWithIdleTasks();
+	ScheduleBuilder sb;
+	sb.BuildScheduleFromFile("TasksDP.txt");
+	sb.PredictEnergyForSchedule(20.0);
+	sb.DumpSchedule();
 	// taskSet1.taskTimeline();
 	// taskSet1.backTracing();
 	// outDuration = taskSet1.getDurationSet();

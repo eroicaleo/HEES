@@ -16,6 +16,7 @@ using std::ostream;
 
 struct dpTableEntry;
 typedef vector<dpTableEntry>::iterator tableEntryIter;
+typedef vector<dpTableEntry>::const_iterator tableEntryConstIter;
 typedef vector<vector<dpTableEntry> >::iterator tableRowIter;
 typedef vector<vector<dpTableEntry> >::reverse_iterator tableRowRIter;
 
