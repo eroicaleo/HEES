@@ -15,17 +15,18 @@
 using namespace std;
 using namespace std::tr1;
 
+int hees_parse_command_line(int argc, char *argv[]);
+
 static double randomRatio;
+extern double ratio_runtime_and_deadline;
 
 static const size_t pxaVoltageLevel = 4;
 static const double pxaVoltageTable[pxaVoltageLevel] = {0.75, 1.0, 1.3, 1.6};
 
 int main(int argc, char *argv[]) {
-	if (argc != 2) {
-		cerr << "Must provide a float number between between 0.8 and 1.1" << endl;
-		exit(88);
-	}
-	randomRatio = atof(argv[1]);
+
+	hees_parse_command_line(argc, argv);
+	randomRatio = ratio_runtime_and_deadline;
 	cout << randomRatio << endl;
 	generateSchedule();
 	return 0;
