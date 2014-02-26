@@ -33,3 +33,8 @@ power_source = constant_power
 # power_source = solar_power
 # power_source = variable_power
 constant_power_value = 3.0
+
+#################################
+## Schedule related parameters ##
+#################################
+ratio_runtime_and_deadline = 1.0
