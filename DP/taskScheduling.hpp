@@ -67,6 +67,8 @@ class dynProg {
 		vector<double>getDurationSet();
 		vector<double>getVoltSet();
 		int getDeadline() const { return m_deadline; }
+		double getOptimalScheduleEnergy() const;
+		int getOptimalScheduleFinishTime() const;
 
 		// The function object take two variables, current energy and task length
 		std::tr1::function<double(double, double, double)> energyCalculator;

@@ -301,11 +301,33 @@ void dynProg::dumpOptimalSchedule() {
 		cout << tmpSchedule.top() << endl;
 		tmpSchedule.pop();
 	}
+	cout << "Final Energy: " << getOptimalScheduleEnergy();
+	cout << " Finish Time: " << getOptimalScheduleFinishTime() << endl;
 	cout << "#########################################################" << endl;
 	cout << "###############  End to dump schedule!  #################" << endl;
 	cout << "#########################################################" << endl;
 	cout << endl;
 
+}
+
+int dynProg::getOptimalScheduleFinishTime() const {
+	int t = -1;
+	stack<dpTableEntry> tmpSchedule(optimalSchedule);
+	while (!tmpSchedule.empty()) {
+		t = tmpSchedule.top().len + tmpSchedule.top().lastTaskFinishTime;
+		tmpSchedule.pop();
+	}
+	return t;
+}
+
+double dynProg::getOptimalScheduleEnergy() const {
+	double e = 0.0;
+	stack<dpTableEntry> tmpSchedule(optimalSchedule);
+	while (!tmpSchedule.empty()) {
+		e = tmpSchedule.top().totalEnergy;
+		tmpSchedule.pop();
+	}
+	return e;
 }
 
 void dynProg::backTracing() {
