@@ -255,15 +255,17 @@ void dynProg::backTracingWithIdleTasks() {
 	tableEntryIter entryIter;
 	findMaxEnergyTableEntry(iter, entryIter);
 
+	// Probably there is no feasible schedule.
+	// We just return.
+	if (entryIter->totalEnergy < 0.0)
+		return;
+
 	// Backing tracing loop
 	optimalSchedule.push(*entryIter);
 	for (++iter; iter != m_scheduleWithIdleTask.rend(); ++iter) {
 		entryIter = iter->begin() + optimalSchedule.top().lastTaskFinishTime;
 		optimalSchedule.push(*entryIter);
 	}
-#ifdef DEBUG_VERBOSE
-	dumpOptimalSchedule();
-#endif
 }
 
 void dynProg::dumpDPTable() {
@@ -292,6 +294,9 @@ void dynProg::dumpOptimalSchedule() {
 	cout << "#########################################################" << endl;
 	cout << "############### Begin to dump schedule! #################" << endl;
 	cout << "#########################################################" << endl;
+	if (tmpSchedule.empty()) {
+		cout << "Error: the schedule is infeasible!" << endl;
+	}
 	while (!tmpSchedule.empty()) {
 		cout << tmpSchedule.top() << endl;
 		tmpSchedule.pop();
@@ -351,6 +356,9 @@ void dynProg::dynamicProgrammingWithIdleTasks() {
 	taskTimelineWithIdle();
 	backTracingWithIdleTasks();
 	genScheduleForEES();
+#ifdef DEBUG_VERBOSE
+	dumpOptimalSchedule();
+#endif
 
 }
 
