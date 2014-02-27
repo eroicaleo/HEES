@@ -41,7 +41,8 @@ int TaskVoltageTable::getScaledCeilLength(double voltage, int scale) const {
 TaskVoltageTable::TaskVoltageTable(const VoltageTable &vt, double nomCur, double nomLen) :
 	m_voltageTable(vt.getVoltageTable()),
 	m_nominalCurrent(nomCur),
-	m_nominalLength(nomLen)
+	m_nominalLength(nomLen),
+	m_nominalVoltage(vt.GetNominalVoltage())
 {
 	m_VCLTable = vector<VolCurLenEntry>(m_voltageTable.size());
 	for (size_t i = 0; i < m_VCLTable.size(); ++i) {
