@@ -45,7 +45,7 @@ int generateSchedule() {
 	randomTaskSetGenerator(m_numOfTask, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy);
 
 	// Then use dynamic programming to generate optimal schedule
-    dynProg taskSet1(m_numOfTask, vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), m_deadline, m_inputDuration, m_inputEnergy);
+	dynProg taskSet1(m_numOfTask, vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), m_deadline, m_inputDuration, m_inputEnergy);
 	taskSet1.dynamicProgrammingWithIdleTasks();
 	m_deadline = taskSet1.getDeadline();
 	m_deadline /= 10.0;
