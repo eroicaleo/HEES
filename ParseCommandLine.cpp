@@ -101,10 +101,10 @@ int hees_parse_command_line(int argc, char *argv[]) {
 		;
 
 		options_description cmdline_options;
-		cmdline_options.add(generic).add(bank_config_options).add(time_config_options).add(power_options);
+		cmdline_options.add(generic).add(bank_config_options).add(time_config_options).add(power_options).add(schedule_options);
 
 		options_description config_file_options;
-		config_file_options.add(bank_config_options).add(time_config_options).add(power_options);
+		config_file_options.add(bank_config_options).add(time_config_options).add(power_options).add(schedule_options);
 
 		variables_map vm;
 		store(parse_command_line(argc, argv, cmdline_options), vm);
