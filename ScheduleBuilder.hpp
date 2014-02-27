@@ -17,6 +17,8 @@ public:
 	void DumpSchedule(ostream &os = std::cout) const;
 private:
 	vector<dpTableEntry> m_schedule;
+	double getScheduleEnergy() const;
+	int getScheduleFinishTime() const;
 };
 
 #endif

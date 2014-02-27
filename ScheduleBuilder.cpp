@@ -43,6 +43,10 @@ void ScheduleBuilder::PredictEnergyForSchedule(double initEnergy) {
 
 	for (tableEntryIter iter = m_schedule.begin(); iter != m_schedule.end(); ++iter) {
 		inputPower = power_source_func(0.0) - dcload.GetPowerConsumptionWithLoad(iter->voltage, iter->current);
+		if (inputPower < 0) {
+			m_schedule.clear();
+			break;
+		}
 		currentEnergy = energyCalculator(inputPower, currentEnergy, iter->len);
 		iter->totalEnergy = currentEnergy;
 	}
@@ -57,12 +61,33 @@ void ScheduleBuilder::DumpSchedule(ostream &os) const {
 	os << "#########################################################" << endl;
 	os << "############### Begin to dump schedule! #################" << endl;
 	os << "#########################################################" << endl;
+	if (m_schedule.size() == 0) {
+		os << "Error: the schedule is infeasible!" << endl;
+	}
 	for (iter = m_schedule.begin(); iter != m_schedule.end(); ++iter) {
 		os << *iter << endl;
 	}
+	cout << "Final Energy: " << getScheduleEnergy();
+	cout << " Finish Time: " << getScheduleFinishTime() << endl;
 	os << "#########################################################" << endl;
 	os << "###############  End to dump schedule!  #################" << endl;
 	os << "#########################################################" << endl;
 	os << endl;
 
+}
+
+double ScheduleBuilder::getScheduleEnergy() const {
+	double e = 0.0;
+	if (m_schedule.size() != 0) {
+		e = m_schedule.back().totalEnergy;
+	}
+	return e;
+}
+
+int ScheduleBuilder::getScheduleFinishTime() const {
+	int t = -1;
+	if (m_schedule.size() != 0) {
+		t = m_schedule.back().len + m_schedule.back().lastTaskFinishTime;
+	}
+	return t;
 }
