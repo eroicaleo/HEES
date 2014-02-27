@@ -16,6 +16,8 @@ using namespace std::tr1;
 
 int hees_parse_command_line(int argc, char *argv[]);
 
+extern function<double(double)> power_source_func;
+extern double ratio_runtime_and_deadline;
 extern const double CRAZY_ENERGY(-1000.0);
 
 dynProg::dynProg(int numOfTask, vector<double> voltageTable, double deadline, vector<double> taskDuration, vector<double> taskEnergy) {
@@ -52,7 +54,7 @@ dynProg::dynProg(int numOfTask, vector<double> voltageTable, double deadline, ve
 
 	// System model related parameters
 	m_initialEnergy = 20;
-	m_solarPower = 3.0;
+	m_solarPower = power_source_func(0.0);
 
 	// Initialize DP table with idle task
 	m_scheduleWithIdleTask = vector<vector<dpTableEntry> >(m_numOfTask+m_numOfTask+1, vector<dpTableEntry>(m_deadline+1, dpTableEntry()));
@@ -216,7 +218,7 @@ double dynProg::getExtraChargePower(int taskIdx, int volLevel) {
 
 	m_dcLoad.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
 	double chargingPower =  m_solarPower - dc_load_vin*dc_load_iin;
-	return (chargingPower < 0) ? 0.001 : chargingPower;
+	return chargingPower;
 }
 
 double dynProg::getExtraChargePower(const TaskVoltageTable &tvt, size_t volLevel) {
@@ -226,7 +228,7 @@ double dynProg::getExtraChargePower(const TaskVoltageTable &tvt, size_t volLevel
 
 	m_dcLoad.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
 	double chargingPower =  m_solarPower - dc_load_vin*dc_load_iin;
-	return (chargingPower < 0) ? 0.001 : chargingPower;
+	return chargingPower;
 }
 
 void dynProg::findMaxEnergyTableEntry(tableRowRIter &row, tableEntryIter &col) {
@@ -429,7 +431,7 @@ void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &dea
 		deadline += tasklen;
 	}
 
-	deadline /= 1.05;
+	deadline /= ratio_runtime_and_deadline;
 
 	infile.close();
 	return;
