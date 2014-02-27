@@ -9,7 +9,7 @@ using namespace std;
 using namespace std::tr1;
 
 extern const double CRAZY_ENERGY;
-extern ConstantPowerSource cps;
+extern function<double(double)> power_source_func;
 
 void ScheduleBuilder::BuildScheduleFromFile(const char *filename) {
 	double vol, cur;
@@ -42,7 +42,7 @@ void ScheduleBuilder::PredictEnergyForSchedule(double initEnergy) {
 	energyCalculator = bind(&nnetmultitask::predictWithEnergyLength, nnetPredictor, placeholders::_1, placeholders::_2, placeholders::_3);
 
 	for (tableEntryIter iter = m_schedule.begin(); iter != m_schedule.end(); ++iter) {
-		inputPower = cps.GetConstantPower(0.0) - dcload.GetPowerConsumptionWithLoad(iter->voltage, iter->current);
+		inputPower = power_source_func(0.0) - dcload.GetPowerConsumptionWithLoad(iter->voltage, iter->current);
 		currentEnergy = energyCalculator(inputPower, currentEnergy, iter->len);
 		iter->totalEnergy = currentEnergy;
 	}
