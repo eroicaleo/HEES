@@ -6,6 +6,7 @@
 #include <cstdlib>
 
 #include "ca_ts.hpp"
+#include "../ScheduleBuilder.hpp"
 
 using namespace std;
 
@@ -38,6 +39,8 @@ int minEnergyScheduleFixed(int m_numOfTask, int m_numOfVolt, double m_deadline, 
 		allDuration += m_inputDuration[i];
 	}
 	selVolt = allDuration / m_deadline;
+	cout << "allDuration: " << allDuration << endl;
+	cout << "deadline: " << m_deadline << endl;
 	cout<<"the continuous voltage: "<<selVolt<<endl;
 	
 	if (selVolt > volSel[0]) {
@@ -105,23 +108,39 @@ int minEnergyScheduleFixed(int m_numOfTask, int m_numOfVolt, double m_deadline, 
 	ofstream outfile;
 	outfile.open("TasksCATSFixed.txt");
 	if (!outfile) {
-		cerr << "Can not open TaskCATSFixed.txt for write!" << endl;
+		cerr << "Can not open TasksCATSFixed.txt for write!" << endl;
 		exit(66);
 	}
 	firstHalfDuration = 0.0;
+	int timeUsed = 0;
 	for (int i = 0; i < m_numOfTask ; i ++) {
 		if (firstHalfDuration < totalDuration * changePoint) {
 			outfile << volSel[up] << " ";
 			outfile << vec_tvt[i].getCurrent(volSel[up]) << " ";
 			outfile << vec_tvt[i].getScaledCeilLength(volSel[up], 10) <<endl ;//* changePoint <<endl;
 			firstHalfDuration +=  m_inputDuration[i] /  volSel[up];
+			timeUsed += vec_tvt[i].getScaledCeilLength(volSel[up], 10);
 		} else {
 			outfile << volSel[bottom] << " ";
 			outfile << vec_tvt[i].getCurrent(volSel[bottom]) << " ";
 			outfile << vec_tvt[i].getScaledCeilLength(volSel[bottom], 10) <<endl;// * (1 - changePoint) <<endl;
+			timeUsed += vec_tvt[i].getScaledCeilLength(volSel[bottom], 10);
 		}
 	}
+	int timeRemained = m_deadline*10 - timeUsed;
+	cout << "timeRemained: " << timeRemained << endl;
+	// If there is sometime remains, we charge it with idle task
+	if (timeRemained > 0) {
+		outfile << vec_tvt[0].getNominalVoltage() << " ";
+		outfile << 0.0 << " ";
+		outfile << timeRemained << endl;
+	}
 	outfile.close();
+
+	ScheduleBuilder sb;
+	sb.BuildScheduleFromFile("TasksCATSFixed.txt");
+	sb.PredictEnergyForSchedule(20.0);
+	sb.DumpSchedule();
 
  	return 0;
 }
