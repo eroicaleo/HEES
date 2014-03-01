@@ -1,13 +1,4 @@
-#include <boost/program_options.hpp>
-
-#include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <iterator>
-#include <string>
-#include <tr1/functional>
-
-#include "powersource.hpp"
+#include "ParseCommandLine.hpp"
 
 using namespace std;
 using namespace std::tr1;
@@ -48,6 +39,10 @@ function<double(double)> power_source_func;
 
 /* Scheduling related parameters */
 double ratio_runtime_and_deadline;
+
+/* Predictor related parameters */
+double min_training_power;
+double max_training_power;
 
 int hees_parse_command_line(int argc, char *argv[]) {
 	
@@ -100,11 +95,18 @@ int hees_parse_command_line(int argc, char *argv[]) {
 			("ratio_runtime_and_deadline", value<double>(&ratio_runtime_and_deadline)->default_value(1.0), "The ratio between the runtime @ nominal speed and deadline")
 		;
 
+		/* Predictor options */
+		options_description predictor_options("Neural network predictor options");
+		predictor_options.add_options()
+			("min_training_power", value<double>(&min_training_power)->default_value(0.0), "The minimum power used in training prediction model")
+			("max_training_power", value<double>(&max_training_power)->default_value(5.0), "The maximum power used in training prediction model")
+		;
+
 		options_description cmdline_options;
-		cmdline_options.add(generic).add(bank_config_options).add(time_config_options).add(power_options).add(schedule_options);
+		cmdline_options.add(generic).add(bank_config_options).add(time_config_options).add(power_options).add(schedule_options).add(predictor_options);
 
 		options_description config_file_options;
-		config_file_options.add(bank_config_options).add(time_config_options).add(power_options).add(schedule_options);
+		config_file_options.add(bank_config_options).add(time_config_options).add(power_options).add(schedule_options).add(predictor_options);
 
 		variables_map vm;
 		store(parse_command_line(argc, argv, cmdline_options), vm);
