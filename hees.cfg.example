@@ -38,3 +38,9 @@ constant_power_value = 3.0
 ## Schedule related parameters ##
 #################################
 ratio_runtime_and_deadline = 1.0
+
+#################################################
+## Neural Network Predictor related parameters ##
+#################################################
+min_training_power = 0.58
+max_training_power = 2.30396
