@@ -11,12 +11,14 @@ using std::ostream;
 
 class ScheduleBuilder {
 public:
-	// Leave all constructor/destructor, copy/move operations default
+	ScheduleBuilder() : m_inaccurateFlag(false) {}
+	// Leave all destructor, copy/move operations default
 	void BuildScheduleFromFile(const char *filename);
 	void PredictEnergyForSchedule(double initEnergy);
 	void DumpSchedule(ostream &os = std::cout) const;
 private:
 	vector<dpTableEntry> m_schedule;
+	bool m_inaccurateFlag;
 	double getScheduleEnergy() const;
 	int getScheduleFinishTime() const;
 };

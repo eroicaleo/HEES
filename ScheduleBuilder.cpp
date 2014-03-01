@@ -43,9 +43,12 @@ void ScheduleBuilder::PredictEnergyForSchedule(double initEnergy) {
 
 	for (tableEntryIter iter = m_schedule.begin(); iter != m_schedule.end(); ++iter) {
 		inputPower = power_source_func(0.0) - dcload.GetPowerConsumptionWithLoad(iter->voltage, iter->current);
-		if (!above_min_valid_input_power(inputPower)) {
+		if (inputPower < 0) {
 			m_schedule.clear();
 			break;
+		}
+		if (!above_min_valid_input_power(inputPower)) {
+			m_inaccurateFlag = true;
 		}
 		currentEnergy = energyCalculator(inputPower, currentEnergy, iter->len);
 		iter->totalEnergy = currentEnergy;
@@ -68,7 +71,11 @@ void ScheduleBuilder::DumpSchedule(ostream &os) const {
 		os << *iter << endl;
 	}
 	cout << "Final Energy: " << getScheduleEnergy();
-	cout << " Finish Time: " << getScheduleFinishTime() << endl;
+	cout << " Finish Time: " << getScheduleFinishTime();
+	if (m_inaccurateFlag) {
+		cout << " might be inaccurate!";
+	}
+	cout << endl;
 	os << "#########################################################" << endl;
 	os << "###############  End to dump schedule!  #################" << endl;
 	os << "#########################################################" << endl;
