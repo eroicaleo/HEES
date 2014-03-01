@@ -17,11 +17,11 @@ using namespace std::tr1;
 
 extern const double CRAZY_ENERGY(-1000.0);
 
-dynProg::dynProg(int numOfTask, vector<double> voltageTable, double deadline, vector<double> taskDuration, vector<double> taskEnergy) {
+dynProg::dynProg(int numOfTask, vector<double> voltageTable, int deadline, vector<double> taskDuration, vector<double> taskEnergy) {
 
 	m_numOfTask = numOfTask;
 	m_numOfVolt = voltageTable.size();
-	m_deadline = (int)(deadline*10);
+	m_deadline = deadline;
 	m_inputDuration = taskDuration;
 	m_inputEnergy = taskEnergy;
 
