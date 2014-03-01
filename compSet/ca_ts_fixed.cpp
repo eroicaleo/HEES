@@ -6,6 +6,7 @@
 #include <cstdlib>
 
 #include "ca_ts.hpp"
+#include "../ParseCommandLine.hpp"
 #include "../ScheduleBuilder.hpp"
 
 using namespace std;
@@ -174,15 +175,16 @@ void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &dea
 	return;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
 	double deadline = 24;
 	int numOfTask = 3;
 	int numOfVoltage = 5;
 	vector<double>InDuration;
 	vector<double>InEnergy;
 
+	hees_parse_command_line(argc, argv);
 	readInput(InDuration, InEnergy, deadline);
-	minEnergyScheduleFixed(numOfTask, numOfVoltage, 18.1, InDuration, InEnergy, vec_tvt);
+	minEnergyScheduleFixed(numOfTask, numOfVoltage, 19.0, InDuration, InEnergy, vec_tvt);
 
 	return 0;
 }
