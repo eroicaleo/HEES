@@ -10,14 +10,11 @@
 #include "taskScheduling.hpp"
 #include "../nnet/nnetmultitask.hpp"
 #include "../ScheduleBuilder.hpp"
+#include "../ParseCommandLine.hpp"
 
 using namespace std;
 using namespace std::tr1;
 
-int hees_parse_command_line(int argc, char *argv[]);
-
-extern function<double(double)> power_source_func;
-extern double ratio_runtime_and_deadline;
 extern const double CRAZY_ENERGY(-1000.0);
 
 dynProg::dynProg(int numOfTask, vector<double> voltageTable, double deadline, vector<double> taskDuration, vector<double> taskEnergy) {
@@ -88,6 +85,10 @@ void dynProg::populateFirstIdleTask(vector<dpTableEntry> &firstIdleRow) {
 	for (tableEntryIter iter = firstIdleRow.begin(); iter != firstIdleRow.end(); ++iter) {
 		size_t len = (iter-firstIdleRow.begin());
 		double inputPower = getExtraChargePower(idleTaskVoltageTable, 0);
+
+		if (!above_min_valid_input_power(inputPower))
+			return;
+
 		iter->totalEnergy = energyCalculator(inputPower, m_initialEnergy, len);
 		iter->len = len;
 	}
@@ -97,7 +98,7 @@ void dynProg::populateFirstIdleTask(vector<dpTableEntry> &firstIdleRow) {
 void dynProg::populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<dpTableEntry> &thisIdleRow) {
 
 	double inputPower = getExtraChargePower(idleTaskVoltageTable, 0);
-	if (inputPower < 0.0)
+	if (!above_min_valid_input_power(inputPower))
 		return;
 
 	for (vector<dpTableEntry>::const_iterator iter = lastRealRow.begin(); iter != lastRealRow.end(); ++iter) {
@@ -134,7 +135,7 @@ void dynProg::populateRealTask(const vector<dpTableEntry> &lastIdleRow, vector<d
 			size_t taskiFinishTime = (iter-lastIdleRow.begin()) + taskDur;
 			tableEntryIter realTaskIter = thisRealRow.begin() + taskiFinishTime;
 			// Must guarantee there is enough power for charging
-			if ((inputPower > 0) && (realTaskIter < thisRealRow.end())) {
+			if (above_min_valid_input_power(inputPower) && (realTaskIter < thisRealRow.end())) {
 #ifdef DEBUG_VERBOSE
 				cout << "I am predicting real task " << taskID << " from time " << (iter-lastIdleRow.begin()) << " to " << taskiFinishTime << "." << endl;
 #endif
