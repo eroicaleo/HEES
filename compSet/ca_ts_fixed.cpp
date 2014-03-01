@@ -147,7 +147,7 @@ int minEnergyScheduleFixed(int m_numOfTask, int m_numOfVolt, double m_deadline, 
 	sb.PredictEnergyForSchedule(20.0);
 	sb.DumpSchedule();
 
- 	return 0;
+	return max(int(round(m_deadline*10)), timeUsed);
 }
 
 #ifdef CATS_BINARY
