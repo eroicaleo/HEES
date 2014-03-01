@@ -3,13 +3,13 @@
 
 #include "nnet/nnetmultitask.hpp"
 #include "powersource.hpp"
+#include "ParseCommandLine.hpp"
 #include "ScheduleBuilder.hpp"
 
 using namespace std;
 using namespace std::tr1;
 
 extern const double CRAZY_ENERGY;
-extern function<double(double)> power_source_func;
 
 void ScheduleBuilder::BuildScheduleFromFile(const char *filename) {
 	double vol, cur;
@@ -43,7 +43,7 @@ void ScheduleBuilder::PredictEnergyForSchedule(double initEnergy) {
 
 	for (tableEntryIter iter = m_schedule.begin(); iter != m_schedule.end(); ++iter) {
 		inputPower = power_source_func(0.0) - dcload.GetPowerConsumptionWithLoad(iter->voltage, iter->current);
-		if (inputPower < 0) {
+		if (!above_min_valid_input_power(inputPower)) {
 			m_schedule.clear();
 			break;
 		}
