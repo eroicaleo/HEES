@@ -128,7 +128,11 @@ int minEnergyScheduleFixed(int m_numOfTask, int m_numOfVolt, double m_deadline, 
 			timeUsed += vec_tvt[i].getScaledCeilLength(volSel[bottom], 10);
 		}
 	}
-	int timeRemained = m_deadline*10 - timeUsed;
+	int timeRemained = round(m_deadline*10 - timeUsed);
+	double doubletimeRemained = m_deadline*10 - timeUsed;
+	cout << "doubletimeRemained " << doubletimeRemained << endl;
+	cout << "10*m_deadline " << int(m_deadline*10) << endl;
+	cout << "timeUsed: " << timeUsed << endl;
 	cout << "timeRemained: " << timeRemained << endl;
 	// If there is sometime remains, we charge it with idle task
 	if (timeRemained > 0) {
@@ -184,7 +188,7 @@ int main(int argc, char *argv[]) {
 
 	hees_parse_command_line(argc, argv);
 	readInput(InDuration, InEnergy, deadline);
-	minEnergyScheduleFixed(numOfTask, numOfVoltage, 19.0, InDuration, InEnergy, vec_tvt);
+	minEnergyScheduleFixed(numOfTask, numOfVoltage, 14.2, InDuration, InEnergy, vec_tvt);
 
 	return 0;
 }
