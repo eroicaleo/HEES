@@ -44,15 +44,15 @@ int generateSchedule() {
 	// dummyTaskSetGenerator(int &m_numOfTask, int &m_numOfVolt, double &m_deadline, vector<double> &m_inputDuration, vector<double> &m_inputEnergy);
 	randomTaskSetGenerator(m_numOfTask, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy);
 
+	// Baseline policy
+	minEnergySchedule(m_numOfTask, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy);
+	m_deadline = minEnergyScheduleFixed(m_numOfTask, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy, vec_tvt);
+
 	// Then use dynamic programming to generate optimal schedule
 	dynProg taskSet1(m_numOfTask, vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), m_deadline, m_inputDuration, m_inputEnergy);
 	taskSet1.dynamicProgrammingWithIdleTasks();
 	m_deadline = taskSet1.getDeadline();
 	m_deadline /= 10.0;
-
-	// Baseline policy
-	minEnergySchedule(m_numOfTask, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy);
-	minEnergyScheduleFixed(m_numOfTask, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy, vec_tvt);
 
 	return 0;
 }
