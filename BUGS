@@ -1,0 +1,4 @@
+0001. The neural network predictor does not work properly when input power is way out of the training range.
+When the input power is very close to 0, the delta energy can be negative, which is apprantly wrong.
+
+A: 
