@@ -10,6 +10,7 @@
 #include "DP/taskScheduling.hpp"
 #include "compSet/ca_ts.hpp"
 #include "nnet/nnetmultitask.hpp"
+#include "ParseCommandLine.hpp"
 #include "VoltageTable.hpp"
 
 using namespace std;
@@ -37,19 +38,19 @@ vector<TaskVoltageTable> vec_tvt;
 
 int generateSchedule() {
 
-	int m_numOfTask, m_numOfVolt; 
+	int m_numOfVolt;
 	double m_deadline;
 	vector<double> m_inputDuration, m_inputEnergy;
 
 	// dummyTaskSetGenerator(int &m_numOfTask, int &m_numOfVolt, double &m_deadline, vector<double> &m_inputDuration, vector<double> &m_inputEnergy);
-	randomTaskSetGenerator(m_numOfTask, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy);
+	randomTaskSetGenerator(number_of_tasks, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy);
 
 	// Baseline policy
-	minEnergySchedule(m_numOfTask, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy);
-	m_deadline = minEnergyScheduleFixed(m_numOfTask, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy, vec_tvt);
+	minEnergySchedule(number_of_tasks, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy);
+	m_deadline = minEnergyScheduleFixed(number_of_tasks, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy, vec_tvt);
 
 	// Then use dynamic programming to generate optimal schedule
-	dynProg taskSet1(m_numOfTask, vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), m_deadline, m_inputDuration, m_inputEnergy);
+	dynProg taskSet1(number_of_tasks, vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), m_deadline, m_inputDuration, m_inputEnergy);
 	taskSet1.dynamicProgrammingWithIdleTasks();
 	m_deadline = taskSet1.getDeadline();
 	m_deadline /= 10.0;
@@ -60,7 +61,6 @@ int generateSchedule() {
 void randomTaskSetGenerator(int &m_numOfTask, int &m_numOfVolt, double &m_deadline, vector<double> &m_inputDuration, vector<double> &m_inputEnergy) {
 	// Generate 10 tasks
 	m_deadline = 0;
-    m_numOfTask = 3;
 	m_numOfVolt = 5;
 
     vector<double> InDuration;
@@ -73,7 +73,7 @@ void randomTaskSetGenerator(int &m_numOfTask, int &m_numOfVolt, double &m_deadli
 		// Each task is between [10 100] with a timestamp 10
 		int tasklen = (1 + rand() % 9);
 		// Each task power is between 0.6 ~ 2.0
-		double taskpower = 0.8 + (rand() % 100) * (1.5 - 0.8) / 100.0;
+		double taskpower = min_task_power + (rand() % 100) * (max_task_power - min_task_power) / 100.0;
 		double taskEnergy = tasklen * taskpower;
 		InDuration.push_back(tasklen);
 		InEnergy.push_back(taskEnergy);
