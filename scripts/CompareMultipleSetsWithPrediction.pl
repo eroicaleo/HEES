@@ -11,10 +11,10 @@ use POSIX qw(strftime);
 # Modify the parameters to run the test #
 #########################################
 my $numOfTestSets = 10;
-my $numOfTasks = 3;
-my $minPowerTasks = 0.6;
-my $maxPowerTasks = 1.5;
-my $harvestingPower = 2.2;
+my $numOfTasks = 4;
+my $minPowerTasks = 0.3;
+my $maxPowerTasks = 1.0;
+my $harvestingPower = 2.3;
 my $deadlineRatio = 1.05;
 
 # Create a directory so the 
@@ -31,7 +31,8 @@ mkdir $resultsDir unless -d $resultsDir;
 foreach my $i (0..($numOfTestSets-1)) {
   my $format = sprintf "%04d", $i;
   my $logFile = "runinfo${format}.log";
-  my $cmdstr = "./Scheduler --ratio_runtime_and_deadline $deadlineRatio --constant_power_value $harvestingPower > $logFile";
+  my $cmdstr = "./Scheduler --ratio_runtime_and_deadline $deadlineRatio --constant_power_value $harvestingPower ";
+  $cmdstr .= "--number_of_tasks $numOfTasks --min_task_power $minPowerTasks --max_task_power $maxPowerTasks > $logFile";
   print $cmdstr, "\n";
   system($cmdstr);
   &processFile($logFile);
