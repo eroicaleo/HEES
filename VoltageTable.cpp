@@ -70,5 +70,9 @@ void BuildTaskVoltageTableVectorFromFile(const char *filename, vector<TaskVoltag
 	return;
 }
 
+VoltageTable GenerateSingleVoltageTable(double vol, double nomvol) {
+	return VoltageTable(vector<double>(vol), nomvol);
+}
+
 const VoltageTable syntheticCPUVoltageTable(vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), 1.0);
 const TaskVoltageTable idleTaskVoltageTable(syntheticCPUVoltageTable, 0.0, 0.0);

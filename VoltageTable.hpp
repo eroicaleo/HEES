@@ -51,6 +51,7 @@ private:
 };
 
 void BuildTaskVoltageTableVectorFromFile(const char *filename, vector<TaskVoltageTable> &vec_tvt, const VoltageTable &vt);
+VoltageTable GenerateSingleVoltageTable(double vol, double nomvol = 1.0);
 
 const size_t syntheticVoltageLevel = 5;
 const double syntheticVoltageTable[syntheticVoltageLevel] = {0.8, 0.9, 1.0, 1.1, 1.2};
