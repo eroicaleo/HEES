@@ -50,6 +50,7 @@ extern function<double(double)> power_source_func;
 
 /* Scheduling related parameters */
 extern double ratio_runtime_and_deadline;
+extern double scheduling_deadline;
 extern double min_task_power;
 extern double max_task_power;
 extern int number_of_tasks;
