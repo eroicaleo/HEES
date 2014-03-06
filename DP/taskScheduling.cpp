@@ -481,11 +481,15 @@ int main(int argc, char *argv[]){
 	// InEnergy.push_back(7.0);
 	// InEnergy.push_back(8.0);
 
+	vector<TaskVoltageTable> vec_tvt;
+
 	hees_parse_command_line(argc, argv);
 	readInput(InDuration, InEnergy, deadline);
+	BuildTaskVoltageTableVectorFromFile("TasksOrig.txt", vec_tvt, syntheticCPUVoltageTable);
+
 	vector<double>outDuration;
 	vector<double>outVolt;
-	dynProg taskSet1 (InDuration.size(), vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), deadline, InDuration, InEnergy);
+	dynProg taskSet1 (InDuration.size(), vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), deadline, InDuration, InEnergy, vec_tvt);
 	taskSet1.dynamicProgrammingWithIdleTasks();
 	ScheduleBuilder sb;
 	sb.BuildScheduleFromFile("TasksDP.txt");
