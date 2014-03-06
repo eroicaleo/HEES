@@ -2,3 +2,9 @@
 When the input power is very close to 0, the delta energy can be negative, which is apprantly wrong.
 
 A: 
+
+0002. When building the vector task voltage table, did not use the nominal current to initialize the task voltage
+table. Use the power instead. This is fine in current settings, because the nominal voltage is 1.0 volt. 
+So the magnitudes of power and current are the same. But it needs to be fixed.
+
+A:
