@@ -12,6 +12,9 @@ dp : $(dp)_bin.o $(EXT_OBJ)
 
 all : $(dp).o
 
+single : $(dp).o $(EXT_OBJ) testSingleVoltage.o
+	g++ $^ $(BOOST_LIBS) -o $@
+
 %_bin.o : %.cpp
 	g++ $(CFLAG_DP) $< -o $@
 
