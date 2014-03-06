@@ -32,6 +32,7 @@ public:
 	double getCurrent(double voltage) const;
 	int getScaledCeilLength(size_t level, int scale) const { return ceil(scale*m_VCLTable[level].l); }
 	int getScaledCeilLength(double voltage, int scale) const;
+	const vector<double> &getVoltageTable() const { return m_voltageTable; }
 
 private:
 	size_t getVoltageLevel(double v) const;
