@@ -25,4 +25,4 @@ single : $(dp).o $(EXT_OBJ) testSingleVoltage.o
 	g++ $(CFLAG) $< -o $@
 
 clean :
-	rm -rf *.o dp
+	rm -rf *.o dp single
