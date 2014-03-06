@@ -39,6 +39,7 @@ function<double(double)> power_source_func;
 
 /* Scheduling related parameters */
 double ratio_runtime_and_deadline;
+double scheduling_deadline;
 double min_task_power;
 double max_task_power;
 int number_of_tasks;
@@ -96,6 +97,7 @@ int hees_parse_command_line(int argc, char *argv[]) {
 		options_description schedule_options("Schedule source options");
 		schedule_options.add_options()
 			("ratio_runtime_and_deadline", value<double>(&ratio_runtime_and_deadline)->default_value(1.0), "The ratio between the runtime @ nominal speed and deadline")
+			("scheduling_deadline", value<double>(&scheduling_deadline)->default_value(-1.0), "User defined deadline")
 			("min_task_power", value<double>(&min_task_power)->default_value(0.6), "The minimum task power generated randomly")
 			("max_task_power", value<double>(&max_task_power)->default_value(1.5), "The maximum task power generated randomly")
 			("number_of_tasks", value<int>(&number_of_tasks)->default_value(3), "The number of tasks generated randomly")
