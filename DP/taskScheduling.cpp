@@ -17,11 +17,10 @@ using namespace std::tr1;
 
 extern const double CRAZY_ENERGY(-1000.0);
 
-dynProg::dynProg(int numOfTask, vector<double> voltageTable, int deadline, vector<double> taskDuration, vector<double> taskEnergy, const vector<TaskVoltageTable> &vec_tvt) {
+dynProg::dynProg(int numOfTask, int deadline, vector<double> taskEnergy, const vector<TaskVoltageTable> &vec_tvt) {
 
 	m_numOfTask = numOfTask;
 	m_deadline = deadline;
-	m_inputDuration = taskDuration;
 	m_inputEnergy = taskEnergy;
 
 	volSel = vec_tvt.begin()->getVoltageTable();
@@ -35,10 +34,6 @@ dynProg::dynProg(int numOfTask, vector<double> voltageTable, int deadline, vecto
 	m_scheduleVolt =  vector<vector<double> >(numOfTask, vector<double>(m_deadline + 1, 0.0));
 	m_lastStepDuration = vector<vector<double> >(numOfTask, vector<double>(m_deadline + 1, 0.0));
 
-	// for(int i = 0; i < numOfTask; i ++){
-	// 	cout<<"Task "<<i<<" :"<<m_inputDuration[i]<<", "<<m_inputEnergy[i]<<endl;
-	// }
-	// memory the task energy and duration at each voltage;
 	for (int i = 0; i < m_numOfTask; i++) {
 		// cout<<"Task "<<i<<":";
 		for (int k = 0; k < m_numOfVolt; k++) {
@@ -493,7 +488,7 @@ int main(int argc, char *argv[]){
 
 	vector<double>outDuration;
 	vector<double>outVolt;
-	dynProg taskSet1 (InDuration.size(), vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), deadline, InDuration, InEnergy, vec_tvt);
+	dynProg taskSet1 (InDuration.size(), deadline, InEnergy, vec_tvt);
 	taskSet1.dynamicProgrammingWithIdleTasks();
 	ScheduleBuilder sb;
 	sb.BuildScheduleFromFile("TasksDP.txt");

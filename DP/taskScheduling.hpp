@@ -58,7 +58,7 @@ class dynProg {
 	public:
 		//default construction method :
 		//Table the task energy and duration at each voltage
-	    dynProg(int numOfTask, vector<double> voltageTable, int deadline, vector<double> taskDuration, vector<double> taskEnergy, const vector<TaskVoltageTable> &vec_tvt);
+	    dynProg(int numOfTask, int deadline, vector<double> taskEnergy, const vector<TaskVoltageTable> &vec_tvt);
 		//memoried the voltage selection of each task at each time step	  
 		void taskTimeline();
 		//taskScheduling method: recurrsive method for task schedule
