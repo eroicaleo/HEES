@@ -17,15 +17,15 @@ using namespace std::tr1;
 
 extern const double CRAZY_ENERGY(-1000.0);
 
-dynProg::dynProg(int numOfTask, vector<double> voltageTable, int deadline, vector<double> taskDuration, vector<double> taskEnergy) {
+dynProg::dynProg(int numOfTask, vector<double> voltageTable, int deadline, vector<double> taskDuration, vector<double> taskEnergy, const vector<TaskVoltageTable> &vec_tvt) {
 
 	m_numOfTask = numOfTask;
-	m_numOfVolt = voltageTable.size();
 	m_deadline = deadline;
 	m_inputDuration = taskDuration;
 	m_inputEnergy = taskEnergy;
 
-	volSel = voltageTable;
+	volSel = vec_tvt.begin()->getVoltageTable();
+	m_numOfVolt = volSel.size();
 
 	m_taskDuration = vector<vector<int> >(numOfTask, vector<int>(m_numOfVolt, 0));
 	m_taskEnergy = vector<vector<double> >(numOfTask, vector<double>(m_numOfVolt, 0.0));
@@ -42,9 +42,9 @@ dynProg::dynProg(int numOfTask, vector<double> voltageTable, int deadline, vecto
 	for (int i = 0; i < m_numOfTask; i++) {
 		// cout<<"Task "<<i<<":";
 		for (int k = 0; k < m_numOfVolt; k++) {
-			m_taskDuration[i][k] = (int)ceil(m_inputDuration[i] * 10.0 / volSel[k]);
+			m_taskDuration[i][k] = vec_tvt[i].getScaledCeilLength(volSel[k], 10);
 			m_taskEnergy[i][k] = m_inputEnergy[i] * volSel[k] * volSel[k];
-			m_taskCurrent[i][k] = m_inputEnergy[i] / m_inputDuration[i] * volSel[k] * volSel[k] ;
+			m_taskCurrent[i][k] = vec_tvt[i].getCurrent(volSel[k]);
 			// cout<<m_taskDuration[i][k]<<","<<m_taskEnergy[i][k]<<endl;
 		}
 	}
