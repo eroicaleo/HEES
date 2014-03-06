@@ -487,6 +487,10 @@ int main(int argc, char *argv[]){
 	readInput(InDuration, InEnergy, deadline);
 	BuildTaskVoltageTableVectorFromFile("TasksOrig.txt", vec_tvt, syntheticCPUVoltageTable);
 
+	if (scheduling_deadline > 0) {
+		deadline = scheduling_deadline;
+	}
+
 	vector<double>outDuration;
 	vector<double>outVolt;
 	dynProg taskSet1 (InDuration.size(), vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), deadline, InDuration, InEnergy, vec_tvt);
