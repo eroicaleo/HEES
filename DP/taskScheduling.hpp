@@ -30,8 +30,6 @@ class dynProg {
 
 		//double m_taskDuration[m_numOfTask][5];
 		vector< vector<int> > m_taskDuration;// The task duration from 0.8V to 1.2V
-		//double m_taskEnergy[m_numOfTask][5];
-		vector< vector<double> > m_taskEnergy;// The task energy from 0.8V to 1.2V
 		vector< vector<double> > m_taskCurrent;//Current I information recorded during scheduling
 		//double m_scheduleEnergy[m_numOfTask][m_deadline * 10 + 1];
 		vector< vector<double> > m_scheduleEnergy;//Energy information recorded during scheduling
@@ -58,7 +56,7 @@ class dynProg {
 	public:
 		//default construction method :
 		//Table the task energy and duration at each voltage
-	    dynProg(int numOfTask, int deadline, vector<double> taskEnergy, const vector<TaskVoltageTable> &vec_tvt);
+	    dynProg(int numOfTask, int deadline, const vector<TaskVoltageTable> &vec_tvt);
 		//memoried the voltage selection of each task at each time step	  
 		void taskTimeline();
 		//taskScheduling method: recurrsive method for task schedule

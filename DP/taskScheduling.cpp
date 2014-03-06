@@ -17,17 +17,15 @@ using namespace std::tr1;
 
 extern const double CRAZY_ENERGY(-1000.0);
 
-dynProg::dynProg(int numOfTask, int deadline, vector<double> taskEnergy, const vector<TaskVoltageTable> &vec_tvt) {
+dynProg::dynProg(int numOfTask, int deadline, const vector<TaskVoltageTable> &vec_tvt) {
 
 	m_numOfTask = numOfTask;
 	m_deadline = deadline;
-	m_inputEnergy = taskEnergy;
 
 	volSel = vec_tvt.begin()->getVoltageTable();
 	m_numOfVolt = volSel.size();
 
 	m_taskDuration = vector<vector<int> >(numOfTask, vector<int>(m_numOfVolt, 0));
-	m_taskEnergy = vector<vector<double> >(numOfTask, vector<double>(m_numOfVolt, 0.0));
 	m_taskCurrent = vector<vector<double> >(numOfTask, vector<double>(m_numOfVolt, 0.0));
 
 	m_scheduleEnergy = vector<vector<double> >(numOfTask, vector<double>(m_deadline + 1 , 0.0));
@@ -38,9 +36,7 @@ dynProg::dynProg(int numOfTask, int deadline, vector<double> taskEnergy, const v
 		// cout<<"Task "<<i<<":";
 		for (int k = 0; k < m_numOfVolt; k++) {
 			m_taskDuration[i][k] = vec_tvt[i].getScaledCeilLength(volSel[k], 10);
-			m_taskEnergy[i][k] = m_inputEnergy[i] * volSel[k] * volSel[k];
 			m_taskCurrent[i][k] = vec_tvt[i].getCurrent(volSel[k]);
-			// cout<<m_taskDuration[i][k]<<","<<m_taskEnergy[i][k]<<endl;
 		}
 	}
 
@@ -488,7 +484,7 @@ int main(int argc, char *argv[]){
 
 	vector<double>outDuration;
 	vector<double>outVolt;
-	dynProg taskSet1 (InDuration.size(), deadline, InEnergy, vec_tvt);
+	dynProg taskSet1 (InDuration.size(), deadline, vec_tvt);
 	taskSet1.dynamicProgrammingWithIdleTasks();
 	ScheduleBuilder sb;
 	sb.BuildScheduleFromFile("TasksDP.txt");
