@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
+#include <fstream>
 
 #include "VoltageTable.hpp"
 
@@ -50,6 +51,23 @@ TaskVoltageTable::TaskVoltageTable(const VoltageTable &vt, double nomCur, double
 		m_VCLTable[i].c = vt.VoltageCurrentRelation(m_VCLTable[i].v, m_nominalCurrent);
 		m_VCLTable[i].l = vt.VoltageFrequencyRelation(m_VCLTable[i].v, m_nominalLength);
 	}
+}
+
+void BuildTaskVoltageTableVectorFromFile(const char *filename, vector<TaskVoltageTable> &vec_tvt, const VoltageTable &vt) {
+	// Clear the vector first
+	vec_tvt.clear();
+
+	ifstream ifs(filename);
+	double len(0.0);
+	double power(0.0);
+	double energy(0.0);
+	double nominalCurrent(0.0);
+	while ((ifs >> len >> power >> energy).good()) {
+		nominalCurrent = power / vt.GetNominalVoltage();
+		vec_tvt.push_back(TaskVoltageTable(vt, nominalCurrent, len));
+	}
+	ifs.close();
+	return;
 }
 
 const VoltageTable syntheticCPUVoltageTable(vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), 1.0);
