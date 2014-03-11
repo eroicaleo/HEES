@@ -28,29 +28,19 @@ int main(int argc, char *argv[]) {
 	hees_parse_command_line(argc, argv);
 
 	deadline = randomTaskSetGenerator(InDuration, InEnergy, vec_tvt);
-	deadline *= 10;
+	deadline = vec_tvt.begin()->getScaledCeilLength(0.8, 10);
 
 	if (scheduling_deadline > 0) {
 		deadline = scheduling_deadline;
 	}
 
-	VoltageTable tmp = GenerateSingleVoltageTable(1.0);
-	BuildTaskVoltageTableVectorFromFile("TasksOrig.txt", vec_tvt, tmp);
+	for (double vol = 0.8; vol < 1.3; vol += 0.1) {
+		VoltageTable tmp = GenerateSingleVoltageTable(vol);
+		BuildTaskVoltageTableVectorFromFile("TasksOrig.txt", vec_tvt, tmp);
 
-	dynProg taskSet0(vec_tvt.size(), deadline, vec_tvt);
-	taskSet0.dynamicProgrammingWithIdleTasks();
-
-	tmp = GenerateSingleVoltageTable(1.1);
-	BuildTaskVoltageTableVectorFromFile("TasksOrig.txt", vec_tvt, tmp);
-
-	dynProg taskSet1(vec_tvt.size(), deadline, vec_tvt);
-	taskSet1.dynamicProgrammingWithIdleTasks();
-
-	tmp = GenerateSingleVoltageTable(1.2);
-	BuildTaskVoltageTableVectorFromFile("TasksOrig.txt", vec_tvt, tmp);
-
-	dynProg taskSet2(vec_tvt.size(), deadline, vec_tvt);
-	taskSet2.dynamicProgrammingWithIdleTasks();
+		dynProg taskSet0(vec_tvt.size(), deadline, vec_tvt);
+		taskSet0.dynamicProgrammingWithIdleTasks();
+	}
 
 	return 0;
 }
