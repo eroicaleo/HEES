@@ -7,6 +7,6 @@
 
 using std::vector;
 
-double randomTaskSetGenerator(vector<double> &InDuration, vector<double> &InEnergy, vector<TaskVoltageTable> &vec_tvt);
+double randomTaskSetGenerator(vector<double> &InDuration, vector<double> &InEnergy, vector<TaskVoltageTable> &vec_tvt, const VoltageTable &vt);
 
 #endif

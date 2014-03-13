@@ -6,14 +6,13 @@
 
 using namespace std;
 
-double randomTaskSetGenerator(vector<double> &InDuration, vector<double> &InEnergy, vector<TaskVoltageTable> &vec_tvt) {
+double randomTaskSetGenerator(vector<double> &InDuration, vector<double> &InEnergy, vector<TaskVoltageTable> &vec_tvt, const VoltageTable &vt) {
 
 	InDuration.clear();
 	InEnergy.clear();
 	vec_tvt.clear();
 
     vector<double> InPower;
-	VoltageTable vt(vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), 1.0);
 
 	double m_deadline(0.0);
 
@@ -22,7 +21,7 @@ double randomTaskSetGenerator(vector<double> &InDuration, vector<double> &InEner
 	srand(time(NULL));
 	for (int i = 0; i < number_of_tasks; ++i) {
 		// Each task is between [10 100] with a timestamp 10
-		int tasklen = (1 + rand() % 9);
+		int tasklen = min_task_len + (rand() % 100) * (max_task_len - min_task_len) / 100.0;
 		// Each task power is between 0.6 ~ 2.0
 		double taskpower = min_task_power + (rand() % 100) * (max_task_power - min_task_power) / 100.0;
 		double taskEnergy = tasklen * taskpower;
