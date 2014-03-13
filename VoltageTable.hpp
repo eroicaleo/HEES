@@ -17,6 +17,7 @@ public:
 
 	const vector<double> &getVoltageTable() const { return m_voltageTable; }
 	double GetNominalVoltage() const { return m_nominalVol; }
+	void setVoltageTable(const vector<double> &volTable) { m_voltageTable = volTable; }
 
 private:
 	vector<double> m_voltageTable;
@@ -58,4 +59,14 @@ const double syntheticVoltageTable[syntheticVoltageLevel] = {0.8, 0.9, 1.0, 1.1,
 
 extern const VoltageTable syntheticCPUVoltageTable;
 extern const TaskVoltageTable idleTaskVoltageTable;
+
+class VoltageTableDFS : public VoltageTable {
+public:
+	VoltageTableDFS(const vector<double> &vt, double nominalVol) : VoltageTable(vt, nominalVol) {}
+	virtual ~VoltageTableDFS() {}
+
+	virtual double VoltageCurrentRelation(double targetVol, double nominalCur) const;
+	virtual double VoltageFrequencyRelation(double targetVol, double nominalLen) const;
+};
+
 #endif
