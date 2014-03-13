@@ -26,8 +26,9 @@ int main(int argc, char *argv[]) {
 
 	vector<TaskVoltageTable> vec_tvt;
 	hees_parse_command_line(argc, argv);
+	VoltageTableDFS vt(vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), 1.0);
 
-	deadline = randomTaskSetGenerator(InDuration, InEnergy, vec_tvt);
+	deadline = randomTaskSetGenerator(InDuration, InEnergy, vec_tvt, vt);
 	deadline = vec_tvt.begin()->getScaledCeilLength(0.8, 10);
 
 	if (scheduling_deadline > 0) {
@@ -35,8 +36,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	for (double vol = 0.8; vol < 1.3; vol += 0.1) {
-		VoltageTable tmp = GenerateSingleVoltageTable(vol);
-		BuildTaskVoltageTableVectorFromFile("TasksOrig.txt", vec_tvt, tmp);
+		vt.setVoltageTable(vector<double>(1, vol));
+		BuildTaskVoltageTableVectorFromFile("TasksOrig.txt", vec_tvt, vt);
 
 		dynProg taskSet0(vec_tvt.size(), deadline, vec_tvt);
 		taskSet0.dynamicProgrammingWithIdleTasks();
