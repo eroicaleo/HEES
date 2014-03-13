@@ -13,7 +13,7 @@ use POSIX qw(strftime);
 my $numOfTestSets = 10;
 my $numOfTasks = 1;
 my $minPowerTasks = 1;
-my $maxPowerTasks = 12;
+my $maxPowerTasks = 15;
 my $harvestingPower = 2.3;
 my $deadlineRatio = 1.0;
 
@@ -37,7 +37,7 @@ foreach my $i (0..$#taskPowerArray) {
   my $format = sprintf "%04d", $i;
   my $logFile = "runinfo${format}.log";
   my $cmdstr = "./single --ratio_runtime_and_deadline $deadlineRatio --constant_power_value $harvestingPower ";
-  $cmdstr .= "--number_of_tasks $numOfTasks --min_task_power $power --max_task_power $power > $logFile";
+  $cmdstr .= "--number_of_tasks $numOfTasks --min_task_power $power --max_task_power $power --min_task_len 10 --max_task_len 10 > $logFile";
   print $cmdstr, "\n";
   system($cmdstr);
   move $logFile, $resultsDir;
