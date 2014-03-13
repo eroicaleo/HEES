@@ -53,6 +53,8 @@ extern double ratio_runtime_and_deadline;
 extern double scheduling_deadline;
 extern double min_task_power;
 extern double max_task_power;
+extern int min_task_len;
+extern int max_task_len;
 extern int number_of_tasks;
 
 /* Predictor related parameters */
