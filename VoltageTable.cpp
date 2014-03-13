@@ -76,3 +76,11 @@ VoltageTable GenerateSingleVoltageTable(double vol, double nomvol) {
 
 const VoltageTable syntheticCPUVoltageTable(vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), 1.0);
 const TaskVoltageTable idleTaskVoltageTable(syntheticCPUVoltageTable, 0.0, 0.0);
+
+inline double VoltageTableDFS::VoltageCurrentRelation(double targetVol, double nominalCur) const {
+	return nominalCur;
+}
+
+inline double VoltageTableDFS::VoltageFrequencyRelation(double targetVol, double nominalLen) const {
+	return nominalLen * (GetNominalVoltage()/targetVol);
+}
