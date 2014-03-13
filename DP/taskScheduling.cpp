@@ -142,6 +142,12 @@ void dynProg::populateRealTask(const vector<dpTableEntry> &lastIdleRow, vector<d
 					realTaskIter->setAllFields(energy, volSel[k], m_taskCurrent[taskID][k], k, taskID, taskDur, taskiFinishTime-taskDur);
 				}
 			}
+#ifdef DEBUG_VERBOSE
+			else if (!above_min_valid_input_power(inputPower)) {
+				cout << "I am predicting real task " << taskID << " from time " << (iter-lastIdleRow.begin()) << " to " << taskiFinishTime << ". ";
+				cout << "However power is below valid range: " << inputPower << "." << endl;
+			}
+#endif
 		} // iterate over 'k': number of voltage
 	}
 	return;
