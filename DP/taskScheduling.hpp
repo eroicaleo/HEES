@@ -70,6 +70,7 @@ class dynProg {
 
 		// The function object take two variables, current energy and task length
 		std::tr1::function<double(double, double, double)> energyCalculator;
+		double energyCalculatorWrapper(double inputPower, double initialEnergy, double len);
 
 		void backTracing();
 		int genScheduleForEES();
@@ -122,6 +123,8 @@ struct dpTableEntry {
 ostream& operator<<(ostream& os, const dpTableEntry &e);
 
 bool dpTableEntryComp(const dpTableEntry &a, const dpTableEntry &b);
+
+double energyCalculatorApproximation(double inputPower, double initialEnergy, double len);
 
 void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &deadline);
 

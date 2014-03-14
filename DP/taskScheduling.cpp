@@ -77,10 +77,10 @@ void dynProg::populateFirstIdleTask(vector<dpTableEntry> &firstIdleRow) {
 		size_t len = (iter-firstIdleRow.begin());
 		double inputPower = getExtraChargePower(idleTaskVoltageTable, 0);
 
-		if (!above_min_valid_input_power(inputPower))
+		if (inputPower < 0)
 			return;
 
-		iter->totalEnergy = energyCalculator(inputPower, m_initialEnergy, len);
+		iter->totalEnergy = energyCalculatorWrapper(inputPower, m_initialEnergy, len);
 		iter->len = len;
 	}
 	return;
@@ -89,7 +89,7 @@ void dynProg::populateFirstIdleTask(vector<dpTableEntry> &firstIdleRow) {
 void dynProg::populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<dpTableEntry> &thisIdleRow) {
 
 	double inputPower = getExtraChargePower(idleTaskVoltageTable, 0);
-	if (!above_min_valid_input_power(inputPower))
+	if (inputPower < 0)
 		return;
 
 	for (vector<dpTableEntry>::const_iterator iter = lastRealRow.begin(); iter != lastRealRow.end(); ++iter) {
@@ -101,7 +101,7 @@ void dynProg::populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<d
 #ifdef DEBUG_VERBOSE
 			cout << "I am predicting idle task " << iterIdle->taskID << " from time " << iterIdleHead - thisIdleRow.begin() << " to " << iterIdle - thisIdleRow.begin() << "." << endl;
 #endif
-			double energy = energyCalculator(inputPower, iter->totalEnergy, taskDur);
+			double energy = energyCalculatorWrapper(inputPower, iter->totalEnergy, taskDur);
 			if (energy > iterIdle->totalEnergy) {
 #ifdef DEBUG_VERBOSE
 				cout << "Taskid: idle " << iterIdle->taskID << " entry " << iterIdle-thisIdleRow.begin() << " has been updated from "
@@ -126,11 +126,11 @@ void dynProg::populateRealTask(const vector<dpTableEntry> &lastIdleRow, vector<d
 			size_t taskiFinishTime = (iter-lastIdleRow.begin()) + taskDur;
 			tableEntryIter realTaskIter = thisRealRow.begin() + taskiFinishTime;
 			// Must guarantee there is enough power for charging
-			if (above_min_valid_input_power(inputPower) && (realTaskIter < thisRealRow.end())) {
+			if ((inputPower > 0.0) && (realTaskIter < thisRealRow.end())) {
 #ifdef DEBUG_VERBOSE
 				cout << "I am predicting real task " << taskID << " from time " << (iter-lastIdleRow.begin()) << " to " << taskiFinishTime << "." << endl;
 #endif
-				double energy = energyCalculator(inputPower, iter->totalEnergy, taskDur);
+				double energy = energyCalculatorWrapper(inputPower, iter->totalEnergy, taskDur);
 
 				// Must guarantee that the schedule is feasible
 				if (realTaskIter->totalEnergy < energy) {
@@ -369,9 +369,9 @@ int dynProg::genScheduleForEES() {
 	return totalLength;
 }
 
+static nnetmultitask nnetPredictor;
 void dynProg::dynamicProgrammingWithIdleTasks() {
 
-	nnetmultitask nnetPredictor;
 	energyCalculator = bind(&nnetmultitask::predictWithEnergyLength, nnetPredictor, placeholders::_1, placeholders::_2, placeholders::_3);
 	taskTimelineWithIdle();
 	backTracingWithIdleTasks();
@@ -438,6 +438,23 @@ ostream& operator<<(ostream& os, const dpTableEntry &e) {
 
 bool dpTableEntryComp(const dpTableEntry &a, const dpTableEntry &b) {
 	return a.totalEnergy < b.totalEnergy;
+}
+
+double dynProg::energyCalculatorWrapper(double inputPower, double initialEnergy, double len) {
+	if (inputPower <= 0.0)
+		return 0.0;
+
+	if (!above_min_valid_input_power(inputPower) || !below_max_valid_input_power(inputPower)) {
+		energyCalculator = bind(energyCalculatorApproximation, placeholders::_1, placeholders::_2, placeholders::_3);
+	} else {
+		energyCalculator = bind(&nnetmultitask::predictWithEnergyLength, nnetPredictor, placeholders::_1, placeholders::_2, placeholders::_3);
+	}
+
+	return energyCalculator(inputPower, initialEnergy, len);
+}
+
+double energyCalculatorApproximation(double inputPower, double initialEnergy, double len) {
+	return initialEnergy + inputPower * len * 0.8;
 }
 
 #ifdef DP_BINARY
