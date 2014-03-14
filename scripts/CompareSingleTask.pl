@@ -33,13 +33,15 @@ print "@taskPowerArray\n";
 # Main loop
 # Run the tests, process log file and archieve the results
 foreach my $i (0..$#taskPowerArray) {
-  my $power = $taskPowerArray[$i];
-  my $format = sprintf "%04d", $i;
-  my $logFile = "runinfo${format}.log";
-  my $cmdstr = "./single --ratio_runtime_and_deadline $deadlineRatio --constant_power_value $harvestingPower ";
-  $cmdstr .= "--number_of_tasks $numOfTasks --min_task_power $power --max_task_power $power --min_task_len 10 --max_task_len 10 > $logFile";
-  print $cmdstr, "\n";
-  system($cmdstr);
-  move $logFile, $resultsDir;
-  sleep 1;
+  foreach my $len (10..10) {
+    my $power = $taskPowerArray[$i];
+    my $format = sprintf "%04d_%02d", $i, $len;
+    my $logFile = "runinfo${format}.log";
+    my $cmdstr = "./single --ratio_runtime_and_deadline $deadlineRatio --constant_power_value $harvestingPower ";
+    $cmdstr .= "--number_of_tasks $numOfTasks --min_task_power $power --max_task_power $power --min_task_len $len --max_task_len $len > $logFile";
+    print $cmdstr, "\n";
+    system($cmdstr);
+    move $logFile, $resultsDir;
+    sleep 1;
+  }
 }
