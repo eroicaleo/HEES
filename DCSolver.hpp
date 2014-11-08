@@ -97,7 +97,9 @@ class DCSolver;
 typedef struct {
   realtype lb[NVAR];
   realtype ub[NVAR];
-} *UserData;
+} UserDataStruct;
+
+typedef UserDataStruct *UserData;
 
 /* Accessor macro */
 #define Ith(v,i)    NV_Ith_S(v,i-1)   
@@ -134,6 +136,54 @@ private:
 	void *kmem;
 
 	int buck_failed, boost_failed;
+};
+
+class DCSolverSolution {
+public:
+	DCSolverSolution(int qf, double qd, double vin, double iin, double vout, double iout, int bb) :
+		quality_flag(qf),
+		quality_delta(qd),
+		dc_vin(vin),
+		dc_iin(iin),
+		dc_vout(vout),
+		dc_iout(iout),
+		buck_boost_mode(bb)
+		{}
+	bool is_valid() const {
+		if ((buck_boost_mode == 1) && (dc_vin < dc_vout))
+			return false;
+		if ((buck_boost_mode == -1) && (dc_vin > dc_vout))
+			return false;
+		if ((quality_flag == KIN_SUCCESS) || (quality_delta < ABSTOL))
+			return true;
+		return false;
+	}
+	bool operator<(const DCSolverSolution &d1) const {
+		if (is_valid() && !d1.is_valid())
+			return false;
+		if (!is_valid() && d1.is_valid())
+			return true;
+		if ((quality_flag == KIN_SUCCESS) && (d1.quality_flag != KIN_SUCCESS))
+			return false;
+		if ((quality_flag != KIN_SUCCESS) && (d1.quality_flag == KIN_SUCCESS))
+			return true;
+		return (fabs(quality_delta) > fabs(d1.quality_delta));
+	}
+	int mode() const { return buck_boost_mode; }
+	void output(double &vin, double &iin, double &vout, double &iout) {
+		vin = dc_vin;
+		iin = dc_iin;
+		vout = dc_vout;
+		iout = dc_iout;
+	}
+private:
+	int quality_flag;
+	double quality_delta;
+	double dc_vin;
+	double dc_iin;
+	double dc_vout;
+	double dc_iout;
+	int buck_boost_mode; // buck = 1, boost = -1
 };
 
 #endif

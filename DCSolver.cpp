@@ -19,13 +19,18 @@ static void SetInitialGuess1(N_Vector u, UserData data);
 static void SetInitialGuess2(N_Vector u, UserData data);
 static void PrintOutput(N_Vector u);
 static void PrintFinalStats(void *kmem);
-static int check_flag(void *flagvalue, char *funcname, int opt);
+static int check_flag(void *flagvalue, char const*funcname, int opt);
+static int cross_check_solution(int flag);
+static double calculate_solution_delta();
 
 /* Private varible */
 static double g_dc_vout, g_dc_iout;
 static double g_dc_vin, g_dc_iin;
 static double g_dc_power;
 static double g_bank_vocc(0.0), g_bank_racc(0.166), g_bank_cap(0.0);
+
+const int buck_mode = 1;
+const int boost_mode = -1;
 
 static function<double(const double, const double, const double)> power_calculator;
 
@@ -152,7 +157,6 @@ int DCSolver::SolveItGivenDCInput(double dc_vin, double dc_iin, double &dc_vout,
 
 	// Set the lower bound and initial guess
 	data->lb[0] = max(RCONST(g_bank_vocc), ABSTOL);
-	PrimaryGuess(u1,data);
 
 	KINSolverWapper();
 
@@ -195,7 +199,6 @@ int DCSolver::SolveItGivenDCOutput(double dc_vout, double dc_iout, double &dc_vi
 
 	// Set the upper bound and initial guess
 	data->ub[0] = RCONST(g_bank_vocc + TOL);
-	PrimaryGuess(u1,data);
 
 	KINSolverWapper();
 
@@ -243,31 +246,45 @@ int DCSolver::KINSolverWapper()
 
   // Assume buck mode first
   power_calculator = bind(&DCSolver::ComputeDCPowerBuck, this, placeholders::_1, placeholders::_2, placeholders::_3);
-  buck_failed = KINSol(kmem, u, glstr, s, s);
-  if (buck_failed != KIN_SUCCESS) {
-    check_flag(&buck_failed, "KINSol", 1);
 
-	// Start from another bound
-	SecondaryGuess(u1,data);
-    N_VScale_Serial(ONE,u1,u);
-	buck_failed = KINSol(kmem, u, glstr, s, s);
-  }
+  PrimaryGuess(u1,data);
+  N_VScale_Serial(ONE,u1,u);
+  buck_failed = KINSol(kmem, u, glstr, s, s);
+  DCSolverSolution d1(buck_failed, calculate_solution_delta(), g_dc_vin, g_dc_iin, g_dc_vout, g_dc_iout, buck_mode);
+
+  SecondaryGuess(u1,data);
+  N_VScale_Serial(ONE,u1,u);
+  buck_failed = KINSol(kmem, u, glstr, s, s);
+  DCSolverSolution d2(buck_failed, calculate_solution_delta(), g_dc_vin, g_dc_iin, g_dc_vout, g_dc_iout, buck_mode);
+
+  DCSolverSolution d_best_buck = max(d1, d2);
 
   // If it is in boost mode
-  if ((buck_failed != KIN_SUCCESS) || (g_dc_vin < g_dc_vout)) {
-	power_calculator = bind(&DCSolver::ComputeDCPowerBoost, this, placeholders::_1, placeholders::_2, placeholders::_3);
-	boost_failed = KINSol(kmem, u, glstr, s, s);
-	if ((boost_failed != KIN_SUCCESS) || (g_dc_vin > g_dc_vout)){
-	  check_flag(&boost_failed, "KINSol", 1);
+  power_calculator = bind(&DCSolver::ComputeDCPowerBoost, this, placeholders::_1, placeholders::_2, placeholders::_3);
 
-	  // Start from another bound
-	  SecondaryGuess(u1,data);
-      N_VScale_Serial(ONE,u1,u);
-	  boost_failed = KINSol(kmem, u, glstr, s, s);
-	  if (g_dc_vin > g_dc_vout) {
-	    boost_failed = -1;
-	  }
-	}
+  PrimaryGuess(u1,data);
+  N_VScale_Serial(ONE,u1,u);
+  boost_failed = KINSol(kmem, u, glstr, s, s);
+  DCSolverSolution d3(boost_failed, calculate_solution_delta(), g_dc_vin, g_dc_iin, g_dc_vout, g_dc_iout, boost_mode);
+
+  SecondaryGuess(u1,data);
+  N_VScale_Serial(ONE,u1,u);
+  boost_failed = KINSol(kmem, u, glstr, s, s);
+  DCSolverSolution d4(boost_failed, calculate_solution_delta(), g_dc_vin, g_dc_iin, g_dc_vout, g_dc_iout, boost_mode);
+
+  DCSolverSolution d_best_boost = max(d3, d4);
+
+  DCSolverSolution d_best = max(d_best_boost, d_best_buck);
+
+  if (d_best.is_valid()) {
+	  d_best.output(g_dc_vin, g_dc_iin, g_dc_vout, g_dc_iout);
+	  if (d_best.mode() == buck_mode)
+		  buck_failed = 0;
+	  else
+		  boost_failed = 0;
+  } else {
+	  buck_failed = -1;
+	  boost_failed = -1;
   }
 
   printf("Solution:\n  [x1,x2] = ");
@@ -506,7 +523,7 @@ static void PrintFinalStats(void *kmem)
  *             NULL pointer 
  */
 
-static int check_flag(void *flagvalue, char *funcname, int opt)
+static int check_flag(void *flagvalue, char const *funcname, int opt)
 {
   int *errflag;
 
@@ -538,4 +555,27 @@ static int check_flag(void *flagvalue, char *funcname, int opt)
   }
 
   return(0);
+}
+
+/*
+ * Cross check function
+ */
+static int cross_check_solution(int flag) {
+
+	double delta = calculate_solution_delta();
+
+	if (delta < ABSTOL) {
+		return KIN_SUCCESS;
+	} else {
+		return flag;
+	}
+}
+
+/*
+ * calculate_solution_delta
+ */
+static double calculate_solution_delta() {
+	double power = power_calculator(g_dc_vin, g_dc_vout, g_dc_iout);
+	double delta = fabs(g_dc_vin*g_dc_iin - power - g_dc_vout*g_dc_iout);
+	return delta;
 }
