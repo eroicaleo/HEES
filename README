@@ -9,7 +9,7 @@ Then, you could find the final energy stored in the bank
 in the file OverallProcess.txt.
 
 2. How to change the workload?
-You can specify the workload in Task.txt. A workload 
+You can specify the workload in Tasks.txt. A workload
 consists of three parameters in the following format.
 
 1.0 0.5 600
