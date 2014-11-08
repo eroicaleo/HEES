@@ -14,7 +14,7 @@ the sundials library and the boost library.
 1. Download the library from: [sundials website](http://computation.llnl.gov/casc/sundials/download/download.php).
    You only need the KINSOL package though.
 
-2. untar the package, and go into the direcotry:
+2. untar the package, and go into the directory:
 
    ```
    tar -xzvf kinsol-2.7.0.tar.gz
@@ -25,8 +25,8 @@ the sundials library and the boost library.
    but if you don't want to, then you can just do:
 
    ```bash
-   # Assume I want to install them to ~/usr directory
-   ./configure --prefix=$HOME/usr --enable-examples
+   # Assume I want to install them to ~/usr/sundials directory
+   ./configure --prefix=$HOME/usr/sundials --enable-examples
    make
    make install
    ```
