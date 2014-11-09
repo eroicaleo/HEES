@@ -19,8 +19,7 @@ def processLogFile():
   f = open('OverallProcess.txt', 'r')
   # Skip the header
   f.readline()
-  # energy = [[re.split(r'\s+', line) for line in f][i] for i in [7, 10]]
-  res = [[re.split(r'\s+', line)[i] for i in [7, 10]] for line in f]
+  res = [[re.split(r'\s+', line)[i] for i in [8, 11]] for line in f]
   energy = [i[1] for i in res]
   inputPower = res[0][0]
   return inputPower, energy
@@ -34,10 +33,10 @@ if not os.path.isfile('energysys'):
 ##----------------------------------------------------------------------------------------------------
 ## Generate load power sequence
 ##----------------------------------------------------------------------------------------------------
-initalPower = 0.6
+initalPower = 0.0
 step        = 0.2
-tasklen     = 10000
-NumofLoad   = 1
+tasklen     = 4000
+NumofLoad   = 12
 LoadPower = [initalPower+step*x for x in range(NumofLoad)]
 
 energyList = []
