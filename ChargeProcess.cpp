@@ -1,4 +1,5 @@
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <math.h>
 
@@ -28,7 +29,19 @@ ChargeProcess::ChargeProcess() :
 	output_file("OverallProcess.txt") { 
 	
 	ofstream output(output_file.c_str());
-	output << "Pinput\tVCTI\tVcap_oc\tVcap_cc\tQacc\t\tIsup\tPdcsup\tPdcsupIin\tPdcload\tPrbank\tEsup\tCacc" << endl;
+	output << setw(8) << "Pinput"    << "    ";
+	output << setw(8) << "VCTI"      << "    ";
+	output << setw(8) << "Vcap_oc"   << "    ";
+	output << setw(8) << "Vcap_cc"   << "    ";
+	output << setw(8) << "Qacc"      << "    ";
+	output << setw(8) << "Isup"      << "    ";
+	output << setw(8) << "Pdcsup"    << "    ";
+	output << setw(8) << "PdcsupIi"  << "    ";
+	output << setw(8) << "Pdcload"   << "    ";
+	output << setw(8) << "Prbank"    << "    ";
+	output << setw(8) << "Esup"      << "    ";
+	output << setw(8) << "Cacc"      << "    ";
+	output << setw(8) << endl;
 	output.close();
 }
 
@@ -173,20 +186,20 @@ void ChargeProcess::print_super_cap_info(ofstream &output, ees_bank *bank, doubl
 	// Output the status to a file
 	super_cap_voc = bank->EESBankGetVoc();
 	super_cap_qacc = bank->EESBankGetQacc();
-	output.precision(5);
+	output.precision(3);
 	output.setf(ios::fixed,ios::floatfield);
-	output << power_input << "\t"
-			<< vcti << "\t"
-			<< super_cap_voc << "\t"
-			<< super_cap_vcc << "\t"
-			<< super_cap_qacc << "\t"
-			<< super_cap_iin << "\t"
-			<< dc_super_cap_power << "\t"
-			<< dc_super_cap_iin << "\t\t"
-			<< dc_load_power << "\t"
-			<< super_cap_iin*super_cap_iin*bank->EESBankGetRacc() << "\t"
-			<< bank->EESBankGetEnergy() << "\t"
-			<< bank->EESBankGetCacc() << endl;
+    output << setw(8) << power_input << "    "
+           << setw(8) << vcti << "    "
+           << setw(8) << super_cap_voc << "    "
+           << setw(8) << super_cap_vcc << "    "
+           << setw(8) << super_cap_qacc << "    "
+           << setw(8) << super_cap_iin << "    "
+           << setw(8) << dc_super_cap_power << "    "
+           << setw(8) << dc_super_cap_iin << "    "
+           << setw(8) << dc_load_power << "    "
+           << setw(8) << super_cap_iin*super_cap_iin*bank->EESBankGetRacc() << "    "
+           << setw(8) << bank->EESBankGetEnergy() << "    "
+           << setw(8) << bank->EESBankGetCacc() << endl;
 
 	return;
 }
