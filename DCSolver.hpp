@@ -88,6 +88,8 @@ extern "C" {
 
 #define TOL	   1.e-3
 #define ABSTOL RCONST(1.e-3)
+#define ABSTOL2 RCONST(2.e-3)
+#define ABSMAX RCONST(1.e3)
 
 const double MinManualStep = 1.e-4;
 const double MaxManualStep = 1.e-1;
@@ -154,7 +156,7 @@ public:
 			return false;
 		if ((buck_boost_mode == -1) && (dc_vin > dc_vout))
 			return false;
-		if ((quality_flag == KIN_SUCCESS) || (quality_delta < ABSTOL))
+		if ((quality_flag == KIN_SUCCESS) || (quality_delta < ABSTOL2))
 			return true;
 		return false;
 	}

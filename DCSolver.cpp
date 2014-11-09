@@ -75,7 +75,7 @@ DCSolver::DCSolver() :
 
   data = (UserData)malloc(sizeof *data);
   data->lb[0] = RCONST(ABSTOL);       
-  data->ub[0] = RCONST(10.0);
+  data->ub[0] = RCONST(ABSMAX);
 
   /* Create serial vectors of length NEQ */
   u1 = N_VNew_Serial(NEQ);
@@ -408,7 +408,7 @@ static void SetInitialGuess2(N_Vector u, UserData data)
   ub = data->ub;
 
   /* this init. guess should take us to (0.29945; 2.83693) */
-  x1 = ub[0];
+  x1 = min(ub[0], 50.0);
 
   udata[0] = x1;
   udata[1] = x1 - lb[0];
@@ -564,7 +564,7 @@ static int cross_check_solution(int flag) {
 
 	double delta = calculate_solution_delta();
 
-	if (delta < ABSTOL) {
+	if (delta < ABSTOL2) {
 		return KIN_SUCCESS;
 	} else {
 		return flag;
