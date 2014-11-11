@@ -86,15 +86,35 @@ nnetmodel::simnnet(double *input) {
 	// Down scale
 	preprocessing(input, input_min, input_range, INPUT_DIM);
 
+#ifdef DEBUG_NNET
+	printf("Scaled input: toolbox/nnet/nnutils/+nnsim/y.m:29 Pc\n");
+	dump_dvector(input, INPUT_DIM);
+#endif
+
 	// The first level multiplication
 	// IW * input
 	mbynmatvecmult(inter_output, IW, input, NUM_OF_NEURONS, INPUT_DIM);
 
+#ifdef DEBUG_NNET
+	printf("IW * input:\n");
+	dump_dvector(inter_output, NUM_OF_NEURONS);
+#endif
+
 	// First level bias
 	vecadd(inter_output, b1, NUM_OF_NEURONS);
 
+#ifdef DEBUG_NNET
+	printf("Added first level bias: toolbox/nnet/nnutils/+nnsim/a.m:114 n\n");
+	dump_dvector(inter_output, NUM_OF_NEURONS);
+#endif
+
 	// Transfer function: tansig
 	tansig(inter_output, NUM_OF_NEURONS);
+
+#ifdef DEBUG_NNET
+	printf("After tansig function: toolbox/nnet/nnutils/+nnsim/a.m:120 Ac\n");
+	dump_dvector(inter_output, NUM_OF_NEURONS);
+#endif
 
 	// The second level multiplication
 	// LW * first level output
@@ -106,9 +126,19 @@ nnetmodel::simnnet(double *input) {
 	// Second level bias
 	result += b2;
 
+#ifdef DEBUG_NNET
+	printf("After second layer: toolbox/nnet/nnutils/+nnsim/a.m:120 Ac\n");
+	dump_dvector(&result, 1);
+#endif
+
 	// Postprocessing the output
 	// Up scale
 	result = postprocessing(result, output_min, output_range);
+
+#ifdef DEBUG_NNET
+	printf("After post scale: toolbox/nnet/nnutils/+nnsim/y.m:49 Y and \n");
+	dump_dvector(&result, 1);
+#endif
 
 	return result;
 }
