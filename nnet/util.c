@@ -22,7 +22,7 @@ int ge(float x, float y)
 	return ((x > y) || eq(x,y));
 }
 
-void fatal(char *s)
+void fatal(char const *s)
 {
 	fprintf(stderr, "error: %s", s);
 	exit(1);

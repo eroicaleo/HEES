@@ -27,7 +27,7 @@
 int eq(float x, float y);
 int le(float x, float y);
 int ge(float x, float y);
-void fatal (char *s);
+void fatal (char const *s);
 void warning (char *s);
 void swap_ival (int *a, int *b);
 void swap_dval (double *a, double *b);
