@@ -75,7 +75,7 @@ void dynProg::taskTimelineWithIdle() {
 void dynProg::populateFirstIdleTask(vector<dpTableEntry> &firstIdleRow) {
 	for (tableEntryIter iter = firstIdleRow.begin(); iter != firstIdleRow.end(); ++iter) {
 		size_t len = (iter-firstIdleRow.begin());
-		double inputPower = getExtraChargePower(idleTaskVoltageTable, 0);
+		double inputPower = getExtraChargePower(idleTaskVoltageTable, idleTaskVoltageTable.getNominalVoltageIndex());
 
 		if (inputPower < 0)
 			return;
@@ -88,7 +88,7 @@ void dynProg::populateFirstIdleTask(vector<dpTableEntry> &firstIdleRow) {
 
 void dynProg::populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<dpTableEntry> &thisIdleRow) {
 
-	double inputPower = getExtraChargePower(idleTaskVoltageTable, 0);
+	double inputPower = getExtraChargePower(idleTaskVoltageTable, idleTaskVoltageTable.getNominalVoltageIndex());
 	if (inputPower < 0)
 		return;
 
@@ -99,7 +99,7 @@ void dynProg::populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<d
 		for (tableEntryIter iterIdle = iterIdleHead; iterIdle != thisIdleRow.end(); ++iterIdle) {
 			int taskDur = iterIdle - iterIdleHead;
 #ifdef DEBUG_VERBOSE
-			cout << "I am predicting idle task " << iterIdle->taskID << " from time " << iterIdleHead - thisIdleRow.begin() << " to " << iterIdle - thisIdleRow.begin() << "." << endl;
+			cout << "I am predicting idle task " << iterIdle->taskID << " from time " << iterIdleHead - thisIdleRow.begin() << " to " << iterIdle - thisIdleRow.begin() << "." << " inputPower: " << inputPower << ". taskDur: " << taskDur << ". iter->totalEnergy: " << iter->totalEnergy << "." << endl;
 #endif
 			double energy = energyCalculatorWrapper(inputPower, iter->totalEnergy, taskDur);
 			if (energy > iterIdle->totalEnergy) {
