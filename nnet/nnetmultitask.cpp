@@ -15,14 +15,14 @@ static char filenames[5][50] = {
 
 /* FIXME: when we get more models */
 nnetmultitask::nnetmultitask() :
-	interalVec(2, 10),
+	interalVec(1, 10),
 	nnet1to5(),
 	nnet10(),
 	nnet20(),
 	nnet40(),
 	nnet100()
 {
-	interalVec[0] = 20;
+	interalVec[0] = 10;
 	nnet10.readnnetmodel(filenames[1]);
 	nnet20.readnnetmodel(filenames[2]);
 	nnet40.readnnetmodel(filenames[3]);
