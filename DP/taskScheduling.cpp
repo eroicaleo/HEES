@@ -35,7 +35,7 @@ dynProg::dynProg(int numOfTask, int deadline, const vector<TaskVoltageTable> &ve
 	for (int i = 0; i < m_numOfTask; i++) {
 		// cout<<"Task "<<i<<":";
 		for (int k = 0; k < m_numOfVolt; k++) {
-			m_taskDuration[i][k] = vec_tvt[i].getScaledCeilLength(volSel[k], 10);
+			m_taskDuration[i][k] = vec_tvt[i].getScaledCeilLength(volSel[k], 1);
 			m_taskCurrent[i][k] = vec_tvt[i].getCurrent(volSel[k]);
 		}
 	}
