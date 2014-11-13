@@ -33,7 +33,6 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-VoltageTable vt(vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), 1.0);
 vector<TaskVoltageTable> vec_tvt;
 
 int generateSchedule() {
@@ -42,15 +41,13 @@ int generateSchedule() {
 	double m_deadline;
 	vector<double> m_inputDuration, m_inputEnergy;
 
-	// dummyTaskSetGenerator(int &m_numOfTask, int &m_numOfVolt, double &m_deadline, vector<double> &m_inputDuration, vector<double> &m_inputEnergy);
 	randomTaskSetGenerator(number_of_tasks, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy);
 
 	// Baseline policy
-	minEnergySchedule(number_of_tasks, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy);
-	m_deadline = minEnergyScheduleFixed(number_of_tasks, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy, vec_tvt);
+	minEnergyScheduleFixed(number_of_tasks, m_numOfVolt, m_deadline, m_inputDuration, m_inputEnergy, vec_tvt);
 
 	// Then use dynamic programming to generate optimal schedule
-	dynProg taskSet1(number_of_tasks, vector<double>(syntheticVoltageTable, syntheticVoltageTable+syntheticVoltageLevel), m_deadline, m_inputDuration, m_inputEnergy);
+	dynProg taskSet1(vec_tvt.size(), m_deadline, vec_tvt);
 	taskSet1.dynamicProgrammingWithIdleTasks();
 	m_deadline = taskSet1.getDeadline();
 	m_deadline /= 10.0;
@@ -71,7 +68,7 @@ void randomTaskSetGenerator(int &m_numOfTask, int &m_numOfVolt, double &m_deadli
 	srand(time(NULL));
 	for (int i = 0; i < m_numOfTask; ++i) {
 		// Each task is between [10 100] with a timestamp 10
-		int tasklen = (1 + rand() % 9);
+		int tasklen = (10 + rand() % 200);
 		// Each task power is between 0.6 ~ 2.0
 		double taskpower = min_task_power + (rand() % 100) * (max_task_power - min_task_power) / 100.0;
 		double taskEnergy = tasklen * taskpower;
@@ -81,7 +78,7 @@ void randomTaskSetGenerator(int &m_numOfTask, int &m_numOfVolt, double &m_deadli
 
 		m_deadline += tasklen;
 
-		vec_tvt.push_back(TaskVoltageTable(vt, taskpower, tasklen));
+		vec_tvt.push_back(TaskVoltageTable(syntheticCPUVoltageTable, taskpower, tasklen));
 
 	}
 	outfile.open("TasksOrigNoSorting.txt");
