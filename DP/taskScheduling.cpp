@@ -376,9 +376,7 @@ void dynProg::dynamicProgrammingWithIdleTasks() {
 	taskTimelineWithIdle();
 	backTracingWithIdleTasks();
 	genScheduleForEES();
-#ifdef DEBUG_VERBOSE
 	dumpOptimalSchedule();
-#endif
 
 }
 
