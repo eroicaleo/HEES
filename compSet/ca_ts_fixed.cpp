@@ -97,12 +97,12 @@ int minEnergyScheduleFixed(int m_numOfTask, int m_numOfVolt, double m_deadline, 
 		if ( firstHalfDuration < totalDuration * changePoint){
 			cout<< volSel[up] << " ";
 			cout<< vec_tvt[i].getCurrent(volSel[up]) << " ";
-			cout<< vec_tvt[i].getScaledCeilLength(volSel[up], 10) <<endl ;//* changePoint <<endl;
+			cout<< vec_tvt[i].getScaledCeilLength(volSel[up], 1) <<endl ;//* changePoint <<endl;
 			firstHalfDuration +=  m_inputDuration[i] /  volSel[up];
 		} else {
 			cout<< volSel[bottom] << " ";
 			cout<< vec_tvt[i].getCurrent(volSel[bottom]) << " ";
-			cout<< vec_tvt[i].getScaledCeilLength(volSel[bottom], 10) <<endl;// * (1 - changePoint) <<endl;
+			cout<< vec_tvt[i].getScaledCeilLength(volSel[bottom], 1) <<endl;// * (1 - changePoint) <<endl;
 		}
 	}
 
@@ -118,20 +118,20 @@ int minEnergyScheduleFixed(int m_numOfTask, int m_numOfVolt, double m_deadline, 
 		if (firstHalfDuration < totalDuration * changePoint) {
 			outfile << volSel[up] << " ";
 			outfile << vec_tvt[i].getCurrent(volSel[up]) << " ";
-			outfile << vec_tvt[i].getScaledCeilLength(volSel[up], 10) <<endl ;//* changePoint <<endl;
+			outfile << vec_tvt[i].getScaledCeilLength(volSel[up], 1) <<endl ;//* changePoint <<endl;
 			firstHalfDuration +=  m_inputDuration[i] /  volSel[up];
-			timeUsed += vec_tvt[i].getScaledCeilLength(volSel[up], 10);
+			timeUsed += vec_tvt[i].getScaledCeilLength(volSel[up], 1);
 		} else {
 			outfile << volSel[bottom] << " ";
 			outfile << vec_tvt[i].getCurrent(volSel[bottom]) << " ";
-			outfile << vec_tvt[i].getScaledCeilLength(volSel[bottom], 10) <<endl;// * (1 - changePoint) <<endl;
-			timeUsed += vec_tvt[i].getScaledCeilLength(volSel[bottom], 10);
+			outfile << vec_tvt[i].getScaledCeilLength(volSel[bottom], 1) <<endl;// * (1 - changePoint) <<endl;
+			timeUsed += vec_tvt[i].getScaledCeilLength(volSel[bottom], 1);
 		}
 	}
-	int timeRemained = round(m_deadline*10 - timeUsed);
-	double doubletimeRemained = m_deadline*10 - timeUsed;
+	int timeRemained = int(m_deadline*1) - timeUsed;
+	double doubletimeRemained = m_deadline*1 - timeUsed;
 	cout << "doubletimeRemained " << doubletimeRemained << endl;
-	cout << "10*m_deadline " << int(m_deadline*10) << endl;
+	cout << "1*m_deadline " << int(m_deadline*1) << endl;
 	cout << "timeUsed: " << timeUsed << endl;
 	cout << "timeRemained: " << timeRemained << endl;
 	// If there is sometime remains, we charge it with idle task
@@ -147,7 +147,7 @@ int minEnergyScheduleFixed(int m_numOfTask, int m_numOfVolt, double m_deadline, 
 	sb.PredictEnergyForSchedule(20.0);
 	sb.DumpSchedule();
 
-	return max(int(round(m_deadline*10)), timeUsed);
+	return max(int(round(m_deadline*1)), timeUsed);
 }
 
 #ifdef CATS_BINARY
