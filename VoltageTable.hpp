@@ -3,8 +3,10 @@
 
 #include <cmath>
 #include <vector>
+#include <algorithm>
 
 using std::vector;
+using std::find;
 
 // The base class for a voltage table corresponding to a processor model
 class VoltageTable {
