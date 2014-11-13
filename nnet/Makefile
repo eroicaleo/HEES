@@ -30,5 +30,8 @@ test_debug : test_model_10.o $(TEST_DEBUG_OBJ)
 util%.o : util.c
 	g++ $(CFLAG) $< -o $@
 
+util.o : util.c
+	g++ $(CFLAG) $< -o $@
+
 clean :
 	rm -rf *.o nnet
