@@ -46,7 +46,9 @@ double nnetmultitask::predictWithEnergyLength(double inputPower, double startEne
 			nnetInput[0] = inputPower;
 			nnetInput[1] = startEnergy;
 			nnetInput[2] = intlen;
+#ifdef DEBUG_NNET
 			cout << "my prediction: " << inputPower << ", " << initEnergy << ", " << interalVec[i] << ", " << startEnergy << endl;
+#endif
 		}
 	}
 
@@ -70,7 +72,9 @@ double nnetmultitask::predictWithEnergyLength(double inputPower, double startEne
 		energydiff = ((double)lendiff / (double)interalVec.back()) * energydiff;
 		startEnergy += energydiff;
 	}
+#ifdef DEBUG_NNET
 	cout << "We round the task length by: " << lendiff << " so we compensate energy by: " << energydiff << " and the final energy is: " << startEnergy << endl;
+#endif
 
 	return startEnergy;
 }
