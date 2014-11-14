@@ -72,4 +72,6 @@ public:
 	virtual double VoltageFrequencyRelation(double targetVol, double nominalLen) const;
 };
 
+extern const VoltageTableDFS syntheticCPUVoltageTableDFS;
+
 #endif
