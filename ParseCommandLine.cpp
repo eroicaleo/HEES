@@ -50,6 +50,10 @@ int number_of_tasks;
 double min_training_power;
 double max_training_power;
 
+/* Processor DVFS options */
+int cpu_dvfs_type;
+const VoltageTable *cpu_voltage_table_ptr(&syntheticCPUVoltageTable);
+
 int hees_parse_command_line(int argc, char *argv[]) {
 	
 	int ret = 0;
@@ -114,11 +118,19 @@ int hees_parse_command_line(int argc, char *argv[]) {
 			("max_training_power", value<double>(&max_training_power)->default_value(5.0), "The maximum power used in training prediction model")
 		;
 
+		/* Processor DVFS options */
+		options_description dvfs_options("Processor DVFS options");
+		predictor_options.add_options()
+			("cpu_dvfs_type", value<int>(&cpu_dvfs_type)->default_value(0), "The CPU DVFS type: 0. DVFS, 1. DFS.")
+		;
+
 		options_description cmdline_options;
-		cmdline_options.add(generic).add(bank_config_options).add(time_config_options).add(power_options).add(schedule_options).add(predictor_options);
+		cmdline_options.add(generic).add(bank_config_options).add(time_config_options).add(power_options).add(schedule_options).add(predictor_options)
+			.add(dvfs_options);
 
 		options_description config_file_options;
-		config_file_options.add(bank_config_options).add(time_config_options).add(power_options).add(schedule_options).add(predictor_options);
+		config_file_options.add(bank_config_options).add(time_config_options).add(power_options).add(schedule_options).add(predictor_options)
+			.add(dvfs_options);
 
 		variables_map vm;
 		store(parse_command_line(argc, argv, cmdline_options), vm);
@@ -148,6 +160,18 @@ int hees_parse_command_line(int argc, char *argv[]) {
 		} else if (power_source_type == "variable_power") {
 			vps.ReadVariablePowerSource("VariablePowerSource.txt");
 			power_source_func = bind(&VariablePowerSource::AdvanceVariablePowerSource, &vps, placeholders::_1);
+		}
+
+		switch (cpu_dvfs_type) {
+			case 0:
+				cpu_voltage_table_ptr = &syntheticCPUVoltageTable;
+				break;
+			case 1:
+				cpu_voltage_table_ptr = &syntheticCPUVoltageTableDFS;
+				break;
+			default:
+				cpu_voltage_table_ptr = &syntheticCPUVoltageTable;
+				break;
 		}
 
 	} catch (exception &e) {

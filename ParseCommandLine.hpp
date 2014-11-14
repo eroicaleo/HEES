@@ -11,6 +11,7 @@
 #include <boost/program_options.hpp>
 
 #include "powersource.hpp"
+#include "VoltageTable.hpp"
 
 using std::string;
 using std::tr1::function;
@@ -60,6 +61,10 @@ extern int number_of_tasks;
 /* Predictor related parameters */
 extern double min_training_power;
 extern double max_training_power;
+
+/* Processor DVFS options */
+extern int cpu_dvfs_type;
+extern const VoltageTable *cpu_voltage_table_ptr;
 
 /* Functions */
 int hees_parse_command_line(int argc, char *argv[]);
