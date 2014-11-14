@@ -78,7 +78,7 @@ void randomTaskSetGenerator(int &m_numOfTask, int &m_numOfVolt, double &m_deadli
 
 		m_deadline += tasklen;
 
-		vec_tvt.push_back(TaskVoltageTable(syntheticCPUVoltageTable, taskpower, tasklen));
+		vec_tvt.push_back(TaskVoltageTable(*cpu_voltage_table_ptr, taskpower, tasklen));
 
 	}
 	outfile.open("TasksOrigNoSorting.txt");

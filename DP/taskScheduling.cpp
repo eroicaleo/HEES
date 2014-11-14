@@ -41,7 +41,7 @@ dynProg::dynProg(int numOfTask, int deadline, const vector<TaskVoltageTable> &ve
 	}
 
 	// System model related parameters
-	m_initialEnergy = 20;
+	m_initialEnergy = 0.5 * (supcap_init_charge*supcap_init_charge) / 40.0;
 	m_solarPower = power_source_func(0.0);
 
 	// Initialize DP table with idle task
@@ -497,7 +497,7 @@ int main(int argc, char *argv[]){
 
 	hees_parse_command_line(argc, argv);
 	readInput(InDuration, InEnergy, deadline);
-	BuildTaskVoltageTableVectorFromFile("TasksOrig.txt", vec_tvt, syntheticCPUVoltageTable);
+	BuildTaskVoltageTableVectorFromFile("TasksOrig.txt", vec_tvt, *cpu_voltage_table_ptr);
 
 	if (scheduling_deadline > 0) {
 		deadline = scheduling_deadline;
@@ -509,7 +509,7 @@ int main(int argc, char *argv[]){
 	taskSet1.dynamicProgrammingWithIdleTasks();
 	ScheduleBuilder sb;
 	sb.BuildScheduleFromFile("TasksDP.txt");
-	sb.PredictEnergyForSchedule(20.0);
+	sb.PredictEnergyForSchedule(0.5 * (supcap_init_charge*supcap_init_charge) / 40.0);
 	sb.DumpSchedule();
 	// taskSet1.taskTimeline();
 	// taskSet1.backTracing();

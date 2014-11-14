@@ -144,7 +144,7 @@ int minEnergyScheduleFixed(int m_numOfTask, int m_numOfVolt, double m_deadline, 
 
 	ScheduleBuilder sb;
 	sb.BuildScheduleFromFile("TasksCATSFixed.txt");
-	sb.PredictEnergyForSchedule(20.0);
+	sb.PredictEnergyForSchedule(0.5 * (supcap_init_charge*supcap_init_charge) / 40.0);
 	sb.DumpSchedule();
 
 	return max(int(round(m_deadline*1)), timeUsed);

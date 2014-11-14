@@ -16,7 +16,7 @@ BOOST_LIB_DIR    = "/usr/lib/x86_64-linux-gnu"
 bin       = energysys
 
 OBJ       = DCCon_out.o SuperCap.o main.o DischargeProcess.o ChargeProcess.o DCCon_in.o DCCon_dis.o LionBat.o LoadApp.o selVCTI.o \
-			powersource.o DCSolver.o ees_bank.o HEESTimer.o ParseCommandLine.o
+			powersource.o DCSolver.o ees_bank.o HEESTimer.o ParseCommandLine.o VoltageTable.o
 
 SCHED_OBJ = DCCon_in.o Scheduler.o VoltageTable.o ScheduleBuilder.o ParseCommandLine.o powersource.o
 NNET_OBJ  = nnet/nnet.o nnet/util.o nnet/nnetmultitask.o

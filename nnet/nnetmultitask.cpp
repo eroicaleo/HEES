@@ -40,13 +40,13 @@ double nnetmultitask::predictWithEnergyLength(double inputPower, double startEne
 	for (size_t i = 0; i < interalVec.size(); ++i) {
 		bindCalculator(interalVec[i]);
 		while (intlen >= interalVec[i]) {
-			double initEnergy = nnetInput[1];
 			startEnergy = computeEnergy(nnetInput);
 			intlen -= interalVec[i];
 			nnetInput[0] = inputPower;
 			nnetInput[1] = startEnergy;
 			nnetInput[2] = intlen;
 #ifdef DEBUG_NNET
+			double initEnergy = nnetInput[1];
 			cout << "my prediction: " << inputPower << ", " << initEnergy << ", " << interalVec[i] << ", " << startEnergy << endl;
 #endif
 		}
