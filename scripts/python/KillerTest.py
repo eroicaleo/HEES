@@ -4,9 +4,10 @@ import math
 import re
 import subprocess
 
-initCharge = 800.0
-current    = 3.0
-taskLength = 100.0
+initCharge = 1400.0 # (40, 80, 100, 200, 1600)
+current    = 2.0 # (0.6, 1.0, 2.0, 2.2, ..., 3.0)
+dvfs       = 0.0 # (0.0, 1.0, 2.0)
+taskLength = 200.0
 
 ##----------------------------------------------------------------------------------------------------
 ## Do not change the following
@@ -18,7 +19,7 @@ def generateWorkload(current):
     res = []
     for v in volLevel:
         l = math.ceil(taskLength/v)
-        tmp = [(v, current*(v**0), l)]
+        tmp = [(v, current*(v**dvfs), l)]
         rest = math.ceil(taskLength/min(volLevel)) - l
         if rest:
             tmp.append((1.0, 0.0, rest))
@@ -39,4 +40,11 @@ def runIt():
         print("%.3f" % finalEnergy)
 
 if __name__ == '__main__':
-    runIt()
+    initChargeList = [40.0, 80.0]
+    initChargeList.extend(list(range(100, 1700, 100)))
+    dvfsList = [0.0, 1.0, 2.0]
+    currentList = [0.1*d for d in range(6, 32, 2)]
+    for dvfs in dvfsList:
+        for current in currentList:
+            for initCharge in initChargeList:
+                runIt()
