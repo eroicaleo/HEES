@@ -12,8 +12,6 @@ taskLength = 200.0
 ##----------------------------------------------------------------------------------------------------
 ## Do not change the following
 ##----------------------------------------------------------------------------------------------------
-initEnergy = 0.5 * 40 * (initCharge/40.0)**2
-
 def generateWorkload(current):
     volLevel = [d/10.0 for d in range(8, 13)]
     res = []
@@ -27,6 +25,7 @@ def generateWorkload(current):
     return res
 
 def runIt():
+    initEnergy = 0.5 * 40 * (initCharge/40.0)**2
     for tasklist in generateWorkload(current):
         with open('Tasks.txt', 'w') as f:
             for task in tasklist:
@@ -47,4 +46,5 @@ if __name__ == '__main__':
     for dvfs in dvfsList:
         for current in currentList:
             for initCharge in initChargeList:
+                print('##INFO: dvfs = %.1f, current = %.2f, initCharge = %.2f' % (dvfs, current, initCharge))
                 runIt()
