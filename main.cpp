@@ -64,6 +64,10 @@ int main(int argc, char *argv[]){
 		// DischargeProcess
 		if (time_index < 0) {
 			// time_index = dp.DischargeProcessOurPolicy(0.0, &sp, &lb, &load);
+
+			// FIXME: temp solution, we do not consider discharge for DAC 2015
+			break;
+
 			time_index = dp.DischargeProcessOptimalVcti(0.0, &sp, &lb, &load);
 		}
 

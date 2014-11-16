@@ -153,6 +153,8 @@ int ChargeProcess::ChargeProcessApplyPolicy(ees_bank *bank, lionbat *lb, loadApp
 		// Check if we need to break because the power_input is not enough
 		if (power_status == POWER_NOT_ENOUGH_FOR_LOAD) {
 			time_index = -1;
+			// Still report initial bank status
+			print_super_cap_info(output, bank, power_input);
 			break;
 		}
 		
