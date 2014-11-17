@@ -5,12 +5,15 @@
 using namespace std;
 using namespace std::tr1;
 
-static char filenames[5][50] = {
+static double cutoff_power = 1.305;
+
+static char filenames[6][50] = {
 "nnetmodel1to5",
 "nnetmodel10",
 "nnetmodel20",
 "nnetmodel40",
-"nnetmodel100"
+"nnetmodel100",
+"nnetmodel10bot"
 };
 
 /* FIXME: when we get more models */
@@ -20,13 +23,15 @@ nnetmultitask::nnetmultitask() :
 	nnet10(),
 	nnet20(),
 	nnet40(),
-	nnet100()
+	nnet100(),
+	nnet10bot()
 {
 	interalVec[0] = 10;
 	nnet10.readnnetmodel(filenames[1]);
 	nnet20.readnnetmodel(filenames[2]);
 	nnet40.readnnetmodel(filenames[3]);
 	nnet100.readnnetmodel(filenames[4]);
+	nnet10bot.readnnetmodel(filenames[5]);
 }
 
 double nnetmultitask::predictWithEnergyLength(double inputPower, double startEnergy, double len) {
@@ -38,7 +43,7 @@ double nnetmultitask::predictWithEnergyLength(double inputPower, double startEne
 	nnetInput[2] = intlen;
 
 	for (size_t i = 0; i < interalVec.size(); ++i) {
-		bindCalculator(interalVec[i]);
+		bindCalculator(interalVec[i], inputPower);
 		while (intlen >= interalVec[i]) {
 			startEnergy = computeEnergy(nnetInput);
 			intlen -= interalVec[i];
@@ -62,7 +67,7 @@ double nnetmultitask::predictWithEnergyLength(double inputPower, double startEne
 	double energydiff = 0.0;
 	int lendiff = 0;
 	if (intlen > 0) {
-		bindCalculator(interalVec.back());
+		bindCalculator(interalVec.back(), inputPower);
 		energydiff = computeEnergy(nnetInput) - startEnergy;
 		startEnergy += energydiff;
 
@@ -79,7 +84,7 @@ double nnetmultitask::predictWithEnergyLength(double inputPower, double startEne
 	return startEnergy;
 }
 
-void nnetmultitask::bindCalculator(int len) {
+void nnetmultitask::bindCalculator(int len, double inputPower) {
 	switch (len) {
 		case 100:
 			computeEnergy = bind(&nnetmodel::simnnet, nnet100, placeholders::_1);
@@ -91,7 +96,11 @@ void nnetmultitask::bindCalculator(int len) {
 			computeEnergy = bind(&nnetmodel::simnnet, nnet20, placeholders::_1);
 			break;
 		case 10:
-			computeEnergy = bind(&nnetmodel::simnnet, nnet10, placeholders::_1);
+			if (inputPower < cutoff_power) {
+				computeEnergy = bind(&nnetmodel::simnnet, nnet10bot, placeholders::_1);
+			} else {
+				computeEnergy = bind(&nnetmodel::simnnet, nnet10, placeholders::_1);
+			}
 			break;
 		case 5:
 		default :

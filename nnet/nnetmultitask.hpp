@@ -17,11 +17,12 @@ class nnetmultitask {
 		nnetmodel nnet20;
 		nnetmodel nnet40;
 		nnetmodel nnet100;
+		nnetmodel nnet10bot;
 		double nnetInput[3];
 		double currentEnergy;
 
 		std::tr1::function<double(double *)> computeEnergy;
-		void bindCalculator(int);
+		void bindCalculator(int, double);
 };
 
 #endif
