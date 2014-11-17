@@ -80,11 +80,26 @@ nnetmodel::readnnetmodel(const char *name) {
 double 
 nnetmodel::simnnet(double *input) {
 	
+	// Set the result to initialEnergy
 	double result = 0.0;
+	double inputPower  = input[0];
+	double initEnergy = input[1];
 
 	// Preprocessing the input
 	// Down scale
 	preprocessing(input, input_min, input_range, INPUT_DIM);
+
+	// We return earlier when the input power
+	// is less than the min training power
+	// input[0]: preprocessed power
+	// input[1]: preprocessed initial energy
+	if (input[0] < -1.0) {
+#ifdef DEBUG_NNET
+		printf("We found the input power is less than the training minimum:\n");
+		dump_dvector(input, INPUT_DIM);
+#endif
+		return result;
+	}
 
 #ifdef DEBUG_NNET
 	printf("Scaled input: toolbox/nnet/nnutils/+nnsim/y.m:29 Pc\n");
@@ -139,6 +154,13 @@ nnetmodel::simnnet(double *input) {
 	printf("After post scale: toolbox/nnet/nnutils/+nnsim/y.m:49 Y and \n");
 	dump_dvector(&result, 1);
 #endif
+
+	// FIXME: if the prediction is out of wack
+	// Then we have to assume something wrong
+	// with the predictor
+	if ((result > initEnergy + inputPower*input[2]) || (result < initEnergy)){
+		result = initEnergy;
+	}
 
 	return result;
 }
