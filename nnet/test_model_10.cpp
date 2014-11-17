@@ -7,10 +7,11 @@
 
 using namespace std;
 
-const double init_energy = 20.0;
+const double init_energy = 1000;
 
 const double input_power_arr[] = {3.936, 3.732, 3.522, 3.304, 3.079, 2.847, 2.608, 2.362, 2.108, 1.848, 1.580, 1.305, 1.023, 0.734, 0.438, 0.135};
-const double input_power_arr_bot[] = {1.305, 1.235, 1.165, 1.094, 1.023, 0.952, 0.880, 0.807, 0.734, 0.661, 0.587, 0.513, 0.438, 0.363, 0.288, 0.211, 0.135, 0.097};
+// const double input_power_arr_bot[] = {1.305, 1.235, 1.165, 1.094, 1.023, 0.952, 0.880, 0.807, 0.734, 0.661, 0.587, 0.513, 0.438, 0.363, 0.288, 0.211, 0.135, 0.097};
+const double input_power_arr_bot[] = {0.097};
 
 const vector<double> input_power_vec(input_power_arr, input_power_arr + sizeof(input_power_arr)/sizeof(double));
 const vector<double> input_power_vec_bot(input_power_arr_bot, input_power_arr_bot + sizeof(input_power_arr_bot)/sizeof(double));
