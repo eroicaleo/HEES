@@ -61,6 +61,7 @@ struct nnetmodel {
 	double *LW;
 	double b2;
 
+	double energy_offset;
 	// The 3 dimensions are average, high, low power
 	// Other dimensions are neighbor high, lower temperature
 	double *input;

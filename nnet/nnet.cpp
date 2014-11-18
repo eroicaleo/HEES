@@ -14,7 +14,7 @@ nnetmodel::nnetmodel():
 		output_min(0), output_range(0),
 		inter_output(NULL),
 		IW(NULL), b1(NULL),
-		LW(NULL), b2(0), input(NULL) {}
+		LW(NULL), b2(0), energy_offset(0.0), input(NULL) {}
 
 void 
 nnetmodel::readnnetmodel(const char *name) {
@@ -83,6 +83,8 @@ nnetmodel::simnnet(double *input) {
 	// Set the result to initialEnergy
 	double result = 0.0;
 	double inputPower  = input[0];
+	if (energy_offset > 0.0)
+		input[1] -= energy_offset;
 	double initEnergy = input[1];
 
 	// Preprocessing the input
@@ -98,7 +100,8 @@ nnetmodel::simnnet(double *input) {
 		printf("We found the input power is less than the training minimum:\n");
 		dump_dvector(input, INPUT_DIM);
 #endif
-		return result;
+		// Added the energy_offset back
+		return initEnergy+energy_offset;
 	}
 
 #ifdef DEBUG_NNET
@@ -161,6 +164,9 @@ nnetmodel::simnnet(double *input) {
 	if ((result > initEnergy + inputPower*input[2]) || (result < initEnergy)){
 		result = initEnergy;
 	}
+
+	// Added energy_offset back
+	result += energy_offset;
 
 	return result;
 }
