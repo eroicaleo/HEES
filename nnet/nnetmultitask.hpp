@@ -22,7 +22,7 @@ class nnetmultitask {
 		double currentEnergy;
 
 		std::tr1::function<double(double *)> computeEnergy;
-		void bindCalculator(int, double);
+		void bindCalculator(int, double, double);
 };
 
 #endif

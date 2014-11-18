@@ -16,6 +16,11 @@ static char filenames[6][50] = {
 "nnetmodel10bot"
 };
 
+static nnetmodel nnet1300;
+static nnetmodel nnet1400;
+static nnetmodel nnet1500;
+static nnetmodel nnet1600;
+
 /* FIXME: when we get more models */
 nnetmultitask::nnetmultitask() :
 	interalVec(1, 10),
@@ -32,6 +37,9 @@ nnetmultitask::nnetmultitask() :
 	nnet40.readnnetmodel(filenames[3]);
 	nnet100.readnnetmodel(filenames[4]);
 	nnet10bot.readnnetmodel(filenames[5]);
+
+	nnet1300.readnnetmodel("nnetmodel1300");
+	nnet1300.energy_offset = 21125.000;
 }
 
 double nnetmultitask::predictWithEnergyLength(double inputPower, double startEnergy, double len) {
@@ -43,15 +51,17 @@ double nnetmultitask::predictWithEnergyLength(double inputPower, double startEne
 	nnetInput[2] = intlen;
 
 	for (size_t i = 0; i < interalVec.size(); ++i) {
-		bindCalculator(interalVec[i], inputPower);
+		bindCalculator(interalVec[i], inputPower, startEnergy);
 		while (intlen >= interalVec[i]) {
 			startEnergy = computeEnergy(nnetInput);
 			intlen -= interalVec[i];
+#ifdef DEBUG_NNET
+			double initEnergy = nnetInput[1];
+#endif
 			nnetInput[0] = inputPower;
 			nnetInput[1] = startEnergy;
 			nnetInput[2] = intlen;
 #ifdef DEBUG_NNET
-			double initEnergy = nnetInput[1];
 			cout << "my prediction: " << inputPower << ", " << initEnergy << ", " << interalVec[i] << ", " << startEnergy << endl;
 #endif
 		}
@@ -67,7 +77,7 @@ double nnetmultitask::predictWithEnergyLength(double inputPower, double startEne
 	double energydiff = 0.0;
 	int lendiff = 0;
 	if (intlen > 0) {
-		bindCalculator(interalVec.back(), inputPower);
+		bindCalculator(interalVec.back(), inputPower, startEnergy);
 		energydiff = computeEnergy(nnetInput) - startEnergy;
 		startEnergy += energydiff;
 
@@ -84,7 +94,11 @@ double nnetmultitask::predictWithEnergyLength(double inputPower, double startEne
 	return startEnergy;
 }
 
-void nnetmultitask::bindCalculator(int len, double inputPower) {
+void nnetmultitask::bindCalculator(int len, double inputPower, double energy) {
+	if (energy >= 21125.0) {
+		computeEnergy = bind(&nnetmodel::simnnet, nnet1300, placeholders::_1);
+		return;
+	}
 	switch (len) {
 		case 100:
 			computeEnergy = bind(&nnetmodel::simnnet, nnet100, placeholders::_1);
