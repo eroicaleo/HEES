@@ -8,6 +8,7 @@ based on SweepLoad.txt produced by SweepLoadPower.py
 2. The output is in the nnet/data
 '''
 
+import glob
 import os
 import os.path
 import re
@@ -25,12 +26,15 @@ def divideTrnTst(dataTrace):
 
     return trnTrace, tstTrace
 
-def dumpDataset(energyTrace, trainOrTest):
+def dumpDataset(energyTrace, trainOrTest, suffix):
 
     if (trainOrTest == 'train'):
         fileName = 'trn_' + '%2d'%(predLen) + '.txt'
     else:
         fileName = 'tst_' + '%2d'%(predLen) + '.txt'
+
+    if suffix:
+        fileName = fileName + "." + suffix
 
     if (not os.path.isdir('./nnet/data')):
         os.mkdir('./nnet/data')
@@ -61,23 +65,26 @@ def runIt():
         sys.exit('Can not find SweepLoad.txt in current dir!')
 
     # Read the files
-    f = open('SweepLoad.txt')
-    energyTrace = []
-    for line in f:
-        line = line.strip()
-        energyTrace.append(re.split(r'\s+', line))
-    f.close()
+    for fname in glob.glob('SweepLoad.txt.*'):
+        m = re.search(r'\.(\w+?)$', fname)
+        suffix = m.group(1) if m else ''
+        f = open(fname)
+        energyTrace = []
+        for line in f:
+            line = line.strip()
+            energyTrace.append(re.split(r'\s+', line))
+        f.close()
 
-    # Transpose the energyTrace
-    energyTrace = list(map(list, zip(*energyTrace)))
+        # Transpose the energyTrace
+        energyTrace = list(map(list, zip(*energyTrace)))
 
-    # Divide training and testing data
-    energyTrnTrace, energyTstTrace = divideTrnTst(energyTrace)
+        # Divide training and testing data
+        energyTrnTrace, energyTstTrace = divideTrnTst(energyTrace)
 
-    # Dump the data set
-    # print(energyTrnTrace)
-    dumpDataset(energyTrnTrace, 'train')
-    dumpDataset(energyTstTrace, 'test')
+        # Dump the data set
+        # print(energyTrnTrace)
+        dumpDataset(energyTrnTrace, 'train', suffix)
+        dumpDataset(energyTstTrace, 'test', suffix)
 
     return;
 
