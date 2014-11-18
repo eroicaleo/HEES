@@ -16,11 +16,6 @@ static char filenames[6][50] = {
 "nnetmodel10bot"
 };
 
-static nnetmodel nnet1300;
-static nnetmodel nnet1400;
-static nnetmodel nnet1500;
-static nnetmodel nnet1600;
-
 /* FIXME: when we get more models */
 nnetmultitask::nnetmultitask() :
 	interalVec(1, 10),
@@ -29,7 +24,11 @@ nnetmultitask::nnetmultitask() :
 	nnet20(),
 	nnet40(),
 	nnet100(),
-	nnet10bot()
+	nnet10bot(),
+	nnet1300(),
+	nnet1400(),
+	nnet1500(),
+	nnet1600()
 {
 	interalVec[0] = 10;
 	nnet10.readnnetmodel(filenames[1]);

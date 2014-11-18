@@ -18,6 +18,11 @@ class nnetmultitask {
 		nnetmodel nnet40;
 		nnetmodel nnet100;
 		nnetmodel nnet10bot;
+		nnetmodel nnet1300;
+		nnetmodel nnet1400;
+		nnetmodel nnet1500;
+		nnetmodel nnet1600;
+
 		double nnetInput[3];
 		double currentEnergy;
 
