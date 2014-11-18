@@ -36,7 +36,8 @@ if not os.path.isfile('energysys'):
 initalPower = 0.0
 step        = 0.2
 tasklen     = 4000
-NumofLoad   = 12
+NumofLoad   = 10
+InitialCharge = 1300
 LoadPower = [initalPower+step*x for x in range(NumofLoad)]
 
 energyList = []
@@ -48,13 +49,13 @@ for power in LoadPower:
   print('Run the load power ', power)
   # Run the simulator
   f1 = open('1', 'w')
-  subprocess.call(['./energysys'], stdout=f1, stderr=f1)
+  subprocess.call(['./energysys', '--supcap_init_charge=%.2f' % InitialCharge], stdout=f1, stderr=f1)
   f1.close()
   # Collect the power number
   inputPower, energy = processLogFile()
   energyList.append([inputPower] + energy)
   # Dump out the results
-  f = open('SweepLoad.txt', 'w')
+  f = open('SweepLoad.txt.%04d'%InitialCharge, 'w')
   for i in range(len(energyList[0])):
     for j in range(len(energyList)):
       print('%8.3f'%(float(energyList[j][i])), file=f, end=' '*4)
