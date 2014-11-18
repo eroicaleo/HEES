@@ -156,7 +156,7 @@ public:
 			return false;
 		if ((buck_boost_mode == -1) && (dc_vin > dc_vout))
 			return false;
-		if ((quality_flag == KIN_SUCCESS) || (quality_delta < ABSTOL2))
+		if ((quality_flag == KIN_SUCCESS) || (quality_delta/dc_vout < ABSTOL2))
 			return true;
 		return false;
 	}
