@@ -39,6 +39,8 @@ nnetmultitask::nnetmultitask() :
 
 	nnet1300.readnnetmodel("nnetmodel1300");
 	nnet1300.energy_offset = 21125.000;
+	nnet1400.readnnetmodel("nnetmodel1400");
+	nnet1400.energy_offset = 24500.000;
 }
 
 double nnetmultitask::predictWithEnergyLength(double inputPower, double startEnergy, double len) {
@@ -94,7 +96,10 @@ double nnetmultitask::predictWithEnergyLength(double inputPower, double startEne
 }
 
 void nnetmultitask::bindCalculator(int len, double inputPower, double energy) {
-	if (energy >= 21125.0) {
+	if (energy >= 24500.0) {
+		computeEnergy = bind(&nnetmodel::simnnet, nnet1400, placeholders::_1);
+		return;
+	} else if (energy >= 21125.0) {
 		computeEnergy = bind(&nnetmodel::simnnet, nnet1300, placeholders::_1);
 		return;
 	}
