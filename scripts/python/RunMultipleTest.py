@@ -13,7 +13,7 @@ import shutil
 import subprocess
 import sys
 
-num_of_tests = 5
+num_of_tests = 20
 
 if (not os.path.isfile('./energysys')) or (not os.path.isfile('./Scheduler')):
     sys.exit('Can not find binaries ./energysys or ./Scheduler')
@@ -55,10 +55,11 @@ for i in range(num_of_tests):
     f1.close()
 
     energy_list = []
-    pattern = re.compile('^Final Energy: ([\d.]+) Finish Time: \d+')
+    pattern = re.compile('^Initial Energy: ([\d.]+)')
     for line in open(logname):
         m = re.match(pattern, line)
         if m:
+            pattern = re.compile('^Final Energy: ([\d.]+) Finish Time: \d+')
             energy_list.append(m.group(1))
     shutil.move(logname, res_dir)
 
@@ -98,8 +99,9 @@ for i in range(num_of_tests):
     # collect data and store the results as well as input trace, log file etc.
     #----------------------------------------------------------------------------------------------------
 
-    print(energy_list)
-    [print('%8.3f'%(float(e)), file=f_summ, end='    ') for e in energy_list]
+    initial_energy = energy_list.pop(0)
+    print(['%.3f'%(float(e)-float(initial_energy)) for e in energy_list])
+    [print('%8.3f'%(float(e)-float(initial_energy)), file=f_summ, end='    ') for e in energy_list]
     print(file=f_summ)
 
 f_summ.close()
