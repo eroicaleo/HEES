@@ -61,8 +61,6 @@ def processOneInputPower(energyTrace, predLen=10, stepBetweenStartIndex=1):
     return ([inputPower, energyTrace[i], predLen, energyTrace[j]] for (i, j) in zip(ixStart, ixEnd))
 
 def runIt():
-    if not os.path.isfile('SweepLoad.txt'):
-        sys.exit('Can not find SweepLoad.txt in current dir!')
 
     # Read the files
     for fname in glob.glob('SweepLoad.txt.*'):
