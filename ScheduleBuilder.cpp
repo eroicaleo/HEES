@@ -37,6 +37,8 @@ void ScheduleBuilder::PredictEnergyForSchedule(double initEnergy) {
 	dcconvertIN dcload;
 	double inputPower(0.0);
 	double currentEnergy(initEnergy);
+	m_initialEnergy = initEnergy;
+
 	nnetmultitask nnetPredictor;
 	std::tr1::function<double(double, double, double)> energyCalculator;
 	energyCalculator = bind(&nnetmultitask::predictWithEnergyLength, nnetPredictor, placeholders::_1, placeholders::_2, placeholders::_3);
@@ -67,6 +69,7 @@ void ScheduleBuilder::DumpSchedule(ostream &os) const {
 	if (m_schedule.size() == 0) {
 		os << "Error: the schedule is infeasible!" << endl;
 	}
+	cout << "Initial Energy: " << m_initialEnergy << endl;
 	for (iter = m_schedule.begin(); iter != m_schedule.end(); ++iter) {
 		os << *iter << endl;
 	}

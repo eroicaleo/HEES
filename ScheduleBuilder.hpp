@@ -21,6 +21,7 @@ private:
 	bool m_inaccurateFlag;
 	double getScheduleEnergy() const;
 	int getScheduleFinishTime() const;
+	double m_initialEnergy;
 };
 
 #endif
