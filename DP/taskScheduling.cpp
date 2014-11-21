@@ -442,11 +442,7 @@ double dynProg::energyCalculatorWrapper(double inputPower, double initialEnergy,
 	if (inputPower <= 0.0)
 		return 0.0;
 
-	if (!above_min_valid_input_power(inputPower) || !below_max_valid_input_power(inputPower)) {
-		energyCalculator = bind(energyCalculatorApproximation, placeholders::_1, placeholders::_2, placeholders::_3);
-	} else {
-		energyCalculator = bind(&nnetmultitask::predictWithEnergyLength, nnetPredictor, placeholders::_1, placeholders::_2, placeholders::_3);
-	}
+	energyCalculator = bind(&nnetmultitask::predictWithEnergyLength, nnetPredictor, placeholders::_1, placeholders::_2, placeholders::_3);
 
 	return energyCalculator(inputPower, initialEnergy, len);
 }
