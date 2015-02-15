@@ -49,6 +49,9 @@ extern VariablePowerSource vps;
 
 extern function<double(double)> power_source_func;
 
+/* DC-DC converter related parameters */
+extern unsigned int dc_load_is_ideal;
+
 /* Scheduling related parameters */
 extern double ratio_runtime_and_deadline;
 extern double scheduling_deadline;

@@ -6,7 +6,10 @@
 #include <math.h>
 #include "DCCon_in.hpp"
 #include <vector>
- using namespace std;
+
+#include "ParseCommandLine.hpp"
+
+using namespace std;
 
 dcconvertIN::dcconvertIN() :
 	m_Rsw(4, 25e-3),
@@ -21,13 +24,18 @@ void dcconvertIN::ConverterModel(double Vin, double Vout, double Iout, double &I
 	double m_Iin = 0.0;
 	double m_Pdcdc = 0.0;
 
-	if (Vin > Vout){//buck mode
-		BuckMode(Vin, Vout, Iout, m_Iin, m_Pdcdc);
-		Iin = m_Iin;
-		Pdcdc = m_Pdcdc;
-	}else{//boost mode
-		BoostMode(Vin, Vout, Iout, m_Iin, m_Pdcdc);
-		Iin = m_Iin;
+	if (!dc_load_is_ideal) {
+		if (Vin > Vout) { //buck mode
+			BuckMode(Vin, Vout, Iout, m_Iin, m_Pdcdc);
+			Iin = m_Iin;
+			Pdcdc = m_Pdcdc;
+		} else { //boost mode
+			BoostMode(Vin, Vout, Iout, m_Iin, m_Pdcdc);
+			Iin = m_Iin;
+			Pdcdc = m_Pdcdc;
+		}
+	} else {
+		Iin = Iout;
 		Pdcdc = m_Pdcdc;
 	}
 

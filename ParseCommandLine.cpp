@@ -37,6 +37,9 @@ VariablePowerSource vps;
 
 function<double(double)> power_source_func;
 
+/* DC-DC converter related parameters */
+unsigned int dc_load_is_ideal;
+
 /* Scheduling related parameters */
 double ratio_runtime_and_deadline;
 double scheduling_deadline;
@@ -99,6 +102,12 @@ int hees_parse_command_line(int argc, char *argv[]) {
 			("constant_power_value", value<double>(&constant_power_value)->default_value(0.0), "The value of the constant power source")
 		;
 
+		/* DC-DC converter */
+		options_description dcdc_options("DC-DC converter options");
+		dcdc_options.add_options()
+			("dc_load_is_ideal", value<unsigned int>(&dc_load_is_ideal)->default_value(0), "If the dc-dc converter connect to load is ideal. If so, then it consumes no power")
+		;
+
 		/* Schedule options */
 		options_description schedule_options("Schedule source options");
 		schedule_options.add_options()
@@ -125,11 +134,11 @@ int hees_parse_command_line(int argc, char *argv[]) {
 		;
 
 		options_description cmdline_options;
-		cmdline_options.add(generic).add(bank_config_options).add(time_config_options).add(power_options).add(schedule_options).add(predictor_options)
+		cmdline_options.add(generic).add(bank_config_options).add(time_config_options).add(power_options).add(dcdc_options).add(schedule_options).add(predictor_options)
 			.add(dvfs_options);
 
 		options_description config_file_options;
-		config_file_options.add(bank_config_options).add(time_config_options).add(power_options).add(schedule_options).add(predictor_options)
+		config_file_options.add(bank_config_options).add(time_config_options).add(power_options).add(dcdc_options).add(schedule_options).add(predictor_options)
 			.add(dvfs_options);
 
 		variables_map vm;
