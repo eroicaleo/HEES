@@ -8,12 +8,15 @@ BOOST_LIBS = -lboost_program_options
 dp = taskScheduling
 
 dp : $(dp)_bin.o $(EXT_OBJ)
-	g++ $^ $(BOOST_LIBS) -o $@
+	g++ $^ -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
 
 all : $(dp).o
 
 single : $(dp).o $(EXT_OBJ) testSingleVoltage.o
 	g++ $^ $(BOOST_LIBS) -o $@
+
+sched : $(dp).o $(EXT_OBJ) testSched.o
+	g++ $^ -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
 
 %_bin.o : %.cpp
 	g++ $(CFLAG_DP) $< -o $@
