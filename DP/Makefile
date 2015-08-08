@@ -18,6 +18,9 @@ single : $(dp).o $(EXT_OBJ) testSingleVoltage.o
 sched : $(dp).o $(EXT_OBJ) testSched.o
 	g++ $^ -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
 
+solar : $(dp).o $(EXT_OBJ) testSched.o
+	g++ $^ -DDEBUG_VERBOSE -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
+
 %_bin.o : %.cpp
 	g++ $(CFLAG_DP) $< -o $@
 
