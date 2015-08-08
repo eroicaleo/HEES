@@ -58,10 +58,15 @@ void VariablePowerSource::ReadVariablePowerSource(string filename) {
 	infile.close();
 }
 
+/*
+ * arguments:
+ * t : the current time in second, not the length
+ *     the length is computed as the current time - last access time
+ */
 double VariablePowerSource::AdvanceVariablePowerSource(double t) {
-	double len = 1.0;
+	double len(1.0);
 	if (LastTimeAccessInSeconds < 0) {
-		len = 1.0;
+		len = 0.0;
 	} else {
 		len = t - LastTimeAccessInSeconds;
 	}

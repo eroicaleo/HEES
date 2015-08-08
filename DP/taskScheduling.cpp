@@ -42,7 +42,6 @@ dynProg::dynProg(int numOfTask, int deadline, const vector<TaskVoltageTable> &ve
 
 	// System model related parameters
 	m_initialEnergy = 0.5 * (supcap_init_charge*supcap_init_charge) / 40.0;
-	m_solarPower = power_source_func(0.0);
 
 	// Initialize DP table with idle task
 	m_scheduleWithIdleTask = vector<vector<dpTableEntry> >(m_numOfTask+m_numOfTask+1, vector<dpTableEntry>(m_deadline+1, dpTableEntry()));
@@ -56,6 +55,22 @@ dynProg::dynProg(int numOfTask, int deadline, const vector<TaskVoltageTable> &ve
 			}
 		}
 	}
+
+	// Initialize solar power for each dp table entry
+	initDPSolarPower();
+}
+
+void dynProg::initDPSolarPower() {
+
+	for (size_t j = 0; j < m_scheduleWithIdleTask[0].size(); ++j) {
+		double sp = power_source_func(j);
+		m_solarPower = sp;
+		for (size_t i = 0; i < m_scheduleWithIdleTask.size(); ++i) {
+			m_scheduleWithIdleTask[i][j].solarPower = sp;
+		}
+	}
+
+	dumpDPTable();
 }
 
 void dynProg::taskTimelineWithIdle() {
@@ -429,6 +444,7 @@ ostream& operator<<(ostream& os, const dpTableEntry &e) {
 	os << ", volLevel: " << std::setw(4) << e.volLevel;
 	os << ", taskID: " << std::setw(4) << e.taskID;
 	os << ", len: " << std::setw(4) << e.len;
+	os << ", solarPower: " << std::setw(8) << e.solarPower;
 	os << ", lastTaskFinishTime: " << e.lastTaskFinishTime;
 	os << ".";
 	return os;

@@ -86,6 +86,7 @@ class dynProg {
 		void findMaxEnergyTableEntry(tableRowRIter &row, tableEntryIter &col);
 		void dumpOptimalSchedule();
 		void dumpDPTable();
+		void initDPSolarPower();
 };
 
 struct dpTableEntry {
@@ -103,6 +104,9 @@ struct dpTableEntry {
 
 	// Record when the last task finishes must be non-negative number.
 	size_t lastTaskFinishTime;
+
+	// solar power at this entry
+	double solarPower;
 
 	dpTableEntry();
 	void setAllFields(double e, double v, double c, int vl, int id, int l, size_t f) {
