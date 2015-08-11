@@ -17,7 +17,10 @@ using namespace std::tr1;
 
 extern const double CRAZY_ENERGY(-1000.0);
 
-dynProg::dynProg(int numOfTask, int deadline, const vector<TaskVoltageTable> &vec_tvt) {
+dynProg::dynProg(int numOfTask, int deadline, const vector<TaskVoltageTable> &vec_tvt) :
+	realTaskVoltageTable(vec_tvt),
+	m_scheduleWithIdleTask(vector<vector<dpTableEntry> >(numOfTask+numOfTask+1, vector<dpTableEntry>(deadline+1)))
+{
 
 	m_numOfTask = numOfTask;
 	m_deadline = deadline;
@@ -29,8 +32,6 @@ dynProg::dynProg(int numOfTask, int deadline, const vector<TaskVoltageTable> &ve
 	m_taskCurrent = vector<vector<double> >(numOfTask, vector<double>(m_numOfVolt, 0.0));
 
 	m_scheduleEnergy = vector<vector<double> >(numOfTask, vector<double>(m_deadline + 1 , 0.0));
-	m_scheduleVolt =  vector<vector<double> >(numOfTask, vector<double>(m_deadline + 1, 0.0));
-	m_lastStepDuration = vector<vector<double> >(numOfTask, vector<double>(m_deadline + 1, 0.0));
 
 	for (int i = 0; i < m_numOfTask; i++) {
 		// cout<<"Task "<<i<<":";
@@ -44,7 +45,6 @@ dynProg::dynProg(int numOfTask, int deadline, const vector<TaskVoltageTable> &ve
 	m_initialEnergy = 0.5 * (supcap_init_charge*supcap_init_charge) / 40.0;
 
 	// Initialize DP table with idle task
-	m_scheduleWithIdleTask = vector<vector<dpTableEntry> >(m_numOfTask+m_numOfTask+1, vector<dpTableEntry>(m_deadline+1, dpTableEntry()));
 	for (size_t i = 0; i < m_scheduleWithIdleTask.size(); i += 2) {
 		for (size_t j = 0; j != m_scheduleWithIdleTask[i].size(); ++j) {
 			// Idle tasks
@@ -70,7 +70,9 @@ void dynProg::initDPSolarPower() {
 		}
 	}
 
+#ifdef DEBUG_VERBOSE
 	dumpDPTable();
+#endif
 }
 
 void dynProg::taskTimelineWithIdle() {
@@ -90,12 +92,11 @@ void dynProg::taskTimelineWithIdle() {
 void dynProg::populateFirstIdleTask(vector<dpTableEntry> &firstIdleRow) {
 	for (tableEntryIter iter = firstIdleRow.begin(); iter != firstIdleRow.end(); ++iter) {
 		size_t len = (iter-firstIdleRow.begin());
-		double inputPower = getExtraChargePower(idleTaskVoltageTable, idleTaskVoltageTable.getNominalVoltageIndex());
 
-		if (inputPower < 0)
-			return;
-
-		iter->totalEnergy = energyCalculatorWrapper(inputPower, m_initialEnergy, len);
+		iter->totalEnergy = energyCalVarSolarPowerWrapper(1+firstIdleRow.begin(), 
+								1+iter, idleTaskVoltageTable,
+								idleTaskVoltageTable.getNominalVoltageIndex(),
+								m_initialEnergy);
 		iter->len = len;
 	}
 	return;
@@ -103,20 +104,28 @@ void dynProg::populateFirstIdleTask(vector<dpTableEntry> &firstIdleRow) {
 
 void dynProg::populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<dpTableEntry> &thisIdleRow) {
 
-	double inputPower = getExtraChargePower(idleTaskVoltageTable, idleTaskVoltageTable.getNominalVoltageIndex());
-	if (inputPower < 0)
-		return;
-
 	for (vector<dpTableEntry>::const_iterator iter = lastRealRow.begin(); iter != lastRealRow.end(); ++iter) {
 		if (iter->totalEnergy < 0)
 			continue;
-		tableEntryIter iterIdleHead = thisIdleRow.begin()+(iter-lastRealRow.begin());
+
+		/** Here is a diagram for how to pass parameters to energyCalVarSolarPowerWrapper
+		 *
+		 *  |________|________|________|________|________|________|________|________|
+		 *          iter
+		 *  |________|________|________|________|________|________|________|________|
+		 *            iterIdleHead(begin)            iterIdel   (end)
+		 */
+
+		tableEntryIter iterIdleHead = thisIdleRow.begin()+(iter-lastRealRow.begin())+1;
 		for (tableEntryIter iterIdle = iterIdleHead; iterIdle != thisIdleRow.end(); ++iterIdle) {
 			int taskDur = iterIdle - iterIdleHead;
 #ifdef DEBUG_VERBOSE
-			cout << "I am predicting idle task " << iterIdle->taskID << " from time " << iterIdleHead - thisIdleRow.begin() << " to " << iterIdle - thisIdleRow.begin() << "." << " inputPower: " << inputPower << ". taskDur: " << taskDur << ". iter->totalEnergy: " << iter->totalEnergy << "." << endl;
+			cout << "I am predicting idle task " << iterIdle->taskID << " from time " << iterIdleHead - thisIdleRow.begin() << " to " << iterIdle - thisIdleRow.begin() << "." << ". taskDur: " << taskDur << ". iter->totalEnergy: " << iter->totalEnergy << "." << endl;
 #endif
-			double energy = energyCalculatorWrapper(inputPower, iter->totalEnergy, taskDur);
+			double energy = energyCalVarSolarPowerWrapper(iterIdleHead, iterIdle+1,
+							idleTaskVoltageTable, idleTaskVoltageTable.getNominalVoltageIndex(),
+							iter->totalEnergy);
+
 			if (energy > iterIdle->totalEnergy) {
 #ifdef DEBUG_VERBOSE
 				cout << "Taskid: idle " << iterIdle->taskID << " entry " << iterIdle-thisIdleRow.begin() << " has been updated from "
@@ -130,31 +139,93 @@ void dynProg::populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<d
 	return;
 }
 
+/**
+ * This function predicts the energy for a task even when the solar power varies
+ * across the task execution time.
+ * Input:
+ *   begin: iterator points to the dp table entry when task begins
+ *   end  : iterator points to the dp table entry when task ends
+ *   volLevel : the voltage level which the task is executed
+ *   initEnergy : the energy stored in the EES bank before running this task
+ * Output:
+ *   The predicted energy stored in the EES bank
+ *
+ * Here is an example on how to pass begin and end parameters
+ * Say a task lasts 4 seconds from 0 to 4, if we want to predict the energy
+ * We need to pass (begin = 1, end = 5), **not** (begin = 0, end = 4)
+ *
+ * |__|__|__|__|__|
+ * 0  1  2  3  4  5
+ *
+ */
+double dynProg::energyCalVarSolarPowerWrapper(tableEntryIter begin, tableEntryIter end, const TaskVoltageTable &tvt, size_t volLevel, double initEnergy) {
+	double endEnergy(initEnergy);
+	tableEntryIter next(begin);
+	while (begin < end) {
+		next = find_if(begin, end, dpSolarComparator(begin->solarPower));
+		double inputPower = getExtraChargePower(tvt, volLevel, begin->solarPower);
+		if (inputPower < 0) {
+			endEnergy = CRAZY_ENERGY;
+			break;
+		}
+		// the user need to carefully pass the begin and end iterator
+		// See the example above and below
+#ifdef DEBUG_VERBOSE
+		cout << "VSP: "
+			<< ", inputPower: " << inputPower
+			<< ", solarPower: " << begin->solarPower
+			<< ", length: " << (next-begin)
+			<< ", startEnergy: " << endEnergy;
+#endif
+		endEnergy += energyCalculatorWrapper(inputPower, endEnergy, next-begin);
+		begin = next;
+
+#ifdef DEBUG_VERBOSE
+		cout << ", endEnergy: " << endEnergy << endl;
+#endif
+	}
+	return endEnergy;
+}
+
 void dynProg::populateRealTask(const vector<dpTableEntry> &lastIdleRow, vector<dpTableEntry> &thisRealRow) {
 	for (vector<dpTableEntry>::const_iterator iter = lastIdleRow.begin(); iter != lastIdleRow.end(); ++iter) {
 		if (iter->totalEnergy < 0)
 			continue;
+
+		tableEntryIter realTaskIterBegin = thisRealRow.begin() + (iter-lastIdleRow.begin()) + 1;
 		for (int k = 0; k < m_numOfVolt; ++k) {
 			int taskID = thisRealRow[0].taskID;
 			int taskDur = m_taskDuration[taskID][k];
-			double inputPower = getExtraChargePower(taskID, k);
 			size_t taskiFinishTime = (iter-lastIdleRow.begin()) + taskDur;
-			tableEntryIter realTaskIter = thisRealRow.begin() + taskiFinishTime;
+			tableEntryIter realTaskIterEnd = thisRealRow.begin() + taskiFinishTime;
+			double inputPower = getExtraChargePower(realTaskVoltageTable[taskID], k, realTaskIterBegin->solarPower);
+
 			// Must guarantee there is enough power for charging
-			if ((inputPower > 0.0) && (realTaskIter < thisRealRow.end())) {
+			if ((inputPower > 0.0) && (realTaskIterEnd < thisRealRow.end())) {
 #ifdef DEBUG_VERBOSE
 				cout << "I am predicting real task " << taskID << " from time " << (iter-lastIdleRow.begin()) << " to " << taskiFinishTime << "." << endl;
 #endif
-				double energy = energyCalculatorWrapper(inputPower, iter->totalEnergy, taskDur);
+
+				/** Here is a diagram for how to pass parameters to energyCalVarSolarPowerWrapper
+				 *
+				 *  |________|________|________|________|________|________|________|________|
+				 *          iter
+				 *  |________|________|________|________|________|________|________|________|
+				 *            realBegin(begin)                realEnd   (end)
+				 */
+
+				double energy = energyCalVarSolarPowerWrapper(realTaskIterBegin, realTaskIterEnd+1,
+																realTaskVoltageTable[taskID], k,
+																iter->totalEnergy);
 
 				// Must guarantee that the schedule is feasible
-				if (realTaskIter->totalEnergy < energy) {
+				if (realTaskIterEnd->totalEnergy < energy) {
 #ifdef DEBUG_VERBOSE
 					cout << "Taskid: " << taskID << " entry " << taskiFinishTime << " has been updated from "
-						<< realTaskIter->totalEnergy << " to " << energy << endl;;
+						<< realTaskIterEnd->totalEnergy << " to " << energy << endl;;
 #endif
 					// Update the table entry
-					realTaskIter->setAllFields(energy, volSel[k], m_taskCurrent[taskID][k], k, taskID, taskDur, taskiFinishTime-taskDur);
+					realTaskIterEnd->setAllFields(energy, volSel[k], m_taskCurrent[taskID][k], k, taskID, taskDur, taskiFinishTime-taskDur);
 				}
 			}
 #ifdef DEBUG_VERBOSE
@@ -168,79 +239,23 @@ void dynProg::populateRealTask(const vector<dpTableEntry> &lastIdleRow, vector<d
 	return;
 }
 
-void dynProg::taskTimeline() {
-	for (int i = 0; i < m_numOfTask; i++) {
-		for (size_t j = 0; j < m_scheduleVolt[0].size(); ++j) {
-			m_scheduleVolt[i][j] = -1;
-			m_scheduleEnergy[i][j] = CRAZY_ENERGY;
-			m_lastStepDuration[i][j] = -1;
-		}
-	}
-	for (int k = 0; k < m_numOfVolt; ++k) {
-		size_t taskDur = m_taskDuration[0][k];
-		double inputPower = getExtraChargePower(0, k);
-		if ((inputPower > 0) && (taskDur < m_scheduleVolt[0].size())) {
-			double energy = energyCalculator(inputPower, m_initialEnergy, taskDur);
-			m_scheduleVolt[0][taskDur] = volSel[k];
-			m_scheduleEnergy[0][taskDur] = energy;
-		}
-	}
-
-	for (int i = 1; i < m_numOfTask; i++) {
-		for (size_t j = 0; j < m_scheduleVolt[0].size(); ++j) {
-			if (m_scheduleVolt[i-1][j] > 0) {
-				for (int k = 0; k < m_numOfVolt; ++k) {
-
-					int taskDur = m_taskDuration[i][k];
-
-					double inputPower = getExtraChargePower(i, k);
-					// Must guarantee there is enough power for charging
-					if (inputPower > 0) {
-						double energy = energyCalculator(inputPower, m_scheduleEnergy[i-1][j], taskDur);
-
-						size_t taskiFinishTime = j + taskDur;
-
-						// Must guarantee that the schedule is feasible
-						if ((m_scheduleEnergy[i][taskiFinishTime] < energy) && (taskiFinishTime < m_scheduleVolt[i].size())) {
-							// Reset the energy
-							m_scheduleVolt[i][taskiFinishTime] = volSel[k];
-							m_scheduleEnergy[i][taskiFinishTime] = energy;
-							m_lastStepDuration[i][taskiFinishTime] = j;
-						}
-					}
-				} // for k
-			} // if last task schedule
-		} // for j
-	} // for i
-
-	#ifdef DEBUG_VERBOSE
-	for (int i = 0; i < m_numOfTask; i++) {
-			cout<<"Task "<<i<<":";
-		for (int j = 0; j <= m_deadline; j++) {
-			cout<<"Time step "<< j <<": ("<< m_scheduleEnergy[i][j]<<","<<m_scheduleVolt[i][j]<<","<<m_lastStepDuration[i][j]<<")-->"<<endl;
-		}
-		cout<<endl;
-	}
-	#endif
-}
-
-double dynProg::getExtraChargePower(int taskIdx, int volLevel) {
+double dynProg::getExtraChargePower(int taskIdx, int volLevel, double solarPower) {
 
 	double dc_load_vin(1.0), dc_load_vout(volSel[volLevel]), dc_load_iout(m_taskCurrent[taskIdx][volLevel]);
 	double dc_load_iin(0.0), dc_load_power(0.0);
 
 	m_dcLoad.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
-	double chargingPower =  m_solarPower - dc_load_vin*dc_load_iin;
+	double chargingPower = solarPower - dc_load_vin*dc_load_iin;
 	return chargingPower;
 }
 
-double dynProg::getExtraChargePower(const TaskVoltageTable &tvt, size_t volLevel) {
+double dynProg::getExtraChargePower(const TaskVoltageTable &tvt, size_t volLevel, double solarPower) {
 
 	double dc_load_vin(1.0), dc_load_vout(tvt.getVoltage(volLevel)), dc_load_iout(tvt.getCurrent(volLevel));
 	double dc_load_iin(0.0), dc_load_power(0.0);
 
 	m_dcLoad.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
-	double chargingPower =  m_solarPower - dc_load_vin*dc_load_iin;
+	double chargingPower = solarPower - dc_load_vin*dc_load_iin;
 	return chargingPower;
 }
 
@@ -343,23 +358,6 @@ double dynProg::getOptimalScheduleEnergy() const {
 	return e;
 }
 
-void dynProg::backTracing() {
-	size_t optIdx = max_element(m_scheduleEnergy.back().begin(), m_scheduleEnergy.back().end()) - m_scheduleEnergy.back().begin();
-	for (int i = m_numOfTask-1; i >= 0; --i) {
-		dpTableEntry entry;
-		entry.totalEnergy = m_scheduleEnergy[i][optIdx];
-		entry.voltage = m_scheduleVolt[i][optIdx];
-		entry.volLevel = find(volSel.begin(), volSel.end(), entry.voltage) - volSel.begin();
-		entry.taskID = i;
-		entry.len = (i > 0) ? optIdx - (int)m_lastStepDuration[i][optIdx] : optIdx;
-		entry.current = m_taskCurrent[i][entry.volLevel];
-		optimalSchedule.push(entry);
-
-		optIdx = (i > 0) ? (int)m_lastStepDuration[i][optIdx] : 0;
-	}
-	return;
-}
-
 int dynProg::genScheduleForEES() {
 	ofstream outfile;
 	int totalLength = 0;
@@ -395,34 +393,6 @@ void dynProg::dynamicProgrammingWithIdleTasks() {
 
 }
 
-void dynProg::taskScheduling(){
-	taskTimeline();
-	int i = m_numOfTask - 1;
-	int j = (int)(m_deadline * 10.0);
-
-	//tranverse from the last task at the deadline
-	m_durationSet.push_back(m_deadline);
-	m_voltSet.push_back(m_scheduleVolt[i][j]);
-	j = (int)(m_lastStepDuration[i][j] * 10.0);
-	i --;
-
-	while(i >= 0){
-		m_durationSet.push_back((double)j / 10.0);
-		m_voltSet.push_back(m_scheduleVolt[i][j]);
-		j = (int)(m_lastStepDuration[i][j] * 10.0);
-		i --;
-	}
-
-}
-vector<double> dynProg::getDurationSet(){
-	taskScheduling();
-	return m_durationSet;
-}
-vector<double> dynProg::getVoltSet(){
-	taskScheduling();
-    return m_voltSet;
-}
-
 const size_t pxaVoltageLevel = 4;
 const double pxaVoltageTable[pxaVoltageLevel] = {0.75, 1.0, 1.3, 1.6};
 
@@ -433,7 +403,18 @@ dpTableEntry::dpTableEntry():
 	volLevel(-1),
 	taskID(-1),
 	len(-1),
-	lastTaskFinishTime(0) {}
+	lastTaskFinishTime(0),
+	solarPower(0.0) {}
+
+dpTableEntry::dpTableEntry(const dpTableEntry &e):
+	totalEnergy(e.totalEnergy),
+	voltage(e.voltage),
+	current(e.current),
+	volLevel(e.volLevel),
+	taskID(e.taskID),
+	len(e.len),
+	lastTaskFinishTime(e.lastTaskFinishTime),
+	solarPower(e.solarPower) {}
 
 ostream& operator<<(ostream& os, const dpTableEntry &e) {
 	os << "In this entry, ";
@@ -494,7 +475,7 @@ void readInput(vector<double> &InDuration, vector<double> &InEnergy, double &dea
 
 /* Testbench */
 int main(int argc, char *argv[]){
-	double deadline = 25.0;
+	double deadline = 25;
 	vector<double>InDuration;
 	// InDuration.push_back(6.0);
 	// InDuration.push_back(7.0);
@@ -517,20 +498,12 @@ int main(int argc, char *argv[]){
 
 	vector<double>outDuration;
 	vector<double>outVolt;
-	dynProg taskSet1 (InDuration.size(), deadline, vec_tvt);
+	dynProg taskSet1 (InDuration.size(), (int)deadline, vec_tvt);
 	taskSet1.dynamicProgrammingWithIdleTasks();
 	ScheduleBuilder sb;
 	sb.BuildScheduleFromFile("TasksDP.txt");
 	sb.PredictEnergyForSchedule(0.5 * (supcap_init_charge*supcap_init_charge) / 40.0);
 	sb.DumpSchedule();
-	// taskSet1.taskTimeline();
-	// taskSet1.backTracing();
-	// outDuration = taskSet1.getDurationSet();
-	// outVolt = taskSet1.getVoltSet();
-	// for(int i = 0; i < numOfTask; i ++){
-	// 	cout<<outDuration[i]<<", ";
-	// 	cout<<outVolt[i]<<endl;
-	// }
 }
 
 #endif

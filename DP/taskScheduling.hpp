@@ -25,23 +25,18 @@ class dynProg {
 		int m_numOfTask; //Number of task
 		int m_numOfVolt;
 		int m_deadline;// The deadline of all the task
-		vector<double>m_inputDuration; // The task duration on 1.0V
-		vector<double>m_inputEnergy; // The task energy on 1.0V
 
 		//double m_taskDuration[m_numOfTask][5];
 		vector< vector<int> > m_taskDuration;// The task duration from 0.8V to 1.2V
 		vector< vector<double> > m_taskCurrent;//Current I information recorded during scheduling
 		//double m_scheduleEnergy[m_numOfTask][m_deadline * 10 + 1];
 		vector< vector<double> > m_scheduleEnergy;//Energy information recorded during scheduling
-		//double m_scheduleVolt[m_numOfTask][m_deadline * 10 + 1];
-		vector< vector<double> > m_scheduleVolt;//Voltage information recorded during  scheduling
-		//double m_lastStepDuration[m_numOfTask][m_deadline * 10 + 1];
-		vector< vector<double> > m_lastStepDuration;//Duration information recorded during scheduling
 
-		vector<double>m_durationSet;//scheduled task set
-		vector<double>m_voltSet;//scheduled voltage set
-
+		// The processor available voltage range
 		vector<double> volSel;
+
+		// The real task voltage table
+		vector<TaskVoltageTable> realTaskVoltageTable;
 
 		// DC-DC converter related variable
 		dcconvertIN m_dcLoad;
@@ -78,8 +73,8 @@ class dynProg {
 		void dynamicProgrammingWithIdleTasks();
 
 	private:
-		double getExtraChargePower(int taskIdx, int volLevel);
-		double getExtraChargePower(const TaskVoltageTable &tvt, size_t volLevel);
+		double getExtraChargePower(int taskID, int volLevel, double solarPower);
+		double getExtraChargePower(const TaskVoltageTable &tvt, size_t volLevel, double solarPower);
 		void populateFirstIdleTask(vector<dpTableEntry> &);
 		void populateRealTask(const vector<dpTableEntry> &lastIdleRow, vector<dpTableEntry> &thisRealRow);
 		void populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<dpTableEntry> &thisIdleRow);
@@ -87,13 +82,14 @@ class dynProg {
 		void dumpOptimalSchedule();
 		void dumpDPTable();
 		void initDPSolarPower();
+		double energyCalVarSolarPowerWrapper(tableEntryIter begin, tableEntryIter end, const TaskVoltageTable &tvt, size_t volLevel, double initEnergy);
 };
 
 struct dpTableEntry {
 
 	// We use the compiler generated copy constructor and operator=
 	// Should be OK, because they are all built-in type.
-	// dpTableEntry(const dpTableEntry &);
+	dpTableEntry(const dpTableEntry &);
 
 	double totalEnergy;
 	double voltage;
@@ -122,6 +118,15 @@ struct dpTableEntry {
 	bool operator<(const dpTableEntry &d) {
 		return this->totalEnergy < d.totalEnergy;
 	}
+
+};
+
+class dpSolarComparator {
+	public:
+		dpSolarComparator(double sp) : p(sp) {}
+		bool operator()(const dpTableEntry &e) const { return (e.solarPower != p); }
+	private:
+		double p;
 };
 
 ostream& operator<<(ostream& os, const dpTableEntry &e);
