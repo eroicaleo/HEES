@@ -83,8 +83,8 @@ double VariablePowerSource::AdvanceVariablePowerSourceCore(double len) {
 	} else {
 		if (PowerPeriodQueue.size() > 1) {
 			PowerPeriodQueue.pop_front();
-			CurrentPowerPeriod = PowerPeriodQueue.front();
-			CurrentPowerPeriod.RemainingTime -= len;
+			PowerPeriodQueue.front().RemainingTime -= len;
+			return PowerPeriodQueue.front().PowerValue;
 		}
 	}
 	return CurrentPowerPeriod.PowerValue;

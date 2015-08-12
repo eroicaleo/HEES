@@ -177,7 +177,7 @@ double dynProg::energyCalVarSolarPowerWrapper(tableEntryIter begin, tableEntryIt
 			<< ", length: " << (next-begin)
 			<< ", startEnergy: " << endEnergy;
 #endif
-		endEnergy += energyCalculatorWrapper(inputPower, endEnergy, next-begin);
+		endEnergy = energyCalculatorWrapper(inputPower, endEnergy, next-begin);
 		begin = next;
 
 #ifdef DEBUG_VERBOSE
