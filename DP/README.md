@@ -69,8 +69,8 @@ This test is intended to test the solar power can be change in the dp table or n
 	```python
 	# taskVoltage taskCurrent taskLength
 	1.0 1.0 100
-	1.0 1.5 150
-	1.0 2.0 200
+	1.0 1.5 100
+	1.0 2.0 100
 	```
 	* Change the "hees.cfg" accordingly, `power_source`, `supcap_init_charge`
 	* `./energysys > 1`

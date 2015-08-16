@@ -93,7 +93,7 @@ void dynProg::populateFirstIdleTask(vector<dpTableEntry> &firstIdleRow) {
 	for (tableEntryIter iter = firstIdleRow.begin(); iter != firstIdleRow.end(); ++iter) {
 		size_t len = (iter-firstIdleRow.begin());
 
-		iter->totalEnergy = energyCalVarSolarPowerWrapper(1+firstIdleRow.begin(), 
+		iter->totalEnergy = energyCalVarSolarPowerWrapper(1+firstIdleRow.begin(),
 								1+iter, idleTaskVoltageTable,
 								idleTaskVoltageTable.getNominalVoltageIndex(),
 								m_initialEnergy);
@@ -113,14 +113,25 @@ void dynProg::populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<d
 		 *  |________|________|________|________|________|________|________|________|
 		 *          iter
 		 *  |________|________|________|________|________|________|________|________|
-		 *            iterIdleHead(begin)            iterIdel   (end)
+		 *            iterIdleHead(begin)            iterIdle   (end)
 		 */
 
-		tableEntryIter iterIdleHead = thisIdleRow.begin()+(iter-lastRealRow.begin())+1;
-		for (tableEntryIter iterIdle = iterIdleHead; iterIdle != thisIdleRow.end(); ++iterIdle) {
-			int taskDur = iterIdle - iterIdleHead;
+		tableEntryIter iterIdleHead = thisIdleRow.begin()+(iter-lastRealRow.begin());
+		// Update the table entry
+		iterIdleHead->setAllFields(iter->totalEnergy, 1.0, 0.0, -1, iterIdleHead->taskID, 0, iter-lastRealRow.begin());
 #ifdef DEBUG_VERBOSE
-			cout << "I am predicting idle task " << iterIdle->taskID << " from time " << iterIdleHead - thisIdleRow.begin() << " to " << iterIdle - thisIdleRow.begin() << "." << ". taskDur: " << taskDur << ". iter->totalEnergy: " << iter->totalEnergy << "." << endl;
+		cout << "Idle task: " << iterIdleHead->taskID << " @ time "
+			<< iterIdleHead - thisIdleRow.begin() << " initEnergy: "
+			<< iter->totalEnergy << "." << endl;
+#endif
+
+		// Move the iterator one right, that's the end of the first second of the idle task
+		iterIdleHead += 1;
+		for (tableEntryIter iterIdle = iterIdleHead; iterIdle != thisIdleRow.end(); ++iterIdle) {
+			int taskDur = 1+iterIdle-iterIdleHead;
+#ifdef DEBUG_VERBOSE
+			cout << "Idle task: I am predicting idle task " << iterIdle->taskID << " from time " << iterIdleHead - thisIdleRow.begin()
+				<< " to time " << iterIdle - thisIdleRow.begin() << ", Idle task length is " << taskDur << endl;
 #endif
 			double energy = energyCalVarSolarPowerWrapper(iterIdleHead, iterIdle+1,
 							idleTaskVoltageTable, idleTaskVoltageTable.getNominalVoltageIndex(),
@@ -128,11 +139,11 @@ void dynProg::populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<d
 
 			if (energy > iterIdle->totalEnergy) {
 #ifdef DEBUG_VERBOSE
-				cout << "Taskid: idle " << iterIdle->taskID << " entry " << iterIdle-thisIdleRow.begin() << " has been updated from "
-					<< iterIdle->totalEnergy << " to " << energy << endl;;
+				cout << "Idle task: Taskid: idle " << iterIdle->taskID << " entry " << iterIdle-thisIdleRow.begin() << " has been updated from "
+					<< iterIdle->totalEnergy << " to " << energy << endl;
 #endif
 				// Update the table entry
-				iterIdle->setAllFields(energy, 1.0, 0.0, -1, iterIdle->taskID, taskDur, iterIdleHead-thisIdleRow.begin());
+				iterIdle->setAllFields(energy, 1.0, 0.0, -1, iterIdle->taskID, taskDur, iter-lastRealRow.begin());
 			}
 		}
 	}
