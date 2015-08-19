@@ -29,6 +29,7 @@ ChargeProcess::ChargeProcess() :
 	output_file("OverallProcess.txt") { 
 	
 	ofstream output(output_file.c_str());
+	output << setw(8) << "Timeix"    << "    ";
 	output << setw(8) << "Pinput"    << "    ";
 	output << setw(8) << "VCTI"      << "    ";
 	output << setw(8) << "Vcap_oc"   << "    ";
@@ -100,7 +101,6 @@ void ChargeProcess::charge_policy_optimal_vcti(ees_bank *bank) {
 	return;
 }
 
-
 int ChargeProcess::ChargeProcessOptimalVcti(ees_bank *bank, lionbat *lb, loadApplication *load) {
 
 	this->power_input = power_source_func(HTimer.HEESTimerGetCurrentTimeInSecond());
@@ -141,6 +141,9 @@ int ChargeProcess::ChargeProcessApplyPolicy(ees_bank *bank, lionbat *lb, loadApp
 		cerr << "Can not open files!" << endl;
 	}
 
+	if (HTimer.HEESTimerGetCurrentTimeIndex() == 0)
+		print_super_cap_info(output, bank, power_input, HTimer);
+
 	while (fabs(load->CurrentTaskRemainingTime()) > 1e-3) {
 
 		// Every second, update the power input
@@ -154,20 +157,22 @@ int ChargeProcess::ChargeProcessApplyPolicy(ees_bank *bank, lionbat *lb, loadApp
 		if (power_status == POWER_NOT_ENOUGH_FOR_LOAD) {
 			time_index = -1;
 			// Still report initial bank status
-			print_super_cap_info(output, bank, power_input);
+			print_super_cap_info(output, bank, power_input, HTimer);
 			break;
 		}
 		
-		// Record the current status of the super capacitor
-		if (HTimer.HEESTimerGetCurrentTimeIndex() % delta_energy_steps == 0)
-			print_super_cap_info(output, bank, power_input);
-
-		bank->EESBankCharge(super_cap_iin, dc_super_cap_vout, min_time_interval, super_cap_vcc, super_cap_qacc);
-
 		time_elapsed += min_time_interval;
 		++time_index;
 		HTimer.HEESTimerAdvancdTimerIndex(1, bank);
 		load->AdvanceLoadProgress(min_time_interval);
+
+		// Charge the bank for the current min_time_interval
+		bank->EESBankCharge(super_cap_iin, dc_super_cap_vout, min_time_interval, super_cap_vcc, super_cap_qacc);
+
+		// Record the current status of the ees bank at the end of each second
+		// Because we normall set delta_energy_steps to 10
+		if (HTimer.HEESTimerGetCurrentTimeIndex() % delta_energy_steps == 0)
+			print_super_cap_info(output, bank, power_input, HTimer);
 
 		// Recorde the wasted energy on dcdc and bank resistance
 		dc_super_cap_energy += min_time_interval * dc_super_cap_power;
@@ -184,13 +189,14 @@ int ChargeProcess::ChargeProcessApplyPolicy(ees_bank *bank, lionbat *lb, loadApp
 	return time_index;
 }
 
-void ChargeProcess::print_super_cap_info(ofstream &output, ees_bank *bank, double power_input) {
+void ChargeProcess::print_super_cap_info(ofstream &output, ees_bank *bank, double power_input, const HEESTimer &htimer) {
 	// Output the status to a file
 	super_cap_voc = bank->EESBankGetVoc();
 	super_cap_qacc = bank->EESBankGetQacc();
 	output.precision(3);
 	output.setf(ios::fixed,ios::floatfield);
-    output << setw(8) << power_input << "    "
+    output << setw(8) << htimer.HEESTimerGetCurrentTimeIndex() << "    "
+		   << setw(8) << power_input << "    "
            << setw(8) << vcti << "    "
            << setw(8) << super_cap_voc << "    "
            << setw(8) << super_cap_vcc << "    "

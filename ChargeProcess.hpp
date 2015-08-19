@@ -15,6 +15,7 @@ class ees_bank;
 #include "DCCon_in.hpp"
 #include "DCCon_out.hpp"
 #include "selVCTI.hpp"
+#include "HEESTimer.hpp"
 
 enum POWER_STATUS {POWER_INIT, POWER_NORMAL, POWER_NOT_ENOUGH_FOR_LOAD};
 
@@ -23,7 +24,7 @@ public:
 	ChargeProcess();
 	int ChargeProcessOurPolicy(ees_bank *bank, lionbat *lb, loadApplication *load);
 	int ChargeProcessOptimalVcti(ees_bank *bank, lionbat *lb, loadApplication *load); 
-	void print_super_cap_info(std::ofstream &output_file, ees_bank *bank, double power_input);
+	void print_super_cap_info(std::ofstream &output_file, ees_bank *bank, double power_input, const HEESTimer &htimer);
 // Private member function
 private:
 	std::tr1::function<void(ees_bank *)> charge_policy;
