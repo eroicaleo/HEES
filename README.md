@@ -49,7 +49,7 @@ What we really need from boost library is just the program\_options.
 
   Note that you will need the libboost1.55-dev for the header file "boost/program\_options.hpp"
 3. Finally, you can verify your installation by using the command:
-  
+
   ```
   dpkg-query --listfiles libboost1.55-dev
 
@@ -62,4 +62,20 @@ What we really need from boost library is just the program\_options.
 
 #### 0.3.3 Install from scratch
 
-### 0.4 Compile the simulatro
+### 0.4 Compile the simulator
+
+Set the following variable to correct path in Makefile:
+
+```Makefile
+SUNDIALS_INC_DIR = "$(HOME)/usr/sundials/include"
+SUNDIALS_LIB_DIR = "$(HOME)/usr/sundials/lib"
+BOOST_INC_DIR    = "$(HOME)/usr/include"
+BOOST_LIB_DIR    = "$(HOME)/usr/lib/boost"
+```
+
+Then just do make in your command line:
+
+```sh
+$ make
+```
+

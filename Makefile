@@ -6,8 +6,17 @@
 SUNDIALS_INC_DIR = "$(HOME)/usr/sundials/include"
 SUNDIALS_LIB_DIR = "$(HOME)/usr/sundials/lib"
 
-BOOST_INC_DIR    = "/usr/include"
-BOOST_LIB_DIR    = "/usr/lib/x86_64-linux-gnu"
+##----------------------------------------------------------------------------------------------------
+## If boost library is installed locally
+##----------------------------------------------------------------------------------------------------
+BOOST_INC_DIR    = "$(HOME)/usr/include"
+BOOST_LIB_DIR    = "$(HOME)/usr/lib/boost"
+
+##----------------------------------------------------------------------------------------------------
+## Maybe boost library is installed systemwise
+## BOOST_INC_DIR    = "/usr/include"
+## BOOST_LIB_DIR    = "/usr/lib/x86_64-linux-gnu"
+##----------------------------------------------------------------------------------------------------
 
 ##----------------------------------------------------------------------------------------------------
 ## You will not need to change the following part
