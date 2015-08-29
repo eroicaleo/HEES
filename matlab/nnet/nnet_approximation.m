@@ -9,21 +9,22 @@
 clear all;
 close all;
 
-load house_dataset;
-inputs = houseInputs;
-targets = houseTargets;
-
-A = importdata('data20131114_20.txt', '\t');
-inputs = A(:, [1:3])';
+energy_offset = 4500;
+A = importdata('trn_10.txt.0600', '\t');
+inputs = A(:, [1:2])';
 targets = A(:, 4)';
+inputs(end, :) = inputs(end, :) - energy_offset;
+targets = targets - energy_offset;
 
-A = importdata('data20131115_20.txt', '\t');
-tstinputs = A(:, [1:3])';
+A = importdata('tst_10.txt.0600', '\t');
+tstinputs = A(:, [1:2])';
 tsttargets = A(:, 4)';
+tstinputs(end, :) = tstinputs(end, :) - energy_offset;
+tsttargets = tsttargets - energy_offset;
 
  
 % Create a Fitting Network
-hiddenLayerSize = 5;
+hiddenLayerSize = 7;
 net = fitnet(hiddenLayerSize);
 
 % Set up Division of Data for Training, Validation, Testing
@@ -37,7 +38,7 @@ net.divideParam.testRatio = 5/100;
 % Test the Network
 outputs = net(inputs);
 errors = gsubtract(outputs,targets);
-performance = perform(net,targets,outputs)
+performance = perform(net,targets,outputs);
  
 % View the Network
 view(net)
@@ -61,9 +62,9 @@ plot((1:size(tsttargets, 2)), tsttargets, 'bx');
 
 inputSettings = net.inputs{1}.processSettings{1, 2};
 inputMin = inputSettings.xmin;
-inputRange = inputSettigns.xrange;
+inputRange = inputSettings.xrange;
 
-outputSettings = net.inputs{1}.processSettings{1, 2};
+outputSettings = net.outputs{2}.processSettings{1, 2};
 outputMin = outputSettings.xmin;
 outputRange = outputSettings.xrange;
 
@@ -73,19 +74,43 @@ LW = net.LW{2,1};
 b1 = net.b{1,1};
 b2 = net.b{2,1};
 
-filename = 'nnetmodel20';
+filename = 'nnetmodel0600';
 fid = fopen(filename, 'w');
 
 fprintf(fid, 'NUM_OF_NEURONS: %d\n\n', hiddenLayerSize);
 fprintf(fid, 'Input_dimension: %d\n', size(inputMin, 1));
-fprintf(fid, 'Output_dimension: %d\n', size(OutputMin, 1));
-fprintf(fid, 'Input_min:\n');
+fprintf(fid, 'Output_dimension: %d\n', size(outputMin, 1));
+fprintf(fid, '\nInput_min:\n');
 for i = 1:size(inputMin, 1)
-    fprintf(fid, '%.4f\n', inputMin(i, 1));
+    fprintf(fid, '%f\n', inputMin(i, 1));
 end
-fprintf(fid, 'Input_range:\n');
+fprintf(fid, '\nInput_range:\n');
 for i = 1:size(inputMin, 1)
-    fprintf(fid, '%.4f\n', inputRange(i, 1));
+    fprintf(fid, '%f\n', inputRange(i, 1));
+end
+fprintf(fid, '\nOutput_min:\n');
+for i = 1:size(outputMin, 1)
+    fprintf(fid, '%f\n', outputMin(i, 1));
+end
+fprintf(fid, '\nOutput_range:\n');
+for i = 1:size(outputMin, 1)
+    fprintf(fid, '%f\n', outputRange(i, 1));
+end
+fprintf(fid, '\nIW:\n');
+for i = 1:size(IW, 1)
+    fprintf(fid, '%f %f\n', IW(i, :));
+end
+fprintf(fid, '\nb1:\n');
+for i = 1:size(b1, 1)
+    fprintf(fid, '%f\n', b1(i, :));
+end
+fprintf(fid, '\nLW\n');
+for i = 1:size(LW, 2)
+    fprintf(fid, '%f ', LW(1, i));
+end
+fprintf(fid, '\n\nb2:\n');
+for i = 1:size(b2, 1)
+    fprintf(fid, '%f\n', b2(i, :));
 end
 
 
