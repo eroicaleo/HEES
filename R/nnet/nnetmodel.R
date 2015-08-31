@@ -8,16 +8,25 @@ NormalizeTestData <- function(x, min, max) {
   (x - min) / (max - min)
 }
 
+DeNormalizeData <- function(x, min, max) {
+  min + (max - min) * x
+}
+
 # Read the training and testing data
 hees.trn <- read.delim("data/trn_10.txt.0100", header = FALSE, sep = "")
-names(hees.trn) <- c("solar", "endE", "len", "initE")
+names(hees.trn) <- c("solar", "initE", "len", "endE")
 
 hees.tst <- read.delim("data/tst_10.txt.0100", header = FALSE, sep = "")
-names(hees.tst) <- c("solar", "endE", "len", "initE")
+names(hees.tst) <- c("solar", "initE", "len", "endE")
 
 # Drop the len column
-hees.trn <- hees.trn[c("solar", "endE", "initE")]
-hees.tst <- hees.tst[c("solar", "endE", "initE")]
+hees.trn <- hees.trn[c("solar", "initE", "endE")]
+hees.tst <- hees.tst[c("solar", "initE", "endE")]
+
+# Drop some training data
+threshold <- 1.0
+hees.trn <- hees.trn[hees.trn$solar > threshold,]
+hees.tst <- hees.tst[hees.tst$solar > threshold,]
 
 # Unique it
 hees.trn.unique <- unique(hees.trn)
@@ -43,7 +52,19 @@ plot(hees.model)
 
 # Compute the prediction error
 hees.model.results <- compute(hees.model, hees.tst.normal[c("solar", "initE")])
-hees.tst.pred <- hees.model.results$net.result
+hees.tst.pred.normal <- hees.model.results$net.result
+hees.tst.pred <- DeNormalizeData(hees.tst.pred.normal, trn.min$endE, trn.max$endE)
 
-cor(hees.tst.normal$endE, hees.tst.pred)
-plot(hees.tst.normal$endE, hees.tst.pred)
+hees.model.results.trn <- compute(hees.model, hees.trn.normal[c("solar", "initE")])
+hees.trn.pred.normal <- hees.model.results.trn$net.result
+hees.trn.pred.error.normal <- hees.trn.pred.normal - hees.trn.normal$endE
+
+cor(hees.tst.normal$endE, hees.tst.pred.normal)
+plot(hees.tst.normal$endE, hees.tst.pred.normal)
+
+cor(hees.tst$endE, hees.tst.pred)
+plot(hees.tst$endE, hees.tst.pred)
+
+hees.tst.pred.error <- hees.tst.pred - hees.tst$endE
+hist(hees.tst.pred.error)
+plot(hees.tst.pred.error, lty = 1, col = "red", type = "l")
