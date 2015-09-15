@@ -7,7 +7,7 @@
 initQ    = 100;  % Bank initial charge
 superCap = 40;   % Bank capacitance
 
-loThreshold = 1.0; % the lower threshold for training power
+loThreshold = -inf; % the lower threshold for training power
 upThreshold = inf; % the upper threshold for training power
 
 % You should not need to modify the following part
@@ -72,11 +72,15 @@ hold on
 plot((1:size(tsttargets, 2)), tsttargets, 'bx');
 
 % Extract the neural network parameters
-inputSettings = net.inputs{1}.processSettings{1, 2};
+% This is for older version of Matlab
+% inputSettings = net.inputs{1}.processSettings{1, 2};
+inputSettings = net.inputs{1}.processSettings{1};
 inputMin = inputSettings.xmin;
 inputRange = inputSettings.xrange;
 
-outputSettings = net.outputs{2}.processSettings{1, 2};
+% This is for older version of Matlab
+% outputSettings = net.outputs{2}.processSettings{1, 2};
+outputSettings = net.outputs{2}.processSettings{1};
 outputMin = outputSettings.xmin;
 outputRange = outputSettings.xrange;
 
