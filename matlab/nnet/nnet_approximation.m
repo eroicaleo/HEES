@@ -33,7 +33,7 @@ tstinputs = A(ix, 1:2)';
 tsttargets = A(ix, 4)';
 tstinputs(end, :) = tstinputs(end, :) - energy_offset;
 tsttargets = tsttargets - energy_offset;
- 
+
 % Create a Fitting Network
 hiddenLayerSize = 7;
 net = fitnet(hiddenLayerSize);
@@ -42,18 +42,18 @@ net = fitnet(hiddenLayerSize);
 net.divideParam.trainRatio = 90/100;
 net.divideParam.valRatio = 5/100;
 net.divideParam.testRatio = 5/100;
- 
+
 % Train the Network
 [net,tr] = train(net,inputs,targets);
- 
+
 % Test the Network
 outputs = net(inputs);
 errors = gsubtract(outputs,targets);
 performance = perform(net,targets,outputs);
- 
+
 % View the Network
 % view(net)
- 
+
 % Plots
 % Uncomment these lines to enable various plots.
 %figure, plotperform(tr)
@@ -75,20 +75,40 @@ plot((1:size(tsttargets, 2)), tsttargets, 'bx');
 % This is for older version of Matlab
 % inputSettings = net.inputs{1}.processSettings{1, 2};
 inputSettings = net.inputs{1}.processSettings{1};
-inputMin = inputSettings.xmin;
-inputRange = inputSettings.xrange;
 
 % This is for older version of Matlab
 % outputSettings = net.outputs{2}.processSettings{1, 2};
 outputSettings = net.outputs{2}.processSettings{1};
-outputMin = outputSettings.xmin;
-outputRange = outputSettings.xrange;
 
-IW = net.IW{1,1};
-LW = net.LW{2,1};
+if isfield(inputSettings, 'xmin') && isfield(outputSettings, 'xmin')
 
-b1 = net.b{1,1};
-b2 = net.b{2,1};
+    inputMin = inputSettings.xmin;
+    inputRange = inputSettings.xrange;
+
+    outputMin = outputSettings.xmin;
+    outputRange = outputSettings.xrange;
+
+    IW = net.IW{1,1};
+    LW = net.LW{2,1};
+
+    b1 = net.b{1,1};
+    b2 = net.b{2,1};
+
+else
+
+    inputMin   = min(inputs, [], 2);
+    inputRange = range(inputs, 2);
+
+    outputMin = min(targets);
+    outputRange = range(targets);
+
+    IW = zeros(hiddenLayerSize, 2);
+    LW = zeros(1, hiddenLayerSize);
+
+    b1 = zeros(hiddenLayerSize, 1);
+    b2 = 0.0;
+end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Dump out the results for HEES simulator
