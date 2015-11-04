@@ -43,12 +43,12 @@ int main(int argc, char *argv[]) {
 	testcase.push_back(make_pair(1400.0, 2.5));
 	for (std::vector<pair<double, double> >::iterator iter(testcase.begin()); iter != testcase.end(); ++iter) {
 		const nnetmodel &nmodel = recallNnetMap(nnetMap, iter->first, iter->second);
-		cout << "Bank voltage: " << nmodel.bank_vol << endl;
+		cout << "Bank charge: " << nmodel.bank_vol << endl;
 		cout << "Solar min: " << nmodel.solar_min << endl;
 		cout << "Solar max: " << nmodel.solar_max << endl;
 		cout << "Energy offset: " << nmodel.energy_offset << endl;
-		cout << nmodel.IW << endl;
-		cout << nmodel.LW << endl;
+		cout << "model IW: " << nmodel.IW << endl;
+		cout << "model LW: " << nmodel.LW << endl;
 	}
 	return 0;
 }

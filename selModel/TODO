@@ -1,0 +1,50 @@
+1. Define a class like the one in nnet/nnet.hpp
+1.1 follow the example in testBLAS.cpp, replace all (double *) variable with boost::numeric::ublas:vector<double>
+1.2 follow the example in testBLAS.cpp, replace all (double **) variable with boost::numeric::ublas:matrix<double>
+
+2. rewrite the function 'readnnetmodel' to read in the neural network model.
+you can just follow the readnnetmodel function in nnet/nnet.cpp
+
+3. rewirte the function 'simnet' to use the neural network to make prediction.
+you can just follow the simnet function in nnet/nnet.cpp
+
+
+TODO10212015
+============
+
+1. Modify nnet.cpp
+line 300, 301, 303, 304
+and compare the results between the simulator and the results
+in data/trn* and data/tst*
+
+line 300, solor input power, you can pick any value from data/trn* or data/tst* first column
+line 301, initial bank charge, you can pick any value from data/trn* or data/tst* second column
+line 303, neural network model file, any model under data/PredictionModel/*
+line 304, initial bank charge for a specific model, if model is for 100, then use 100 in the equation,
+if the model is for 200, then use 200 in the equatino and so on ...
+
+TODO11032015
+============
+
+1. Modify testFilesystem.cpp by adding more testcases like the following:
+
+testcase.push_back(make_pair(1400.0, 0.5));
+
+First number is bank charge and second number is the solar power.
+
+2. Then compile it by `make` and run it by `./testFilesystem.cpp`.
+3. Check results.
+
+In this case, since we have 3 models for 1400.0, we should pick "data/PredictionModel/nnetmodel1400_0_1.0"
+So the output should be like:
+
+```
+Bank voltage: 1400
+Solar min: 0
+Solar max: 1
+Energy offset: 24500
+model IW: [7,2]((0,0),(0,0),(0,0),(0,0),(0,0),(0,0),(0,0))
+model LW: [7](0,0,0,0,0,0,0)
+```
+
+To find the IW and LW, we have to go into "data/PredictionModel/nnetmodel1400_0_1.0" and compare.
