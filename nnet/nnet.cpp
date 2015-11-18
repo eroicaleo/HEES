@@ -4,21 +4,23 @@
 #include <iostream>
 #include <fstream>
 
-#include "util.h"
 #include "nnet.hpp"
 
-using namespace std;
+using std::cerr;
+using std::cout;
+using std::endl;
+using std::ifstream;
+using std::string;
 
 nnetmodel::nnetmodel(): 
-		input_min(NULL), input_range(NULL),
 		output_min(0), output_range(0),
-		inter_output(NULL),
-		IW(NULL), b1(NULL),
-		LW(NULL), b2(0), energy_offset(0.0), input(NULL) {}
+		b2(0), energy_offset(0.0) {}
 
 void 
 nnetmodel::readnnetmodel(const char *name) {
 	
+    using namespace boost::numeric::ublas;
+
 	ifstream infile(name);
 	if (!infile) {
 		cerr << "Can not open nnet model file!\n" << endl;
@@ -36,56 +38,88 @@ nnetmodel::readnnetmodel(const char *name) {
 	infile >> OUTPUT_DIM;
 
 	// Read the input min and input range for normalization
-	input_min = dvector(INPUT_DIM);
-	input_range = dvector(INPUT_DIM);
+	input_min = vector<double> (INPUT_DIM);
+	input_range = vector<double> (INPUT_DIM);
 	infile >> varname;
 	readvectorfromfile(infile, input_min, INPUT_DIM);
+#ifdef DEBUG_NNET
+	cout << "input_min is: " << endl;
+	cout << input_min << endl;
+#endif
 	infile >> varname;
 	readvectorfromfile(infile, input_range, INPUT_DIM);
-
+#ifdef DEBUG_NNET
+	cout << "input_range is: " << endl;
+	cout << input_range << endl;
+#endif
+	
 	// Read the output min and range for normalization
 	infile >> varname;
 	infile >> output_min;
+#ifdef DEBUG_NNET
+	cout << "output_min is: " << endl;
+	cout << output_min << endl;
+#endif
 	infile >> varname;
 	infile >> output_range;
+#ifdef DEBUG_NNET
+	cout << "output_range is: " << endl;
+	cout << output_range << endl;
+#endif
 
 	// Read the IW
-	IW = dmatrix(NUM_OF_NEURONS, INPUT_DIM);
+	IW = matrix<double> (NUM_OF_NEURONS, INPUT_DIM);
 	infile >> varname;
 	readmatrixfromfile(infile, IW, NUM_OF_NEURONS, INPUT_DIM);
+#ifdef DEBUG_NNET
+	cout << "IW is: " << endl;
+	cout << IW << endl;
+#endif
 
 	// Read the b1
-	b1 = dvector(NUM_OF_NEURONS);
+	b1 = vector<double> (NUM_OF_NEURONS);
 	infile >> varname;
 	readvectorfromfile(infile, b1, NUM_OF_NEURONS);
+#ifdef DEBUG_NNET
+	cout << "b1 is: " << endl;
+	cout << b1 << endl;
+#endif
 
 	// Read the LW
-	LW = dvector(NUM_OF_NEURONS);
+	LW = vector<double> (NUM_OF_NEURONS);
 	infile >> varname;
 	readvectorfromfile(infile, LW, NUM_OF_NEURONS);
+#ifdef DEBUG_NNET
+	cout << "LW is: " << endl;
+	cout << LW << endl;
+#endif
 
 	// Read the b2
 	infile >> varname;
 	infile >> b2;
+#ifdef DEBUG_NNET
+	cout << "b2 is: " << endl;
+	cout << b2 << endl;
+#endif
 
 	infile.close();
 	infile.clear();
 
-	input = dvector(INPUT_DIM);
-	inter_output = dvector(NUM_OF_NEURONS);
+	input = vector<double> (INPUT_DIM);
+	inter_output = vector<double> (NUM_OF_NEURONS);
 
 	return;
 }
 
 double 
-nnetmodel::simnnet(double *input) {
+nnetmodel::simnnet(vector<double> &input) {
 	
 	// Set the result to initialEnergy
 	double result = 0.0;
 	double inputPower  = input[0];
 	if (energy_offset > 0.0)
-		input[1] -= energy_offset;
-	double initEnergy = input[1];
+		input(1) -= energy_offset;
+	double initEnergy = input(1);
 
 	// Preprocessing the input
 	// Down scale
@@ -95,10 +129,10 @@ nnetmodel::simnnet(double *input) {
 	// is less than the min training power
 	// input[0]: preprocessed power
 	// input[1]: preprocessed initial energy
-	if (input[0] < -1.0) {
+	if (input(0) < -1.0) {
 #ifdef DEBUG_NNET
 		printf("We found the input power is less than the training minimum:\n");
-		dump_dvector(input, INPUT_DIM);
+		cout << input << endl;
 #endif
 		// Added the energy_offset back
 		return initEnergy+energy_offset;
@@ -106,24 +140,24 @@ nnetmodel::simnnet(double *input) {
 
 #ifdef DEBUG_NNET
 	printf("Scaled input: toolbox/nnet/nnutils/+nnsim/y.m:29 Pc\n");
-	dump_dvector(input, INPUT_DIM);
+	cout << input << endl;
 #endif
 
 	// The first level multiplication
 	// IW * input
-	mbynmatvecmult(inter_output, IW, input, NUM_OF_NEURONS, INPUT_DIM);
+	inter_output = prod(IW, input);
 
 #ifdef DEBUG_NNET
 	printf("IW * input:\n");
-	dump_dvector(inter_output, NUM_OF_NEURONS);
+	cout << inter_output << endl;
 #endif
 
 	// First level bias
-	vecadd(inter_output, b1, NUM_OF_NEURONS);
+	inter_output += b1;
 
 #ifdef DEBUG_NNET
 	printf("Added first level bias: toolbox/nnet/nnutils/+nnsim/a.m:114 n\n");
-	dump_dvector(inter_output, NUM_OF_NEURONS);
+	cout << inter_output << endl;
 #endif
 
 	// Transfer function: tansig
@@ -131,7 +165,7 @@ nnetmodel::simnnet(double *input) {
 
 #ifdef DEBUG_NNET
 	printf("After tansig function: toolbox/nnet/nnutils/+nnsim/a.m:120 Ac\n");
-	dump_dvector(inter_output, NUM_OF_NEURONS);
+	cout << inter_output << endl;
 #endif
 
 	// The second level multiplication
@@ -146,7 +180,7 @@ nnetmodel::simnnet(double *input) {
 
 #ifdef DEBUG_NNET
 	printf("After second layer: toolbox/nnet/nnutils/+nnsim/a.m:120 Ac\n");
-	dump_dvector(&result, 1);
+	cout << result << endl;
 #endif
 
 	// Postprocessing the output
@@ -155,13 +189,13 @@ nnetmodel::simnnet(double *input) {
 
 #ifdef DEBUG_NNET
 	printf("After post scale: toolbox/nnet/nnutils/+nnsim/y.m:49 Y and \n");
-	dump_dvector(&result, 1);
+	cout << result << endl;
 #endif
 
 	// FIXME: if the prediction is out of wack
 	// Then we have to assume something wrong
 	// with the predictor
-	if ((result > initEnergy + inputPower*input[2]) || (result < initEnergy)){
+	if ((result > initEnergy + inputPower*10.0) || (result < initEnergy)){
 		result = initEnergy;
 	}
 
@@ -171,7 +205,7 @@ nnetmodel::simnnet(double *input) {
 	return result;
 }
 
-void readmatrixfromfile(ifstream &infile, double **matrix, int row, int col) {
+void readmatrixfromfile(ifstream &infile, matrix<double> &matrix, int row, int col) {
 		if (!infile) {
 				cerr << "The matrix file is not valid! EXIT!" << endl;
 				exit(1);
@@ -180,14 +214,14 @@ void readmatrixfromfile(ifstream &infile, double **matrix, int row, int col) {
 		int i = 0, j = 0;
 		for (i = 0; i < row; ++i) {
 				for (j = 0; j < col; ++j) {
-						infile >> matrix[i][j];
+						infile >> matrix(i, j);
 				}
 		}
 
 		return;
 }
 
-void readvectorfromfile(ifstream &infile, double *vector, int col) {
+void readvectorfromfile(ifstream &infile, vector<double> &vector, int col) {
 		if (!infile) {
 				cerr << "The matrix file is not valid! EXIT!" << endl;
 				exit(1);
@@ -195,53 +229,27 @@ void readvectorfromfile(ifstream &infile, double *vector, int col) {
 
 		int i = 0;
 		for (i = 0; i < col; ++i) {
-				infile >> vector[i];
+				infile >> vector(i);
 		}
 
 		return;
 }
 
-void vecadd(double *x1, double *y1, int dimension) {
-
+void tansig(vector<double> &x1, int dimension) {
 		int i = 0;
 		for (i = 0; i < dimension; ++i) {
-				x1[i] = x1[i] + y1[i];
-		}
-
-		return; 
-}
-
-void mbynmatvecmult(double *result, double **mat, double *vec, int row, int col) {
-		if ((result == NULL) || (mat == NULL) || (vec == NULL)) {
-				cerr << "The matrix multiplication failed!" << endl;
-		}
-
-		int i = 0, j = 0;
-		for (i = 0; i < row; ++i) {
-				result[i] = 0.0;
-				for (j = 0; j < col; ++j) {
-						result[i] += mat[i][j] * vec[j];
-				}
+				x1(i) = 2.0 / (1 + exp(-2*x1(i))) - 1;
 		}
 
 		return;
 }
 
-void tansig(double *x1, int dimension) {
-		int i = 0;
-		for (i = 0; i < dimension; ++i) {
-				x1[i] = 2.0 / (1 + exp(-2*x1[i])) - 1;
-		}
-
-		return;
-}
-
-void preprocessing(double *input, double *min, double *range, int dimension) {
+void preprocessing(vector<double> &input, vector<double> &min, vector<double> &range, int dimension) {
 
 		int i = 0;
 		double yrange = 2.0, ymin = -1.0;
 		for (i = 0; i < dimension; ++i) {
-				input[i] = yrange * (input[i] - min[i]) / range[i] + ymin;
+				input(i) = yrange * (input(i) - min(i)) / range(i) + ymin;
 		}
 
 		return;
@@ -285,17 +293,19 @@ int readInput(double (*data)[4], const char *filename) {
 
 int main() {
 
-	struct nnetmodel nnet;
-	double inputData[100][4];
-	int numInput = 0;
-	double result = 0.0;
+    using namespace boost::numeric::ublas;
 
-	nnet.readnnetmodel("nnetmodel20");
-	numInput = readInput(inputData, "data20131115_20.txt");
-	for (int i = 0; i < numInput; ++i) {
-		result = nnet.simnnet(inputData[i]);
-		cout << result << endl;
-	}
+	struct nnetmodel nnet;
+	vector<double> input(2);
+	input[0] = 0.438;
+	input[1] = 239.229;
+
+	nnet.readnnetmodel("data/PredictionModel/nnetmodel0100");
+	nnet.energy_offset = 0.5 * pow(100, 2) / 40.0; 
+
+	double res = nnet.simnnet(input);
+	cout << "Predicted energy is: " << res << endl;
+
 	return 0;
 }
 #endif
