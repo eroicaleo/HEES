@@ -1,3 +1,4 @@
+#include <cmath>
 #include <iostream>
 
 #include "nnetmultitask.hpp"
@@ -7,40 +8,13 @@ using namespace std::tr1;
 
 static double cutoff_power = 1.305;
 
-static char filenames[6][50] = {
-"nnetmodel1to5",
-"nnetmodel10",
-"nnetmodel20",
-"nnetmodel40",
-"nnetmodel100",
-"nnetmodel10bot"
-};
-
 /* FIXME: when we get more models */
 nnetmultitask::nnetmultitask() :
 	interalVec(1, 10),
-	nnet1to5(),
-	nnet10(),
-	nnet20(),
-	nnet40(),
-	nnet100(),
-	nnet10bot(),
-	nnet1300(),
-	nnet1400(),
-	nnet1500(),
-	nnet1600()
+	nnetInput(2, 0.0)
 {
 	interalVec[0] = 10;
-	nnet10.readnnetmodel(filenames[1]);
-	nnet20.readnnetmodel(filenames[2]);
-	nnet40.readnnetmodel(filenames[3]);
-	nnet100.readnnetmodel(filenames[4]);
-	nnet10bot.readnnetmodel(filenames[5]);
-
-	nnet1300.readnnetmodel("nnetmodel1300");
-	nnet1300.energy_offset = 21125.000;
-	nnet1400.readnnetmodel("nnetmodel1400");
-	nnet1400.energy_offset = 24500.000;
+	buildNnetMap(nnetMap);
 }
 
 double nnetmultitask::predictWithEnergyLength(double inputPower, double startEnergy, double len) {
@@ -49,7 +23,6 @@ double nnetmultitask::predictWithEnergyLength(double inputPower, double startEne
 	int intlen = (int)len;
 	nnetInput[0] = inputPower;
 	nnetInput[1] = startEnergy;
-	nnetInput[2] = intlen;
 
 	for (size_t i = 0; i < interalVec.size(); ++i) {
 		bindCalculator(interalVec[i], inputPower, startEnergy);
@@ -61,7 +34,6 @@ double nnetmultitask::predictWithEnergyLength(double inputPower, double startEne
 #endif
 			nnetInput[0] = inputPower;
 			nnetInput[1] = startEnergy;
-			nnetInput[2] = intlen;
 #ifdef DEBUG_NNET
 			cout << "my prediction: " << inputPower << ", " << initEnergy << ", " << interalVec[i] << ", " << startEnergy << endl;
 #endif
@@ -71,7 +43,6 @@ double nnetmultitask::predictWithEnergyLength(double inputPower, double startEne
 	// Here the remaining length must be less than interalVec.back()
 	nnetInput[0] = inputPower;
 	nnetInput[1] = startEnergy;
-	nnetInput[2] = interalVec.back();
 	// We need to deal with when len < interalVec.back()
 	// So we precompute the energy increase as if we charge for the minimum prediction granularity
 	// And then we do compensation later
@@ -96,11 +67,21 @@ double nnetmultitask::predictWithEnergyLength(double inputPower, double startEne
 }
 
 void nnetmultitask::bindCalculator(int len, double inputPower, double energy) {
+	double capacitance = 40.0;
+	double charge = sqrt(2.0 * energy * capacitance);
+	nnetmodel m(recallNnetMap(nnetMap, charge, inputPower));
+	computeEnergy = bind(&nnetmodel::simnnet, m, placeholders::_1);
+	return;
+
+	/*
 	if (energy >= 24500.0) {
 		computeEnergy = bind(&nnetmodel::simnnet, nnet1400, placeholders::_1);
 		return;
 	} else if (energy >= 21125.0) {
 		computeEnergy = bind(&nnetmodel::simnnet, nnet1300, placeholders::_1);
+		return;
+	} else if (energy >= 4500.0) {
+		computeEnergy = bind(&nnetmodel::simnnet, nnet0600, placeholders::_1);
 		return;
 	}
 	switch (len) {
@@ -124,5 +105,5 @@ void nnetmultitask::bindCalculator(int len, double inputPower, double energy) {
 		default :
 			computeEnergy = bind(&nnetmodel::simnnet, nnet20, placeholders::_1);
 			break;
-	}
+	} */
 }

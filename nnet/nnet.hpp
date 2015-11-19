@@ -9,24 +9,21 @@
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
-using std::ifstream;
-using namespace boost::numeric::ublas;
-
 /* Read matrix from file */
-void readmatrixfromfile(ifstream &infile, matrix<double> &matrix, int row, int col);
+void readmatrixfromfile(std::ifstream &infile, boost::numeric::ublas::matrix<double> &matrix, int row, int col);
 
 /* Read vector from file */
-void readvectorfromfile(ifstream &infile, vector<double> &vector, int col);
+void readvectorfromfile(std::ifstream &infile, boost::numeric::ublas::vector<double> &vector, int col);
 
 /* matrix vector multiplication */
 /* result = mat * vec */
-void mbynmatvecmult(vector<double> &result, matrix<double> &mat, vector<double> &vec, int row, int col); 
+void mbynmatvecmult(boost::numeric::ublas::vector<double> &result, boost::numeric::ublas::matrix<double> &mat, boost::numeric::ublas::vector<double> &vec, int row, int col); 
 
 /* tansig function */
-void tansig(vector<double> &x1, int dimension);
+void tansig(boost::numeric::ublas::vector<double> &x1, int dimension);
 
 /* Down scale the input */
-void preprocessing(vector<double> &input, vector<double> &min, vector<double> &range, int dimension);
+void preprocessing(boost::numeric::ublas::vector<double> &input, boost::numeric::ublas::vector<double> &min, boost::numeric::ublas::vector<double> &range, int dimension);
 
 /* Up scale the output */
 double postprocessing(double d, double min, double range);
@@ -41,29 +38,29 @@ struct nnetmodel {
 	void readnnetmodel(const char *name);
 
 	/* Simulation the neural networks */
-	double simnnet(vector<double> &input);
+	double simnnet(boost::numeric::ublas::vector<double> &input);
 
 	/* Data member */
 	int NUM_OF_NEURONS;
 	int INPUT_DIM;
 	int OUTPUT_DIM;
 
-	vector<double> input_min;
-	vector<double> input_range;
+	boost::numeric::ublas::vector<double> input_min;
+	boost::numeric::ublas::vector<double> input_range;
 	double output_min;
 	double output_range;
 
-	vector<double> inter_output;
+	boost::numeric::ublas::vector<double> inter_output;
 
-	matrix<double> IW;
-	vector<double> b1;
-	vector<double> LW;
+	boost::numeric::ublas::matrix<double> IW;
+	boost::numeric::ublas::vector<double> b1;
+	boost::numeric::ublas::vector<double> LW;
 	double b2;
 
 	double energy_offset;
 	// The 3 dimensions are average, high, low power
 	// Other dimensions are neighbor high, lower temperature
-	vector<double> input;
+	boost::numeric::ublas::vector<double> input;
 
 	/* variables for model sanity check */
 	double bank_vol;

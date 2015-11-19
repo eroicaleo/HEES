@@ -12,6 +12,9 @@ using std::endl;
 using std::ifstream;
 using std::string;
 
+using boost::numeric::ublas::vector;
+using boost::numeric::ublas::matrix;
+
 nnetmodel::nnetmodel(): 
 		output_min(0), output_range(0),
 		b2(0), energy_offset(0.0) {}

@@ -4,7 +4,11 @@
 #include <tr1/functional>
 #include <vector>
 
+#include <boost/numeric/ublas/vector.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
+
 #include "nnet.hpp"
+#include "../selModel/testFilesystem.hpp"
 
 class nnetmultitask {
 	public:
@@ -12,21 +16,12 @@ class nnetmultitask {
 		double predictWithEnergyLength(double inputPower, double enrg, double len);
 	private:
 		std::vector<int> interalVec;
-		nnetmodel nnet1to5;
-		nnetmodel nnet10;
-		nnetmodel nnet20;
-		nnetmodel nnet40;
-		nnetmodel nnet100;
-		nnetmodel nnet10bot;
-		nnetmodel nnet1300;
-		nnetmodel nnet1400;
-		nnetmodel nnet1500;
-		nnetmodel nnet1600;
+		std::map<double, Level2Map> nnetMap;
 
-		double nnetInput[3];
+		boost::numeric::ublas::vector<double> nnetInput;
 		double currentEnergy;
 
-		std::tr1::function<double(double *)> computeEnergy;
+		std::tr1::function<double(boost::numeric::ublas::vector<double>&)> computeEnergy;
 		void bindCalculator(int, double, double);
 };
 
