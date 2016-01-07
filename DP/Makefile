@@ -1,10 +1,14 @@
 
 CFLAG     = -c -g -Wall
 CFLAG_DP  = $(CFLAG) -DDEBUG_VERBOSE -DDP_BINARY 
-CFLAG_DBG = $(CFLAG) -DDEBUG_VERBOSE
+CFLAG_DBG = $(CFLAG) -DDEBUG_VERBOSE -DSWAP_MAIN
+
 EXT_OBJ   = ../nnet/nnetmultitask.o ../nnet/nnet.o ../nnet/util.o \
-          ../DCCon_in.o ../VoltageTable.o ../powersource.o ../ParseCommandLine.o ../ScheduleBuilder.o ../TaskGenerator.o
-BOOST_LIBS = -lboost_program_options
+            ../DCCon_in.o ../VoltageTable.o ../powersource.o \
+            ../ParseCommandLine.o ../ScheduleBuilder.o ../TaskGenerator.o \
+			../selModel/testFilesystem.o
+
+BOOST_LIBS = -lboost_program_options -lboost_system -lboost_filesystem
 
 binary = dp single sched solar
 
@@ -23,6 +27,9 @@ sched : $(dp).o $(EXT_OBJ) testSched.o
 
 solar : $(EXT_OBJ) $(dp)_dbg.o testVariableSolarPower.o
 	g++ $^ -DDEBUG_VERBOSE -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
+
+swap  : $(EXT_OBJ) taskScheduling.o SwapScheduling_dbg.o
+	g++ $^ -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
 
 %_bin.o : %.cpp
 	g++ $(CFLAG_DP) $< -o $@
