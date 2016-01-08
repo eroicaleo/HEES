@@ -1,5 +1,8 @@
 
-CFLAG     = -c -g -Wall
+BOOST_INC_DIR    = "$(HOME)/usr/include"
+BOOST_LIB_DIR    = "$(HOME)/usr/lib/boost"
+
+CFLAG     = -c -g -Wall -I$(BOOST_INC_DIR)
 CFLAG_DP  = $(CFLAG) -DDEBUG_VERBOSE -DDP_BINARY 
 CFLAG_DBG = $(CFLAG) -DDEBUG_VERBOSE -DSWAP_MAIN
 

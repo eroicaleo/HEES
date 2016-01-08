@@ -9,12 +9,13 @@ class SwapScheduling {
 public:
 
 	void buildTaskTable(char *filename);
-	void buildSolarPowerTrace(char *filename);
+	void buildSolarPowerTrace();
 
 private:
 
 	std::vector<TaskVoltageTable> realTaskVoltageTable;
 	std::vector<double> solarPowerTrace;
+	std::vector<double> taskToPowerTrace(const TaskVoltageTable &tvt) const;
 
 };
 
