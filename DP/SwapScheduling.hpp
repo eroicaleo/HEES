@@ -12,6 +12,7 @@ public:
 	void buildTaskTable(char *filename);
 	void buildSolarPowerTrace();
 	std::vector<double> generateChargeTrace();
+	int compareTwoTasks(size_t i);
 
 private:
 
@@ -25,7 +26,6 @@ private:
 	std::vector<double> extractTaskPowerInterval(size_t i, size_t j) const;
 
 	double predictTwoTasksEnergyInterval(const vector<double> &solarPowerInterval, size_t i, size_t j);
-	int compareTwoTasks(size_t i);
 	void addDCDCPower(vector<double> &powerTrace) const;
 	double predictPowerInterval(const vector<double> &chargeTrace);
 	

@@ -15,13 +15,14 @@ void SwapScheduling::buildTaskTable(char *filename) {
 }
 
 vector<double> SwapScheduling::taskToPowerTrace(const TaskVoltageTable &tvt) const {
-	size_t level = tvt.getNominalVoltageIndex();
+	size_t level = 0;
 	double power = tvt.getVoltage(level) * tvt.getCurrent(level);
 	return vector<double>(tvt.getScaledCeilLength(level, 1), power);
 }
 
-/* 
+/**
  * Extract the solar power trace for task i and i+1
+ * @param i task i, must be less than N-1 if there are N tasks in total
  */
 vector<double> SwapScheduling::extractSolarPowerInterval(size_t i) const {
 	int start = 0;
@@ -44,11 +45,14 @@ vector<double> SwapScheduling::extractSolarPowerInterval(size_t i) const {
  * @return converted power trace for the 2 tasks
  */
 vector<double> SwapScheduling::extractTaskPowerInterval(size_t i, size_t j) const {
-	vector<double> taskPowerInterval;
-	vector<double> trace = taskToPowerTrace(realTaskVoltageTable[i]);
+	vector<double> taskPowerInterval, trace;
+
+	trace = taskToPowerTrace(realTaskVoltageTable[i]);
 	taskPowerInterval.insert(taskPowerInterval.end(), trace.begin(), trace.end());
+
 	trace = taskToPowerTrace(realTaskVoltageTable[j]);
 	taskPowerInterval.insert(taskPowerInterval.end(), trace.begin(), trace.end());
+
 	return taskPowerInterval;
 }
 
@@ -81,14 +85,22 @@ double SwapScheduling::predictTwoTasksEnergyInterval(const vector<double> &solar
 /**
  * Compare which task should be done first, task i or task i+1.
  * @param i task i.
+ * @return -1 if doing i+1 is better, +1 if doing i is better, 0 if tie.
  */
 int SwapScheduling::compareTwoTasks(size_t i) {
 	assert (i < realTaskVoltageTable.size()-1);
 
 	vector<double> solarPowerInterval = extractSolarPowerInterval(i);
 
-	double res = predictTwoTasksEnergyInterval(solarPowerInterval, i, i+1) -
-					predictTwoTasksEnergyInterval(solarPowerInterval, i+1, i);
+	double res0 = predictTwoTasksEnergyInterval(solarPowerInterval, i, i+1);
+	double res1 = predictTwoTasksEnergyInterval(solarPowerInterval, i+1, i);
+
+	#ifdef DEBUG_VERBOSE
+		cout << "Doing task " << i << " first, energy: " << res0 << endl;
+		cout << "Doing task " << i << " later, energy: " << res1 << endl;
+	#endif
+
+	double res =  res0 - res1;
 
 	if (res < 0)
 		return -1;
@@ -100,13 +112,14 @@ int SwapScheduling::compareTwoTasks(size_t i) {
  
 double SwapScheduling::predictPowerInterval(const vector<double> &chargeTrace) {
 
-	// Assume the bank voltage is 1.0v
-	double energy = 20.0;
+	// Assume the initial bank voltage is 2.5v
+	double energy = 125.0;
 	vector<double>::const_iterator start = chargeTrace.begin();
 	vector<double>::const_iterator end;
 	while (start != chargeTrace.end()) {
-		end = adjacent_find(start, chargeTrace.end(), not_equal_to<double>());
+		end = find_if(start, chargeTrace.end(), bind1st(not_equal_to<double>(), *start));
 		energy = nnetPredictor.predictWithEnergyLength(*start, energy, end-start);
+		start = end;
 	}
 
 	return energy;
@@ -126,6 +139,7 @@ void SwapScheduling::buildSolarPowerTrace() {
 		solarPowerTrace[i] = power_source_func(i+1);
 	}
 
+	return;
 }
 
 void SwapScheduling::addDCDCPower(vector<double> &powerTrace) const {
@@ -140,7 +154,7 @@ void SwapScheduling::addDCDCPower(vector<double> &powerTrace) const {
 	while (start != powerTrace.end()) {
 		dc_load_iout = *start;
 		dcLoad.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
-		end = adjacent_find(start, powerTrace.end(), not_equal_to<double>());
+		end = find_if(start, powerTrace.end(), bind1st(not_equal_to<double>(), *start));
 		transform(start, end, start, bind2nd(plus<double>(), dc_load_power));
 		start = end;
 	}
@@ -157,6 +171,7 @@ int main(int argc, char *argv[]) {
 	SwapScheduling ss;
 	ss.buildTaskTable("TasksSolar.txt.example");
 	ss.buildSolarPowerTrace();
+	ss.compareTwoTasks(0);
 	return 0;
 }
 #endif
