@@ -8,4 +8,6 @@ TODO list
    Finished.	
 
 3. Pick two tasks, generate a series of charging phase.
+
 4. Make predictions based on the charging phases.
+   Finished.
