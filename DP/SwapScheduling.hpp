@@ -13,6 +13,7 @@ public:
 	void buildSolarPowerTrace();
 	std::vector<double> generateChargeTrace();
 	int compareTwoTasks(size_t i);
+	void exhaustiveSwapping();
 
 private:
 

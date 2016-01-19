@@ -110,6 +110,32 @@ int SwapScheduling::compareTwoTasks(size_t i) {
 	return 0;
 }
  
+/**
+ * Exhaustively search all adjacent pairs of tasks,
+ * if swapping the task can be beneficial to energy, then swap them.
+ */
+void SwapScheduling::exhaustiveSwapping() {
+
+	int numOfSwap;
+	do {
+		numOfSwap = 0;
+		for (size_t i = 0; i < realTaskVoltageTable.size()-1; ++i) {
+			int res = compareTwoTasks(i);
+			if (res < 0)
+				swap(realTaskVoltageTable[i], realTaskVoltageTable[i+1]);
+			++numOfSwap;
+		}
+	} while (numOfSwap > 0)
+
+	return;
+}
+
+/**
+ * Given a vector of charge trace, predict the energy stored in the EES bank
+ * after this charging trace
+ * @param chargeTrace the charging power trace
+ * @return the energy stored in the EES bank
+ */
 double SwapScheduling::predictPowerInterval(const vector<double> &chargeTrace) {
 
 	// Assume the initial bank voltage is 2.5v
