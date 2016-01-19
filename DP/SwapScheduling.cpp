@@ -1,10 +1,12 @@
 #include <iostream>
+#include <tr1/functional>
 
 #include "SwapScheduling.hpp"
 #include "../DCCon_in.hpp"
 #include "../ParseCommandLine.hpp"
 
 using namespace std;
+using namespace std::tr1;
 
 void SwapScheduling::buildTaskTable(char *filename) {
 
@@ -121,11 +123,26 @@ void SwapScheduling::exhaustiveSwapping() {
 		numOfSwap = 0;
 		for (size_t i = 0; i < realTaskVoltageTable.size()-1; ++i) {
 			int res = compareTwoTasks(i);
-			if (res < 0)
+			if (res < 0) {
 				swap(realTaskVoltageTable[i], realTaskVoltageTable[i+1]);
-			++numOfSwap;
+				++numOfSwap;
+			}
 		}
-	} while (numOfSwap > 0)
+	} while (numOfSwap > 0);
+
+	return;
+}
+
+/**
+ * Generate the TasksSCHED.txt for HEES simulator or handoff to dynamic
+ * programming DVFS algorithm
+ */
+void SwapScheduling::genScheduleForEES() const {
+	vector<TaskHandoff> taskHandoffSet;
+	transform(realTaskVoltageTable.begin(), realTaskVoltageTable.end(),
+		back_inserter(taskHandoffSet), bind(&TaskVoltageTable::toTaskHandoff, placeholders::_1, 0));
+
+	genScheduleTaskHandoffSet(taskHandoffSet, "TasksSCHED.txt");
 
 	return;
 }
@@ -197,7 +214,8 @@ int main(int argc, char *argv[]) {
 	SwapScheduling ss;
 	ss.buildTaskTable("TasksSolar.txt.example");
 	ss.buildSolarPowerTrace();
-	ss.compareTwoTasks(0);
+	ss.exhaustiveSwapping();
+	ss.genScheduleForEES();
 	return 0;
 }
 #endif

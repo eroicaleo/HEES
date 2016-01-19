@@ -4,6 +4,7 @@
 #include <vector>
 #include "../VoltageTable.hpp"
 #include "../nnet/nnetmultitask.hpp"
+#include "../TaskHandoff.hpp"
 
 class SwapScheduling {
 
@@ -14,6 +15,7 @@ public:
 	std::vector<double> generateChargeTrace();
 	int compareTwoTasks(size_t i);
 	void exhaustiveSwapping();
+	void genScheduleForEES() const;
 
 private:
 

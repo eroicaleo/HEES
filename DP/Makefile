@@ -9,7 +9,7 @@ CFLAG_DBG = $(CFLAG) -DDEBUG_VERBOSE -DSWAP_MAIN
 EXT_OBJ   = ../nnet/nnetmultitask.o ../nnet/nnet.o ../nnet/util.o \
             ../DCCon_in.o ../VoltageTable.o ../powersource.o \
             ../ParseCommandLine.o ../ScheduleBuilder.o ../TaskGenerator.o \
-			../selModel/testFilesystem.o
+			../selModel/testFilesystem.o ../TaskHandoff.o
 
 BOOST_LIBS = -lboost_program_options -lboost_system -lboost_filesystem
 
