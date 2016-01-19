@@ -5,6 +5,8 @@
 #include <vector>
 #include <algorithm>
 
+#include "TaskHandoff.hpp"
+
 using std::vector;
 using std::find;
 
@@ -33,10 +35,11 @@ public:
 	double getNominalVoltage() const { return m_nominalVoltage; }
 	double getCurrent(size_t level) const { return m_VCLTable[level].c; }
 	double getCurrent(double voltage) const;
-	int getScaledCeilLength(size_t level, int scale) const { return ceil(scale*m_VCLTable[level].l); }
+	int getScaledCeilLength(size_t level, int scale) const { return (int)ceil(scale*m_VCLTable[level].l); }
 	int getScaledCeilLength(double voltage, int scale) const;
 	const vector<double> &getVoltageTable() const { return m_voltageTable; }
 	size_t getNominalVoltageIndex() const { return find(m_voltageTable.begin(), m_voltageTable.end(), m_nominalVoltage) - m_voltageTable.begin(); }
+	TaskHandoff toTaskHandoff(size_t level) const;
 
 private:
 	size_t getVoltageLevel(double v) const;

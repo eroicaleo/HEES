@@ -39,6 +39,21 @@ int TaskVoltageTable::getScaledCeilLength(double voltage, int scale) const {
 	return getScaledCeilLength(level, scale);
 }
 
+/**
+ * Convert the TaskVoltageTable to a simpler TaskHandoff
+ * @param level is the voltage level
+ * @return a TaskHandoff object which only contains length, power and energy
+ * info
+ */
+TaskHandoff TaskVoltageTable::toTaskHandoff(size_t level) const {
+	int l = getScaledCeilLength(level, 1);
+	double p = getCurrent(level) * getVoltage(level);
+	double e = p * l;
+	TaskHandoff t(l, p, e);
+
+	return t;
+}
+
 TaskVoltageTable::TaskVoltageTable(const VoltageTable &vt, double nomCur, double nomLen) :
 	m_voltageTable(vt.getVoltageTable()),
 	m_nominalCurrent(nomCur),
