@@ -1,4 +1,6 @@
 #include <iostream>
+#include <typeinfo>
+
 #include <tr1/functional>
 
 #include "SwapScheduling.hpp"
@@ -138,11 +140,17 @@ void SwapScheduling::exhaustiveSwapping() {
  * programming DVFS algorithm
  */
 void SwapScheduling::genScheduleForEES() const {
+	vector<TaskHandoffHEES> taskHandoffSetHEES;
+	transform(realTaskVoltageTable.begin(), realTaskVoltageTable.end(),
+		back_inserter(taskHandoffSetHEES), bind(&TaskVoltageTable::toTaskHandoffHEES, placeholders::_1, 0));
+
+	genScheduleTaskHandoffSet(taskHandoffSetHEES, "TasksSCHEDForEES.txt");
+
 	vector<TaskHandoff> taskHandoffSet;
 	transform(realTaskVoltageTable.begin(), realTaskVoltageTable.end(),
 		back_inserter(taskHandoffSet), bind(&TaskVoltageTable::toTaskHandoff, placeholders::_1, 0));
 
-	genScheduleTaskHandoffSet(taskHandoffSet, "TasksSCHED.txt");
+	genScheduleTaskHandoffSet(taskHandoffSet, "TasksSCHEDForDP.txt");
 
 	return;
 }
