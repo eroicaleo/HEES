@@ -15,7 +15,7 @@ public:
 	std::vector<double> generateChargeTrace();
 	int compareTwoTasks(size_t i);
 	void exhaustiveSwapping();
-	void genScheduleForEES() const;
+	void genScheduleForEES(std::string ees, std::string dp) const;
 
 private:
 

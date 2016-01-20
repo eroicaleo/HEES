@@ -139,18 +139,18 @@ void SwapScheduling::exhaustiveSwapping() {
  * Generate the TasksSCHED.txt for HEES simulator or handoff to dynamic
  * programming DVFS algorithm
  */
-void SwapScheduling::genScheduleForEES() const {
+void SwapScheduling::genScheduleForEES(string ees, string dp) const {
 	vector<TaskHandoffHEES> taskHandoffSetHEES;
 	transform(realTaskVoltageTable.begin(), realTaskVoltageTable.end(),
 		back_inserter(taskHandoffSetHEES), bind(&TaskVoltageTable::toTaskHandoffHEES, placeholders::_1, 0));
 
-	genScheduleTaskHandoffSet(taskHandoffSetHEES, "TasksSCHEDForEES.txt");
+	genScheduleTaskHandoffSet(taskHandoffSetHEES, ees);
 
 	vector<TaskHandoff> taskHandoffSet;
 	transform(realTaskVoltageTable.begin(), realTaskVoltageTable.end(),
 		back_inserter(taskHandoffSet), bind(&TaskVoltageTable::toTaskHandoff, placeholders::_1, 0));
 
-	genScheduleTaskHandoffSet(taskHandoffSet, "TasksSCHEDForDP.txt");
+	genScheduleTaskHandoffSet(taskHandoffSet, dp);
 
 	return;
 }
@@ -220,10 +220,11 @@ int main(int argc, char *argv[]) {
 
 	hees_parse_command_line(argc, argv);
 	SwapScheduling ss;
-	ss.buildTaskTable("TasksSolar.txt.example");
+	ss.buildTaskTable("TasksSolar.txt");
+	ss.genScheduleForEES("TasksSCHEDForEES.txt.init", "TasksSCHEDForDP.txt.init");
 	ss.buildSolarPowerTrace();
 	ss.exhaustiveSwapping();
-	ss.genScheduleForEES();
+	ss.genScheduleForEES("TasksSCHEDForEES.txt", "TasksSCHEDForDP.txt");
 	return 0;
 }
 #endif
