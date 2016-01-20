@@ -54,6 +54,23 @@ TaskHandoff TaskVoltageTable::toTaskHandoff(size_t level) const {
 	return t;
 }
 
+/**
+ * Convert the TaskVoltageTable to a simpler TaskHandoffHEES object
+ * @param level is the voltage level
+ * @return a TaskHandoffHEES object which contains an TaskHandoff object plus
+ * voltage and current info
+ */
+TaskHandoffHEES TaskVoltageTable::toTaskHandoffHEES(size_t level) const {
+	int l = getScaledCeilLength(level, 1);
+	double v = getVoltage(level);
+	double c = getCurrent(level);
+	double p = c * v;
+	double e = p * l;
+	TaskHandoffHEES t(l, p, e, v, c);
+
+	return t;
+}
+
 TaskVoltageTable::TaskVoltageTable(const VoltageTable &vt, double nomCur, double nomLen) :
 	m_voltageTable(vt.getVoltageTable()),
 	m_nominalCurrent(nomCur),
