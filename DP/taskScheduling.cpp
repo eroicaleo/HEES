@@ -372,7 +372,7 @@ double dynProg::getOptimalScheduleEnergy() const {
 int dynProg::genScheduleForEES() {
 	ofstream outfile;
 	int totalLength = 0;
-	outfile.open("TasksDP.txt");
+	outfile.open("TasksDPForEES.txt");
 	if (!outfile) {
 		cerr << "can not open TasksDP.txt for write" << endl;
 		exit(66);
