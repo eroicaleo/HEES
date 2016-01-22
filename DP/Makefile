@@ -2,9 +2,10 @@
 BOOST_INC_DIR    = "$(HOME)/usr/include"
 BOOST_LIB_DIR    = "$(HOME)/usr/lib/boost"
 
-CFLAG     = -c -g -Wall -I$(BOOST_INC_DIR)
-CFLAG_DP  = $(CFLAG) -DDEBUG_VERBOSE -DDP_BINARY 
-CFLAG_DBG = $(CFLAG) -DDEBUG_VERBOSE -DSWAP_MAIN
+CFLAG        = -c -g -Wall -I$(BOOST_INC_DIR)
+CFLAG_DBG    = $(CFLAG) -DDEBUG_VERBOSE
+CFLAG_DP     = $(CFLAG_DBG) -DDP_BINARY 
+CFLAG_SCHED  = $(CFLAG_DBG) -DSWAP_MAIN
 
 EXT_OBJ   = ../nnet/nnetmultitask.o ../nnet/nnet.o ../nnet/util.o \
             ../DCCon_in.o ../VoltageTable.o ../powersource.o \
@@ -20,7 +21,8 @@ dp = taskScheduling
 dp : $(dp)_bin.o $(EXT_OBJ)
 	g++ $^ -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
 
-all : $(dp).o
+all : $(EXT_OBJ) taskScheduling.o SwapScheduling.o testSchedDVFS.o
+	g++ $^ -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
 
 single : $(dp).o $(EXT_OBJ) testSingleVoltage.o
 	g++ $^ $(BOOST_LIBS) -o $@
@@ -31,8 +33,11 @@ sched : $(dp).o $(EXT_OBJ) testSched.o
 solar : $(EXT_OBJ) $(dp)_dbg.o testVariableSolarPower.o
 	g++ $^ -DDEBUG_VERBOSE -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
 
-swap  : $(EXT_OBJ) taskScheduling.o SwapScheduling_dbg.o
+swap  : $(EXT_OBJ) taskScheduling.o SwapScheduling_bin.o
 	g++ $^ -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
+
+SwapScheduling_bin.o : SwapScheduling.cpp
+	g++ $(CFLAG_SCHED) $< -o $@
 
 %_bin.o : %.cpp
 	g++ $(CFLAG_DP) $< -o $@
