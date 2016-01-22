@@ -17,6 +17,11 @@ public:
 	void exhaustiveSwapping();
 	void genScheduleForEES(std::string ees, std::string dp) const;
 
+	/**
+	 * @return The number of tasks in this task set
+	 */
+	int getTaskNumber() const { return realTaskVoltageTable.size(); }
+
 private:
 
 	std::vector<TaskVoltageTable> realTaskVoltageTable;
