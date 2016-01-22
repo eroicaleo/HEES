@@ -42,6 +42,8 @@ double solar_power_source_sec(double m_Tdur) {
 	}
 }
 
+VariablePowerSource vps("");
+
 void VariablePowerSource::ReadVariablePowerSource(string filename) {
 	ifstream infile(filename.c_str());
 	if (!infile) {
@@ -49,13 +51,32 @@ void VariablePowerSource::ReadVariablePowerSource(string filename) {
 		throw 23;
 	}
 
+	solarPowerFileName = filename;
+	solarPowerLength = 0.0;
+	if (PowerPeriodQueue.size() > 0)
+		PowerPeriodQueue.clear();
+
 	double power(0.0), len(0.0);
 	while ((infile >> power >> len).good()) {
 		PowerPeriod p1(power, len);
 		PowerPeriodQueue.push_back(p1);
+
+		solarPowerLength += len;
 	}
 
 	infile.close();
+}
+
+/**
+ * reset the solar power source to the begining
+ * @param filename is usually "VariablePowerSource.txt"
+ */
+void VariablePowerSource::resetVariablePowerSource(std::string filename) {
+	ReadVariablePowerSource(filename);
+}
+
+void VariablePowerSource::resetVariablePowerSource() {
+	ReadVariablePowerSource(solarPowerFileName);
 }
 
 /*

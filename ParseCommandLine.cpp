@@ -33,7 +33,6 @@ int delta_energy_steps;
 string power_source_type;
 double constant_power_value;
 ConstantPowerSource cps;
-VariablePowerSource vps;
 
 function<double(double)> power_source_func;
 

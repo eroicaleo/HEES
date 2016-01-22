@@ -45,7 +45,6 @@ extern int delta_energy_steps;
 extern string power_source_type;
 extern double constant_power_value;
 extern ConstantPowerSource cps;
-extern VariablePowerSource vps;
 
 extern function<double(double)> power_source_func;
 

@@ -21,15 +21,29 @@ class PowerPeriod;
 
 class VariablePowerSource {
 public:
-	VariablePowerSource() :
-		LastTimeAccessInSeconds(-1.0) {}
+	VariablePowerSource(std::string name) :
+		LastTimeAccessInSeconds(-1.0), solarPowerFileName(name), solarPowerLength(0.0) {}
 	void ReadVariablePowerSource(std::string filename);
 	double AdvanceVariablePowerSource(double t);
+	void resetVariablePowerSource(std::string filename);
+	void resetVariablePowerSource();
+
+	/**
+	 * Get the total solar power length, it's the summation of length in all
+	 * interval.
+	 * @return the total power length, can be used to initialize DVFS task set
+	 */
+	double getSolarPowerLength() const { return solarPowerLength; }
+
 private:
 	double AdvanceVariablePowerSourceCore(double len);
 	std::deque<PowerPeriod> PowerPeriodQueue;
 	double LastTimeAccessInSeconds;
+	std::string solarPowerFileName;
+	double solarPowerLength;
 };
+
+extern VariablePowerSource vps;
 
 class PowerPeriod {
 	friend class VariablePowerSource;
