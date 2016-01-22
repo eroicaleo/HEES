@@ -3,7 +3,7 @@
 
 #include <map>
 
-#include "nnet.hpp"
+#include "../nnet/nnet.hpp"
 
 typedef std::map<double, nnetmodel> Level2Map;
 
