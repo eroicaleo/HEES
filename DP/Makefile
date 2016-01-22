@@ -39,6 +39,12 @@ swap  : $(EXT_OBJ) taskScheduling.o SwapScheduling_bin.o
 SwapScheduling_bin.o : SwapScheduling.cpp
 	g++ $(CFLAG_SCHED) $< -o $@
 
+SwapScheduling.o : SwapScheduling.cpp
+	g++ $(CFLAG_DBG) $< -o $@
+
+taskScheduling.o : taskScheduling.cpp
+	g++ $(CFLAG_DBG) $< -o $@
+
 %_bin.o : %.cpp
 	g++ $(CFLAG_DP) $< -o $@
 
