@@ -61,3 +61,18 @@ HOWTO
   # Compare the energy
 
   ```
+
+4. run the ./all command. It takes `TasksSCHEDForDP.txt` as input and
+   generates 1 file
+
+   ```
+   TasksDPForEES.txt
+   ```
+
+   Then do the following:
+
+   ```
+   cp TasksDPForEES.txt ../Tasks.txt
+   ./energysys > 1 # record the final energy in OverallProcess.txt, this is the one with scheduling+DVFS
+   ```
+
