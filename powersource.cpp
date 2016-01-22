@@ -51,10 +51,11 @@ void VariablePowerSource::ReadVariablePowerSource(string filename) {
 		throw 23;
 	}
 
+	LastTimeAccessInSeconds = -1.0;
 	solarPowerFileName = filename;
 	solarPowerLength = 0.0;
-	if (PowerPeriodQueue.size() > 0)
-		PowerPeriodQueue.clear();
+
+	PowerPeriodQueue.clear();
 
 	double power(0.0), len(0.0);
 	while ((infile >> power >> len).good()) {
