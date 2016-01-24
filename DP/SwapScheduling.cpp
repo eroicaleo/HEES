@@ -25,17 +25,26 @@ vector<double> SwapScheduling::taskToPowerTrace(const TaskVoltageTable &tvt) con
 }
 
 /**
- * Extract the solar power trace for task i and i+1
- * @param i task i, must be less than N-1 if there are N tasks in total
+ * Extract the solar power trace for tasks specified in coll.
+ * These tasks have to be adjacent. Currently only support up to 2 tasks.
+ *
+ * @param coll the index of tasks for which sum power will be extracted
+ * @return the solar power interval
  */
-vector<double> SwapScheduling::extractSolarPowerInterval(size_t i) const {
+vector<double> SwapScheduling::extractSolarPowerInterval(const vector<size_t> &coll) const {
+	assert ((coll.size() <= 2) && (coll.size() > 0) && (coll[0] < realTaskVoltageTable.size()-1));
+
+	if (coll.size() == 2)
+		assert ((coll[1] - coll[0]) == 1);
+
 	int start = 0;
 	int end = 0;
-	for (size_t k = 0; k < i; ++k) {
+	for (size_t k = 0; k < coll[0]; ++k) {
 		start += realTaskVoltageTable[k].getScaledCeilLength((size_t)0, 1);
 	}
-	end = start + realTaskVoltageTable[i].getScaledCeilLength((size_t)0, 1)
-				+ realTaskVoltageTable[i+1].getScaledCeilLength((size_t)0, 1);
+	for (size_t k = 0; k < coll.size(); ++k) {
+		end = start + realTaskVoltageTable[coll[k]].getScaledCeilLength((size_t)0, 1);
+	}
 
 	vector<double>::const_iterator startIter = solarPowerTrace.begin() + start;
 	vector<double>::const_iterator endIter = solarPowerTrace.begin() + end;
@@ -48,29 +57,29 @@ vector<double> SwapScheduling::extractSolarPowerInterval(size_t i) const {
  * @param j the second task index
  * @return converted power trace for the 2 tasks
  */
-vector<double> SwapScheduling::extractTaskPowerInterval(size_t i, size_t j) const {
+vector<double> SwapScheduling::extractTaskPowerInterval(const vector<size_t> &taskIndexColl) const {
 	vector<double> taskPowerInterval, trace;
 
-	trace = taskToPowerTrace(realTaskVoltageTable[i]);
-	taskPowerInterval.insert(taskPowerInterval.end(), trace.begin(), trace.end());
-
-	trace = taskToPowerTrace(realTaskVoltageTable[j]);
-	taskPowerInterval.insert(taskPowerInterval.end(), trace.begin(), trace.end());
+	vector<size_t>::const_iterator pos(taskIndexColl.begin());
+	for ( ; pos != taskIndexColl.end(); ++pos) {
+		trace = taskToPowerTrace(realTaskVoltageTable[*pos]);
+		taskPowerInterval.insert(taskPowerInterval.end(), trace.begin(), trace.end());
+	}
 
 	return taskPowerInterval;
 }
 
 /**
- * Given two tasks i and j, and the corresponding solar power trace,
+ * Given a collection of tasks, and the corresponding solar power trace,
  * predicts the energy after finish these two tasks.
+ *
  * @param solarPowerTrace solor power trace
- * @param i the first task index
- * @param j the second task index
+ * @param taskIndexColl the task index collection
  * @return predicted energy
  */
-double SwapScheduling::predictTwoTasksEnergyInterval(const vector<double> &solarPowerInterval, size_t i, size_t j) {
+double SwapScheduling::predictTasksEnergyInterval(const vector<double> &solarPowerInterval, const vector<size_t> &taskIndexColl) {
 
-	vector<double> taskPowerInterval = extractTaskPowerInterval(i, j);
+	vector<double> taskPowerInterval = extractTaskPowerInterval(taskIndexColl);
 
 	// Make sure the two vectors are of the same size
 	assert (solarPowerInterval.size() == taskPowerInterval.size());
@@ -83,7 +92,7 @@ double SwapScheduling::predictTwoTasksEnergyInterval(const vector<double> &solar
 	transform(solarPowerInterval.begin(), solarPowerInterval.end(), taskPowerInterval.begin(), back_inserter(chargePowerInterval), minus<double>());
 
 	// Make prediction for the power trace
-	return predictPowerInterval(chargePowerInterval);
+	return predictPowerInterval(chargePowerInterval, taskStartEnergy[taskIndexColl[0]]);
 }
 
 /**
@@ -94,10 +103,14 @@ double SwapScheduling::predictTwoTasksEnergyInterval(const vector<double> &solar
 int SwapScheduling::compareTwoTasks(size_t i) {
 	assert (i < realTaskVoltageTable.size()-1);
 
-	vector<double> solarPowerInterval = extractSolarPowerInterval(i);
+	vector<size_t> taskPair(1, i);
+	taskPair.push_back(i+1);
 
-	double res0 = predictTwoTasksEnergyInterval(solarPowerInterval, i, i+1);
-	double res1 = predictTwoTasksEnergyInterval(solarPowerInterval, i+1, i);
+	vector<double> solarPowerInterval = extractSolarPowerInterval(taskPair);
+
+	double res0 = predictTasksEnergyInterval(solarPowerInterval, taskPair);
+	swap(taskPair[0], taskPair[1]);
+	double res1 = predictTasksEnergyInterval(solarPowerInterval, taskPair);
 
 	#ifdef DEBUG_VERBOSE
 		cout << "Doing task " << i << " first, energy: " << res0 << endl;
@@ -108,12 +121,12 @@ int SwapScheduling::compareTwoTasks(size_t i) {
 
 	if (res < 0)
 		return -1;
-	else if (res > 0)		
+	else if (res > 0)
 		return 1;
 
 	return 0;
 }
- 
+
 /**
  * Exhaustively search all adjacent pairs of tasks,
  * if swapping the task can be beneficial to energy, then swap them.
@@ -127,6 +140,11 @@ void SwapScheduling::exhaustiveSwapping() {
 			int res = compareTwoTasks(i);
 			if (res < 0) {
 				swap(realTaskVoltageTable[i], realTaskVoltageTable[i+1]);
+				// updates the start energy for task i+1 and i+2
+				taskStartEnergy[i+1] = predictOneTask(i);
+				if (i < realTaskVoltageTable.size()-2)
+					taskStartEnergy[i+2] = predictOneTask(i+1);
+
 				++numOfSwap;
 			}
 		}
@@ -161,10 +179,9 @@ void SwapScheduling::genScheduleForEES(string ees, string dp) const {
  * @param chargeTrace the charging power trace
  * @return the energy stored in the EES bank
  */
-double SwapScheduling::predictPowerInterval(const vector<double> &chargeTrace) {
+double SwapScheduling::predictPowerInterval(const vector<double> &chargeTrace, double startEnergy) {
 
-	// Assume the initial bank voltage is 2.5v
-	double energy = 125.0;
+	double energy = startEnergy;
 	vector<double>::const_iterator start = chargeTrace.begin();
 	vector<double>::const_iterator end;
 	while (start != chargeTrace.end()) {
@@ -174,6 +191,37 @@ double SwapScheduling::predictPowerInterval(const vector<double> &chargeTrace) {
 	}
 
 	return energy;
+}
+
+/**
+ * Based on the intial schedule, predict the start energy of each task.
+ * And fill the taskStartEnergy data member.
+ */
+void SwapScheduling::buildTaskStartEnergy() {
+
+	assert (taskStartEnergy.size() == 0);
+
+	for (size_t i = 0; i < realTaskVoltageTable.size(); ++i) {
+		double res = predictOneTask(i);
+		taskStartEnergy.push_back(res);
+	}
+
+	return;
+}
+
+/**
+ * Given a task index, predict the energy after finishing this task
+ *
+ * @param taskIndex
+ * @return the predicted energy
+ */
+double SwapScheduling::predictOneTask(size_t taskIndex) {
+
+		vector<size_t> taskIndexColl(1, taskIndex);
+		vector<double> solarPowerInterval = extractSolarPowerInterval(taskIndexColl);
+		double res = predictTasksEnergyInterval(solarPowerInterval, taskIndexColl);
+
+		return res;
 }
 
 void SwapScheduling::buildSolarPowerTrace() {
@@ -189,6 +237,8 @@ void SwapScheduling::buildSolarPowerTrace() {
 	for (size_t i = 0; i < taskPowerTrace.size(); ++i) {
 		solarPowerTrace[i] = power_source_func(i+1);
 	}
+
+	buildTaskStartEnergy();
 
 	return;
 }
@@ -219,7 +269,7 @@ int main(int argc, char *argv[]) {
 	cout << "Hello swap!" << endl;
 
 	hees_parse_command_line(argc, argv);
-	SwapScheduling ss;
+	SwapScheduling ss(125.0);
 	ss.buildTaskTable("TasksSolar.txt");
 	ss.genScheduleForEES("TasksSCHEDForEES.txt.init", "TasksSCHEDForDP.txt.init");
 	ss.buildSolarPowerTrace();

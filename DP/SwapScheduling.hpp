@@ -10,6 +10,10 @@ class SwapScheduling {
 
 public:
 
+	SwapScheduling(double initBankEnergy) :
+		taskStartEnergy(1, initBankEnergy) {
+		}
+
 	void buildTaskTable(char *filename);
 	void buildSolarPowerTrace();
 	std::vector<double> generateChargeTrace();
@@ -29,13 +33,20 @@ private:
 	std::vector<double> taskPowerTrace;
 	nnetmultitask nnetPredictor;
 
-	std::vector<double> taskToPowerTrace(const TaskVoltageTable &tvt) const;
-	std::vector<double> extractSolarPowerInterval(size_t i) const;
-	std::vector<double> extractTaskPowerInterval(size_t i, size_t j) const;
+	/**
+	 * The bank energy before each task starts
+	 */
+	std::vector<double> taskStartEnergy;
 
-	double predictTwoTasksEnergyInterval(const vector<double> &solarPowerInterval, size_t i, size_t j);
+	std::vector<double> taskToPowerTrace(const TaskVoltageTable &tvt) const;
+	std::vector<double> extractSolarPowerInterval(const std::vector<size_t> &coll) const;
+	std::vector<double> extractTaskPowerInterval(const std::vector<size_t> &coll) const;
+
+	double predictTasksEnergyInterval(const vector<double> &solarPowerInterval, const std::vector<size_t> &taskIndexColl);
 	void addDCDCPower(vector<double> &powerTrace) const;
-	double predictPowerInterval(const vector<double> &chargeTrace);
+	double predictPowerInterval(const vector<double> &chargeTrace, double startEnergy);
+	void buildTaskStartEnergy();
+	double predictOneTask(size_t taskIndex);
 	
 };
 
