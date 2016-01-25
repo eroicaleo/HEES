@@ -13,7 +13,10 @@ int main(int argc, char *argv[]) {
 	hees_parse_command_line(argc, argv);
 
 	// Scheduling phase
-	SwapScheduling ss;
+	double cap = supcap_cap * supcap_parallel_conf / supcap_serial_conf;
+	double initEnergy = 0.5 * (supcap_init_charge * supcap_init_charge) / cap;
+	SwapScheduling ss(initEnergy);
+
 	ss.buildTaskTable("TasksSolar.txt");
 	ss.genScheduleForEES("TasksSCHEDForEES.txt.init", "TasksSCHEDForDP.txt.init");
 	ss.buildSolarPowerTrace();

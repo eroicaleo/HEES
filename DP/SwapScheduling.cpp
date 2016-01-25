@@ -273,7 +273,11 @@ int main(int argc, char *argv[]) {
 	cout << "Hello swap!" << endl;
 
 	hees_parse_command_line(argc, argv);
-	SwapScheduling ss(125.0);
+
+	double cap = supcap_cap * supcap_parallel_conf / supcap_serial_conf;
+	double initEnergy = 0.5 * (supcap_init_charge * supcap_init_charge) / cap;
+	SwapScheduling ss(initEnergy);
+
 	ss.buildTaskTable("TasksSolar.txt");
 	ss.genScheduleForEES("TasksSCHEDForEES.txt.init", "TasksSCHEDForDP.txt.init");
 	ss.buildSolarPowerTrace();
