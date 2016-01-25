@@ -24,6 +24,9 @@ dp : $(dp)_bin.o $(EXT_OBJ)
 all : $(EXT_OBJ) taskScheduling.o SwapScheduling.o testSchedDVFS.o
 	g++ $^ -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
 
+dvfs : $(EXT_OBJ) taskScheduling.o SwapScheduling.o testDVFSOnly.o
+	g++ $^ -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
+
 single : $(dp).o $(EXT_OBJ) testSingleVoltage.o
 	g++ $^ $(BOOST_LIBS) -o $@
 
