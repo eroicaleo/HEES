@@ -32,18 +32,19 @@ vector<double> SwapScheduling::taskToPowerTrace(const TaskVoltageTable &tvt) con
  * @return the solar power interval
  */
 vector<double> SwapScheduling::extractSolarPowerInterval(const vector<size_t> &coll) const {
-	assert ((coll.size() <= 2) && (coll.size() > 0) && (coll[0] < realTaskVoltageTable.size()-1));
+	assert ((coll.size() <= 2) && (coll.size() > 0));
 
 	if (coll.size() == 2)
-		assert ((coll[1] - coll[0]) == 1);
+		assert (((coll[1] - coll[0]) == 1) && (coll[0] < realTaskVoltageTable.size()-1));
 
 	int start = 0;
 	int end = 0;
 	for (size_t k = 0; k < coll[0]; ++k) {
 		start += realTaskVoltageTable[k].getScaledCeilLength((size_t)0, 1);
 	}
+	end = start;
 	for (size_t k = 0; k < coll.size(); ++k) {
-		end = start + realTaskVoltageTable[coll[k]].getScaledCeilLength((size_t)0, 1);
+		end = end + realTaskVoltageTable[coll[k]].getScaledCeilLength((size_t)0, 1);
 	}
 
 	vector<double>::const_iterator startIter = solarPowerTrace.begin() + start;
@@ -92,7 +93,10 @@ double SwapScheduling::predictTasksEnergyInterval(const vector<double> &solarPow
 	transform(solarPowerInterval.begin(), solarPowerInterval.end(), taskPowerInterval.begin(), back_inserter(chargePowerInterval), minus<double>());
 
 	// Make prediction for the power trace
-	return predictPowerInterval(chargePowerInterval, taskStartEnergy[taskIndexColl[0]]);
+	// Note that since the taskIndexColl might be swapped
+	// We need to find the minimum task index to get the start energy
+	size_t minIndex = *min_element(taskIndexColl.begin(), taskIndexColl.end());
+	return predictPowerInterval(chargePowerInterval, taskStartEnergy[minIndex]);
 }
 
 /**
@@ -199,9 +203,9 @@ double SwapScheduling::predictPowerInterval(const vector<double> &chargeTrace, d
  */
 void SwapScheduling::buildTaskStartEnergy() {
 
-	assert (taskStartEnergy.size() == 0);
+	assert (taskStartEnergy.size() == 1);
 
-	for (size_t i = 0; i < realTaskVoltageTable.size(); ++i) {
+	for (size_t i = 0; i < realTaskVoltageTable.size()-1; ++i) {
 		double res = predictOneTask(i);
 		taskStartEnergy.push_back(res);
 	}
