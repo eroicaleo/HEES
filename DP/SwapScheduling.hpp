@@ -20,6 +20,7 @@ public:
 	int compareTwoTasks(size_t i);
 	void exhaustiveSwapping();
 	void genScheduleForEES(std::string ees, std::string dp) const;
+	void dumpOptimalSchedule();
 
 	/**
 	 * @return The number of tasks in this task set

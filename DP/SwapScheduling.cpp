@@ -1,3 +1,4 @@
+#include <iomanip>
 #include <iostream>
 #include <typeinfo>
 
@@ -154,6 +155,8 @@ void SwapScheduling::exhaustiveSwapping() {
 		}
 	} while (numOfSwap > 0);
 
+	dumpOptimalSchedule();
+
 	return;
 }
 
@@ -175,6 +178,15 @@ void SwapScheduling::genScheduleForEES(string ees, string dp) const {
 	genScheduleTaskHandoffSet(taskHandoffSet, dp);
 
 	return;
+}
+
+void SwapScheduling::dumpOptimalSchedule() {
+	cout.precision(4);
+	for (size_t i = 0; i < taskStartEnergy.size(); ++i) {
+		cout << "Task: " << fixed << setw(4) << i
+			<< " Energy: " << fixed << setw(8) << taskStartEnergy[i] << endl;
+	}
+	cout << "Final Energy: " << fixed << setw(8) << predictOneTask(taskStartEnergy.size()-1) << endl;
 }
 
 /**
