@@ -46,7 +46,7 @@ SwapScheduling.o : SwapScheduling.cpp
 	g++ $(CFLAG_DBG) $< -o $@
 
 taskScheduling.o : taskScheduling.cpp
-	g++ $(CFLAG_DBG) $< -o $@
+	g++ $(CFLAG) $< -o $@
 
 %_bin.o : %.cpp
 	g++ $(CFLAG_DP) $< -o $@
