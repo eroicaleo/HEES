@@ -41,6 +41,7 @@ public:
 	size_t getNominalVoltageIndex() const { return find(m_voltageTable.begin(), m_voltageTable.end(), m_nominalVoltage) - m_voltageTable.begin(); }
 	TaskHandoff toTaskHandoff(size_t level) const;
 	TaskHandoffHEES toTaskHandoffHEES(size_t level) const;
+	double getPower(size_t level) const { return getCurrent(level) * getVoltage(level); }
 
 private:
 	size_t getVoltageLevel(double v) const;
