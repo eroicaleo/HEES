@@ -21,7 +21,7 @@ void SwapScheduling::buildTaskTable(char *filename) {
 
 vector<double> SwapScheduling::taskToPowerTrace(const TaskVoltageTable &tvt) const {
 	size_t level = 0;
-	double power = tvt.getVoltage(level) * tvt.getCurrent(level);
+	double power = tvt.getPower(level);
 	return vector<double>(tvt.getScaledCeilLength(level, 1), power);
 }
 
@@ -112,6 +112,10 @@ int SwapScheduling::compareTwoTasks(size_t i) {
 	taskPair.push_back(i+1);
 
 	vector<double> solarPowerInterval = extractSolarPowerInterval(taskPair);
+
+	int hwlf = highWorkLoadFirstTwoTasks(solarPowerInterval, taskPair);
+	if (hwlf != 0)
+		return hwlf;
 
 	double res0 = predictTasksEnergyInterval(solarPowerInterval, taskPair);
 	swap(taskPair[0], taskPair[1]);
@@ -238,6 +242,47 @@ double SwapScheduling::predictOneTask(size_t taskIndex) {
 		double res = predictTasksEnergyInterval(solarPowerInterval, taskIndexColl);
 
 		return res;
+}
+
+/**
+ * Given two tasks, and the corresponding solar power trace,
+ * if solar power is monotonous non-decreasing, check if the
+ * two tasks are high work load first
+ *
+ * @param solarPowerTrace solor power trace
+ * @param taskIndexColl the task index collection
+ * @return 1 if high workload first or not monotonous non-decreasing
+ * else return -1
+ */
+int SwapScheduling::highWorkLoadFirstTwoTasks(const std::vector<double> &solarPowerInterval, const std::vector<size_t> &taskIndexColl) {
+
+	assert (taskIndexColl.size() == 2);
+
+	bool isSorted = (adjacent_find(solarPowerInterval.begin(),
+									solarPowerInterval.end(),
+									greater<double>()) == solarPowerInterval.end());
+
+	if (!isSorted) {
+		#ifdef DEBUG_VERBOSE
+			cout << "solar power is NOT monotonous non-decreasing, leave it to predictor!" << endl;
+		#endif
+		return 0;
+	}
+
+	if (realTaskVoltageTable[taskIndexColl[0]].getPower(0)
+		< realTaskVoltageTable[taskIndexColl[1]].getPower(0)) {
+		#ifdef DEBUG_VERBOSE
+			cout << "solar power is monotonous non-decreasing, but not HWLF, need to swap "
+				<< taskIndexColl[0] << " and " << taskIndexColl[1] << endl;
+		#endif
+		return -1;
+	} else {
+		#ifdef DEBUG_VERBOSE
+			cout << "solar power is monotonous non-decreasing, and is HWLF, no need to swap "
+				<< taskIndexColl[0] << " and " << taskIndexColl[1] << endl;
+		#endif
+		return 1;
+	}
 }
 
 void SwapScheduling::buildSolarPowerTrace() {

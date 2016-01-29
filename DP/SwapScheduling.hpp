@@ -43,11 +43,12 @@ private:
 	std::vector<double> extractSolarPowerInterval(const std::vector<size_t> &coll) const;
 	std::vector<double> extractTaskPowerInterval(const std::vector<size_t> &coll) const;
 
-	double predictTasksEnergyInterval(const vector<double> &solarPowerInterval, const std::vector<size_t> &taskIndexColl);
-	void addDCDCPower(vector<double> &powerTrace) const;
-	double predictPowerInterval(const vector<double> &chargeTrace, double startEnergy);
+	double predictTasksEnergyInterval(const std::vector<double> &solarPowerInterval, const std::vector<size_t> &taskIndexColl);
+	void addDCDCPower(std::vector<double> &powerTrace) const;
+	double predictPowerInterval(const std::vector<double> &chargeTrace, double startEnergy);
 	void buildTaskStartEnergy();
 	double predictOneTask(size_t taskIndex);
+	int highWorkLoadFirstTwoTasks(const std::vector<double> &solarPowerInterval, const std::vector<size_t> &taskIndexColl);
 	
 };
 
