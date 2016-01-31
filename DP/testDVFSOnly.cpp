@@ -12,10 +12,6 @@ int main(int argc, char *argv[]) {
 
 	hees_parse_command_line(argc, argv);
 
-	SwapScheduling ss;
-	ss.buildTaskTable("TasksSolar.txt");
-	ss.buildSolarPowerTrace();
-
 	// DVFS phase
 	// Reset the solar power source
 	vps.resetVariablePowerSource();
@@ -24,7 +20,7 @@ int main(int argc, char *argv[]) {
 	BuildTaskVoltageTableVectorFromFile("TasksSCHEDForDP.txt", vecTaskVoltageTable, *cpu_voltage_table_ptr);
 
 	// deadline is from the solar power length
-	dynProg taskSet(ss.getTaskNumber(), (int)vps.getSolarPowerLength(), vecTaskVoltageTable);
+	dynProg taskSet(vecTaskVoltageTable.size(), (int)vps.getSolarPowerLength(), vecTaskVoltageTable);
 	taskSet.dynamicProgrammingWithIdleTasks();
 
 	return 0;
