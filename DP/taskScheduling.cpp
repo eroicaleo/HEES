@@ -117,13 +117,15 @@ void dynProg::populateIdleTask(const vector<dpTableEntry> &lastRealRow, vector<d
 		 */
 
 		tableEntryIter iterIdleHead = thisIdleRow.begin()+(iter-lastRealRow.begin());
-		// Update the table entry
-		iterIdleHead->setAllFields(iter->totalEnergy, 1.0, 0.0, -1, iterIdleHead->taskID, 0, iter-lastRealRow.begin());
+		// Update the idle table entry if current energy is less
+		if (iter->totalEnergy > iterIdleHead->totalEnergy) {
+			iterIdleHead->setAllFields(iter->totalEnergy, 1.0, 0.0, -1, iterIdleHead->taskID, 0, iter-lastRealRow.begin());
 #ifdef DEBUG_VERBOSE
-		cout << "Idle task: " << iterIdleHead->taskID << " @ time "
-			<< iterIdleHead - thisIdleRow.begin() << " initEnergy: "
-			<< iter->totalEnergy << "." << endl;
+			cout << "Idle task: " << iterIdleHead->taskID << " @ time "
+				<< iterIdleHead - thisIdleRow.begin() << " initEnergy: "
+				<< iter->totalEnergy << "." << endl;
 #endif
+		}
 
 		// Move the iterator one right, that's the end of the first second of the idle task
 		iterIdleHead += 1;
