@@ -18,6 +18,9 @@ binary = dp single sched solar
 
 dp = taskScheduling
 
+pred : $(EXT_OBJ) predictEnergy.o taskScheduling.o
+	g++ $^ -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
+
 dp : $(dp)_bin.o $(EXT_OBJ)
 	g++ $^ -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
 
