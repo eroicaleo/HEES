@@ -63,7 +63,7 @@ def processOneInputPower(energyTrace, predLen=10, stepBetweenStartIndex=1):
 def runIt():
 
     # Read the files
-    for fname in glob.glob('SweepLoad.txt.*'):
+    for fname in glob.glob('./sweepload/SweepLoad.txt.*'):
         m = re.search(r'\.(\w+?)$', fname)
         suffix = m.group(1) if m else ''
         f = open(fname)
