@@ -146,11 +146,14 @@ int ChargeProcess::ChargeProcessApplyPolicy(ees_bank *bank, lionbat *lb, loadApp
 
 	while (fabs(load->CurrentTaskRemainingTime()) > 1e-3) {
 
-		// Every second, update the power input
-		if (time_index % 10 == 0) {
-			this->power_input = power_source_func(HTimer.HEESTimerGetCurrentTimeInSecond());
-			power_status = POWER_INIT;
-		}
+		time_elapsed += min_time_interval;
+		++time_index;
+		HTimer.HEESTimerAdvancdTimerIndex(1, bank);
+		load->AdvanceLoadProgress(min_time_interval);
+
+		// Every time index (0.1 sec), update the power input
+		this->power_input = power_source_func(HTimer.HEESTimerGetCurrentTimeInSecond());
+		power_status = POWER_INIT;
 		charge_policy(bank);
 
 		// Check if we need to break because the power_input is not enough
@@ -161,11 +164,6 @@ int ChargeProcess::ChargeProcessApplyPolicy(ees_bank *bank, lionbat *lb, loadApp
 			break;
 		}
 		
-		time_elapsed += min_time_interval;
-		++time_index;
-		HTimer.HEESTimerAdvancdTimerIndex(1, bank);
-		load->AdvanceLoadProgress(min_time_interval);
-
 		// Charge the bank for the current min_time_interval
 		bank->EESBankCharge(super_cap_iin, dc_super_cap_vout, min_time_interval, super_cap_vcc, super_cap_qacc);
 
