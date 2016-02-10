@@ -246,12 +246,12 @@ double SwapScheduling::predictOneTask(size_t taskIndex) {
 
 /**
  * Given two tasks, and the corresponding solar power trace,
- * if solar power is monotonous non-decreasing, check if the
+ * if solar power is monotonous non-increasing, check if the
  * two tasks are high work load first
  *
  * @param solarPowerTrace solor power trace
  * @param taskIndexColl the task index collection
- * @return 1 if high workload first or not monotonous non-decreasing
+ * @return 1 if high workload first or not monotonous non-increasing
  * else return -1
  */
 int SwapScheduling::highWorkLoadFirstTwoTasks(const std::vector<double> &solarPowerInterval, const std::vector<size_t> &taskIndexColl) {
@@ -260,11 +260,11 @@ int SwapScheduling::highWorkLoadFirstTwoTasks(const std::vector<double> &solarPo
 
 	bool isSorted = (adjacent_find(solarPowerInterval.begin(),
 									solarPowerInterval.end(),
-									greater<double>()) == solarPowerInterval.end());
+									less<double>()) == solarPowerInterval.end());
 
 	if (!isSorted) {
 		#ifdef DEBUG_VERBOSE
-			cout << "solar power is NOT monotonous non-decreasing, leave it to predictor!" << endl;
+			cout << "solar power is NOT monotonous non-increasing, leave it to predictor!" << endl;
 		#endif
 		return 0;
 	}
@@ -272,13 +272,13 @@ int SwapScheduling::highWorkLoadFirstTwoTasks(const std::vector<double> &solarPo
 	if (realTaskVoltageTable[taskIndexColl[0]].getPower(0)
 		< realTaskVoltageTable[taskIndexColl[1]].getPower(0)) {
 		#ifdef DEBUG_VERBOSE
-			cout << "solar power is monotonous non-decreasing, but not HWLF, need to swap "
+			cout << "solar power is monotonous non-increasing, but not HWLF, need to swap "
 				<< taskIndexColl[0] << " and " << taskIndexColl[1] << endl;
 		#endif
 		return -1;
 	} else {
 		#ifdef DEBUG_VERBOSE
-			cout << "solar power is monotonous non-decreasing, and is HWLF, no need to swap "
+			cout << "solar power is monotonous non-increasing, and is HWLF, no need to swap "
 				<< taskIndexColl[0] << " and " << taskIndexColl[1] << endl;
 		#endif
 		return 1;
