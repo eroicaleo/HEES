@@ -5,6 +5,7 @@
 #include "../VoltageTable.hpp"
 #include "../nnet/nnetmultitask.hpp"
 #include "../TaskHandoff.hpp"
+#include "Task.hpp"
 
 class SwapScheduling {
 
@@ -29,7 +30,7 @@ public:
 
 private:
 
-	std::vector<TaskVoltageTable> realTaskVoltageTable;
+	std::vector<Task> realTaskVoltageTable;
 	std::vector<double> solarPowerTrace;
 	std::vector<double> taskPowerTrace;
 	nnetmultitask nnetPredictor;
@@ -39,12 +40,12 @@ private:
 	 */
 	std::vector<double> taskStartEnergy;
 
-	std::vector<double> taskToPowerTrace(const TaskVoltageTable &tvt) const;
+	std::vector<double> taskToPowerTrace(const Task &t) const;
 	std::vector<double> extractSolarPowerInterval(const std::vector<size_t> &coll) const;
 	std::vector<double> extractTaskPowerInterval(const std::vector<size_t> &coll) const;
 
 	double predictTasksEnergyInterval(const std::vector<double> &solarPowerInterval, const std::vector<size_t> &taskIndexColl);
-	void addDCDCPower(std::vector<double> &powerTrace) const;
+	void addDCDCPower(std::vector<double> &powerTrace, const vector<size_t> &taskIndexColl) const;
 	double predictPowerInterval(const std::vector<double> &chargeTrace, double startEnergy);
 	void buildTaskStartEnergy();
 	double predictOneTask(size_t taskIndex);

@@ -13,16 +13,37 @@ using namespace std::tr1;
 
 void SwapScheduling::buildTaskTable(char *filename) {
 
-	VoltageTableDFS vt(vector<double>(1, 1.0), 1.0);
-	BuildTaskVoltageTableVectorFromFile(filename, this->realTaskVoltageTable, vt);
+	ifstream infile(filename);
+	if (!infile) {
+		cerr << "Can not find " << filename << " for read!" << endl;
+		exit(66);
+	}
+
+	realTaskVoltageTable.clear();
+	double v, c;
+	int l;
+	double d0, d1, d2;
+	while ((infile >> d0 >> d1 >> d2).good()) {
+		if (d2 == d0 * d1) {
+			v = 1.0;
+			c = d1;
+			l = (int) d0;
+		} else {
+			v = d0;
+			c = d1;
+			l = (int) d2;
+		}
+		realTaskVoltageTable.push_back(Task(v, c, l));
+	}
+
+	infile.close();
 
 	return;
 }
 
-vector<double> SwapScheduling::taskToPowerTrace(const TaskVoltageTable &tvt) const {
-	size_t level = 0;
-	double power = tvt.getPower(level);
-	return vector<double>(tvt.getScaledCeilLength(level, 1), power);
+vector<double> SwapScheduling::taskToPowerTrace(const Task &t) const {
+	double power = t.getPower();
+	return vector<double>(t.getLength(), power);
 }
 
 /**
@@ -41,11 +62,11 @@ vector<double> SwapScheduling::extractSolarPowerInterval(const vector<size_t> &c
 	int start = 0;
 	int end = 0;
 	for (size_t k = 0; k < coll[0]; ++k) {
-		start += realTaskVoltageTable[k].getScaledCeilLength((size_t)0, 1);
+		start += realTaskVoltageTable[k].getLength();
 	}
 	end = start;
 	for (size_t k = 0; k < coll.size(); ++k) {
-		end = end + realTaskVoltageTable[coll[k]].getScaledCeilLength((size_t)0, 1);
+		end = end + realTaskVoltageTable[coll[k]].getLength();
 	}
 
 	vector<double>::const_iterator startIter = solarPowerTrace.begin() + start;
@@ -87,7 +108,7 @@ double SwapScheduling::predictTasksEnergyInterval(const vector<double> &solarPow
 	assert (solarPowerInterval.size() == taskPowerInterval.size());
 
 	// Add the Load DC-DC power on top of task power trace
-	addDCDCPower(taskPowerInterval);
+	addDCDCPower(taskPowerInterval, taskIndexColl);
 
 	// Get real charge power
 	vector<double> chargePowerInterval;
@@ -171,13 +192,13 @@ void SwapScheduling::exhaustiveSwapping() {
 void SwapScheduling::genScheduleForEES(string ees, string dp) const {
 	vector<TaskHandoffHEES> taskHandoffSetHEES;
 	transform(realTaskVoltageTable.begin(), realTaskVoltageTable.end(),
-		back_inserter(taskHandoffSetHEES), bind(&TaskVoltageTable::toTaskHandoffHEES, placeholders::_1, 0));
+		back_inserter(taskHandoffSetHEES), bind(&Task::toTaskHandoffHEES, placeholders::_1));
 
 	genScheduleTaskHandoffSet(taskHandoffSetHEES, ees);
 
 	vector<TaskHandoff> taskHandoffSet;
 	transform(realTaskVoltageTable.begin(), realTaskVoltageTable.end(),
-		back_inserter(taskHandoffSet), bind(&TaskVoltageTable::toTaskHandoff, placeholders::_1, 0));
+		back_inserter(taskHandoffSet), bind(&Task::toTaskHandoff, placeholders::_1));
 
 	genScheduleTaskHandoffSet(taskHandoffSet, dp);
 
@@ -269,8 +290,8 @@ int SwapScheduling::highWorkLoadFirstTwoTasks(const std::vector<double> &solarPo
 		return 0;
 	}
 
-	if (realTaskVoltageTable[taskIndexColl[0]].getPower(0)
-		< realTaskVoltageTable[taskIndexColl[1]].getPower(0)) {
+	if (realTaskVoltageTable[taskIndexColl[0]].getPower()
+		< realTaskVoltageTable[taskIndexColl[1]].getPower()) {
 		#ifdef DEBUG_VERBOSE
 			cout << "solar power is monotonous non-increasing, but not HWLF, need to swap "
 				<< taskIndexColl[0] << " and " << taskIndexColl[1] << endl;
@@ -288,7 +309,7 @@ int SwapScheduling::highWorkLoadFirstTwoTasks(const std::vector<double> &solarPo
 void SwapScheduling::buildSolarPowerTrace() {
 
 	vector<double> taskPowerTrace;
-	for (vector<TaskVoltageTable>::const_iterator it = realTaskVoltageTable.begin(); it != realTaskVoltageTable.end(); ++it) {
+	for (vector<Task>::const_iterator it = realTaskVoltageTable.begin(); it != realTaskVoltageTable.end(); ++it) {
 		vector<double> trace = taskToPowerTrace(*it);
 		taskPowerTrace.insert(taskPowerTrace.end(), trace.begin(), trace.end());
 	}
@@ -304,20 +325,38 @@ void SwapScheduling::buildSolarPowerTrace() {
 	return;
 }
 
-void SwapScheduling::addDCDCPower(vector<double> &powerTrace) const {
+void SwapScheduling::addDCDCPower(vector<double> &powerTrace, const vector<size_t> &taskIndexColl) const {
+	vector<double> voltageTrace, currentTrace;
+	for (size_t i = 0; i < taskIndexColl.size(); ++i) {
+		const Task &t(realTaskVoltageTable[taskIndexColl[i]]);
+		voltageTrace.insert(voltageTrace.end(), t.getLength(), t.getVoltage());
+		currentTrace.insert(currentTrace.end(), t.getLength(), t.getCurrent());
+	}
+
+	vector<pair<double, double> > vcPairTrace;
+	transform(voltageTrace.begin(), voltageTrace.end(),
+				currentTrace.begin(), back_inserter(vcPairTrace),
+				make_pair<double, double>);
+
 	dcconvertIN dcLoad;
 
 	double dc_load_vin(1.0), dc_load_vout(1.0), dc_load_iout(0.0);
 	double dc_load_iin(0.0), dc_load_power(0.0);
 
-	vector<double>::iterator start = powerTrace.begin();
-	vector<double>::iterator end;
+	vector<pair<double, double> >::iterator start = vcPairTrace.begin();
+	vector<pair<double, double> >::iterator end;
 
-	while (start != powerTrace.end()) {
-		dc_load_iout = *start;
+	vector<double>::iterator s;
+	vector<double>::iterator e;
+
+	while (start != vcPairTrace.end()) {
+		dc_load_vout = start->first;
+		dc_load_iout = start->second;
 		dcLoad.ConverterModel(dc_load_vin, dc_load_vout, dc_load_iout, dc_load_iin, dc_load_power);
-		end = find_if(start, powerTrace.end(), bind1st(not_equal_to<double>(), *start));
-		transform(start, end, start, bind2nd(plus<double>(), dc_load_power));
+		end = find_if(start, vcPairTrace.end(), bind1st(not_equal_to<pair<double, double> >(), *start));
+		s = powerTrace.begin() + (start - vcPairTrace.begin());
+		e = powerTrace.begin() + (end - vcPairTrace.begin());
+		transform(s, e, s, bind2nd(plus<double>(), dc_load_power));
 		start = end;
 	}
 

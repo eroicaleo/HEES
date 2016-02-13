@@ -33,13 +33,13 @@ dvfs : $(EXT_OBJ) taskScheduling.o SwapScheduling.o testDVFSOnly.o
 single : $(dp).o $(EXT_OBJ) testSingleVoltage.o
 	g++ $^ $(BOOST_LIBS) -o $@
 
-sched : $(dp).o $(EXT_OBJ) testSched.o
+sched : $(dp).o $(EXT_OBJ) testSched.o Task.o
 	g++ $^ -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
 
 solar : $(EXT_OBJ) $(dp)_dbg.o testVariableSolarPower.o
 	g++ $^ -DDEBUG_VERBOSE -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
 
-swap  : $(EXT_OBJ) taskScheduling.o SwapScheduling_bin.o
+swap  : $(EXT_OBJ) taskScheduling.o SwapScheduling_bin.o Task.o
 	g++ $^ -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
 
 SwapScheduling_bin.o : SwapScheduling.cpp
