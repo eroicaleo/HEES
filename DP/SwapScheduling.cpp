@@ -290,8 +290,8 @@ int SwapScheduling::highWorkLoadFirstTwoTasks(const std::vector<double> &solarPo
 		return 0;
 	}
 
-	if (realTaskVoltageTable[taskIndexColl[0]].getPower()
-		< realTaskVoltageTable[taskIndexColl[1]].getPower()) {
+	if (realTaskVoltageTable[taskIndexColl[0]].getPowerWithDCDC()
+		< realTaskVoltageTable[taskIndexColl[1]].getPowerWithDCDC()) {
 		#ifdef DEBUG_VERBOSE
 			cout << "solar power is monotonous non-increasing, but not HWLF, need to swap "
 				<< taskIndexColl[0] << " and " << taskIndexColl[1] << endl;

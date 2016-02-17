@@ -21,6 +21,10 @@ double Task::getCurrent() const {
 	return current;
 }
 
+double Task::getPowerWithDCDC() const {
+	return voltage * current + dcdcPower;
+}
+
 /**
  * Convert the Task to a simpler TaskHandoff
  * @return a TaskHandoff object which only contains length, power and energy
