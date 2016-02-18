@@ -283,6 +283,14 @@ int SwapScheduling::highWorkLoadFirstTwoTasks(const std::vector<double> &solarPo
 									solarPowerInterval.end(),
 									less<double>()) == solarPowerInterval.end());
 
+	bool isMonoIncreasing = (adjacent_find(solarPowerInterval.begin(),
+									solarPowerInterval.end(),
+									greater<double>()) == solarPowerInterval.end()
+							&& (solarPowerInterval.front() < solarPowerInterval.back()));
+
+	if (isMonoIncreasing)
+		return dealWithSpecialCase(solarPowerInterval, taskIndexColl);
+
 	if (!isSorted) {
 		#ifdef DEBUG_VERBOSE
 			cout << "solar power is NOT monotonous non-increasing, leave it to predictor!" << endl;
@@ -304,6 +312,48 @@ int SwapScheduling::highWorkLoadFirstTwoTasks(const std::vector<double> &solarPo
 		#endif
 		return 1;
 	}
+}
+
+int SwapScheduling::dealWithSpecialCase(const vector<double> &solarPowerInterval, const vector<size_t> &taskIndexColl) {
+	vector<size_t> taskIndexCollSwap = taskIndexColl;
+	swap(taskIndexCollSwap[0], taskIndexCollSwap[1]);
+
+	double powerDiffInOrder = getPowerDiff(solarPowerInterval, taskIndexColl);
+	double powerDiffReOrder = getPowerDiff(solarPowerInterval, taskIndexCollSwap);
+
+	if (powerDiffInOrder > 0  && powerDiffReOrder >  0) {
+		#ifdef DEBUG_VERBOSE
+			cout << "solar power is monotonous increasing, and both orders result to LPCF, leave it to predictor" << endl;
+		#endif
+		return 0;
+	} else if (powerDiffInOrder >= 0 && powerDiffReOrder <= 0) {
+		#ifdef DEBUG_VERBOSE
+			cout << "solar power is monotonous increasing, and current order leads to LPCF, no need to swap" << endl;
+		#endif
+		return 1;
+	} else if (powerDiffInOrder <= 0 && powerDiffReOrder >= 0) {
+		#ifdef DEBUG_VERBOSE
+			cout << "solar power is monotonous increasing, and reverse order leads to LPCF, need to swap" << endl;
+		#endif
+		return -1;
+	} else {
+		throw "It's not possible to have both powerDiff less than 0!";
+	}
+
+}
+
+double SwapScheduling::getPowerDiff(const vector<double> &solarPowerInterval, const vector<size_t> &taskIndexColl) {
+
+	vector<double> taskPowerInterval = extractTaskPowerInterval(taskIndexColl);
+	assert (solarPowerInterval.size() == taskPowerInterval.size());
+	addDCDCPower(taskPowerInterval, taskIndexColl);
+	vector<double> chargePowerInterval;
+	transform(solarPowerInterval.begin(), solarPowerInterval.end(), taskPowerInterval.begin(), back_inserter(chargePowerInterval), minus<double>());
+
+	size_t index = realTaskVoltageTable[taskIndexColl[0]].getLength();
+	double powerDiff = chargePowerInterval[index] - chargePowerInterval[index-1];
+
+	return powerDiff;
 }
 
 void SwapScheduling::buildSolarPowerTrace() {

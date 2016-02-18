@@ -50,6 +50,8 @@ private:
 	void buildTaskStartEnergy();
 	double predictOneTask(size_t taskIndex);
 	int highWorkLoadFirstTwoTasks(const std::vector<double> &solarPowerInterval, const std::vector<size_t> &taskIndexColl);
+	int dealWithSpecialCase(const std::vector<double> &solarPowerInterval, const std::vector<size_t> &taskIndexColl);
+	double getPowerDiff(const std::vector<double> &solarPowerInterval, const std::vector<size_t> &taskIndexColl);
 	
 };
 
