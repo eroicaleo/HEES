@@ -11,6 +11,8 @@
 using namespace std;
 using namespace std::tr1;
 
+static const double epsilon = 1e-5;
+
 void SwapScheduling::buildTaskTable(char *filename) {
 
 	ifstream infile(filename);
@@ -24,7 +26,7 @@ void SwapScheduling::buildTaskTable(char *filename) {
 	int l;
 	double d0, d1, d2;
 	while ((infile >> d0 >> d1 >> d2).good()) {
-		if (d2 == d0 * d1) {
+		if (fabs(d2 - d0*d1) < epsilon) {
 			v = 1.0;
 			c = d1;
 			l = (int) d0;
