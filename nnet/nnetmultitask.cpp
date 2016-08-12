@@ -25,7 +25,12 @@ double nnetmultitask::predictWithEnergyLength(double inputPower, double startEne
 	nnetInput[1] = startEnergy;
 
 	for (size_t i = 0; i < interalVec.size(); ++i) {
-		bindCalculator(interalVec[i], inputPower, startEnergy);
+		try {
+			bindCalculator(interalVec[i], inputPower, startEnergy);
+		} catch (int e) {
+			// cout << "An exception occurred. Exception Nr. " << e << '\n';
+			return startEnergy;
+		}
 		while (intlen >= interalVec[i]) {
 			startEnergy = computeEnergy(nnetInput);
 			intlen -= interalVec[i];
@@ -49,7 +54,12 @@ double nnetmultitask::predictWithEnergyLength(double inputPower, double startEne
 	double energydiff = 0.0;
 	int lendiff = 0;
 	if (intlen > 0) {
-		bindCalculator(interalVec.back(), inputPower, startEnergy);
+		try {
+			bindCalculator(interalVec.back(), inputPower, startEnergy);
+		} catch (int e) {
+			// cout << "An exception occurred. Exception Nr. " << e << '\n';
+			return startEnergy;
+		}
 		energydiff = computeEnergy(nnetInput) - startEnergy;
 		startEnergy += energydiff;
 

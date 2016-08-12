@@ -32,17 +32,17 @@ const nnetmodel &recallNnetMap(const map<double, Level2Map> &nnetMap, double ban
 
 	// Find the 1st levle key
 	if (nnetMap.upper_bound(bankCharge) == nnetMap.begin()) {
-		std::cerr << "bank charge: " << bankCharge << " is out of training range!"
-			<< " The min training range is: " << nnetMap.begin()->first << endl;
-		exit(-1);
+		// std::cerr << "bank charge: " << bankCharge << " is out of training range!"
+		// 	<< " The min training range is: " << nnetMap.begin()->first << endl;
+		throw 623;
 	}
 	const Level2Map &l2map = (--nnetMap.upper_bound(bankCharge))->second;
 
 	// Find the 2nd level key
 	if (l2map.upper_bound(solarPower) == l2map.begin()) {
-		std::cerr << "sun charge: " << solarPower << " is out of training range!"
-			<< " The min training rage is: " << l2map.begin()->first << endl;
-		exit(-1);
+		// std::cerr << "sun charge: " << solarPower << " is out of training range!"
+		// 	<< " The min training rage is: " << l2map.begin()->first << endl;
+		throw 1228;
 	}
 	const nnetmodel &nmodel = (--l2map.upper_bound(solarPower))->second;
 

@@ -216,7 +216,8 @@ void dynProg::populateRealTask(const vector<dpTableEntry> &lastIdleRow, vector<d
 			// Must guarantee there is enough power for charging
 			if ((inputPower > 0.0) && (realTaskIterEnd < thisRealRow.end())) {
 #ifdef DEBUG_VERBOSE
-				cout << "I am predicting real task " << taskID << " from time " << (iter-lastIdleRow.begin()) << " to " << taskiFinishTime << "." << endl;
+				cout << "I am predicting real task " << taskID << " from time " << (iter-lastIdleRow.begin()) << " to " << taskiFinishTime << "."
+					<< " The start energy is: " << iter->totalEnergy << "." << endl;
 #endif
 
 				/** Here is a diagram for how to pass parameters to energyCalVarSolarPowerWrapper

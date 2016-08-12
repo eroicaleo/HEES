@@ -24,10 +24,13 @@ pred : $(EXT_OBJ) predictEnergy.o taskScheduling.o
 dp : $(dp)_bin.o $(EXT_OBJ)
 	g++ $^ -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
 
-all : $(EXT_OBJ) taskScheduling.o SwapScheduling.o testSchedDVFS.o
+all : $(EXT_OBJ) taskScheduling.o SwapScheduling.o testSchedDVFS.o Task.o
 	g++ $^ -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
 
-dvfs : $(EXT_OBJ) taskScheduling.o SwapScheduling.o testDVFSOnly.o
+dvfs : $(EXT_OBJ) taskScheduling.o SwapScheduling.o testDVFSOnly.o Task.o
+	g++ $^ -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
+
+dvfsswap : $(EXT_OBJ) taskScheduling.o SwapScheduling.o testDVFSSched.o Task.o
 	g++ $^ -L$(HOME)/usr/lib/boost $(BOOST_LIBS) -o $@
 
 single : $(dp).o $(EXT_OBJ) testSingleVoltage.o
@@ -55,10 +58,10 @@ taskScheduling.o : taskScheduling.cpp
 	g++ $(CFLAG_DP) $< -o $@
 
 %_dbg.o : *.cpp
-	g++ $(CFLAG_DBG) $< -o $@
+	g++ $(CFLAG) $< -o $@
 
 %.o : %.cpp
-	g++ $(CFLAG) $< -o $@
+	g++ $(CFLAG_DBG) $< -o $@
 
 %.o : %.c
 	g++ $(CFLAG) $< -o $@
