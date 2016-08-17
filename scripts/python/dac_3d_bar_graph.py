@@ -19,6 +19,11 @@ length = [60, 120]
 task_power = [1 + p/10.0 for p in range(2)]
 print(task_power)
 
+def extract_final_energy(fname):
+    for line in open(fname):
+	    e = line.split()[-2]
+    return float(e)
+
 for l in length:
 	for p1 in task_power:
 		for p2 in task_power:
@@ -37,3 +42,7 @@ for l in length:
 			f3.close()
 			oname = "OverallProcess_%.1f_%.1f_%04d.txt" % (p1, p2, l)
 			shutil.copy('OverallProcess.txt', oname)
+			e = extract_final_energy(oname)
+			p11 = 2.0-p1
+			p21 = 2.0-p2
+			print("%.1f %.1f %d %.3f" % (p11, p21, l, e))
